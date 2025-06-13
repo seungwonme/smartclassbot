@@ -156,18 +156,20 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
                 팔로워 증감량 및 활성도
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               <div className="text-2xl font-bold text-green-600">
                 {influencerDetail.followerGrowth}
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 {influencerDetail.growthRate}
               </div>
-              <Badge variant="secondary" className="mt-2">
-                {influencerDetail.growthStatus}
-              </Badge>
-              <div className="text-xs text-muted-foreground mt-2">
-                {influencerDetail.growthDate}
+              <div className="mt-2 pt-2 border-t">
+                <div className="text-green-600 font-medium">
+                  높음
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  활성도 상태
+                </div>
               </div>
             </CardContent>
           </Card>
