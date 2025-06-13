@@ -16,13 +16,17 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50">
+    <header className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Circlue.ai
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <div className="w-8 h-8 bg-green-500 rounded-full"></div>
+                <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
+              </div>
+              <span className="text-2xl font-bold text-foreground">circlue</span>
             </div>
           </div>
 
@@ -44,7 +48,7 @@ const Header = () => {
             <Button variant="ghost" size="sm">
               로그인
             </Button>
-            <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
               무료 체험 시작
             </Button>
           </div>
@@ -79,7 +83,7 @@ const Header = () => {
                 <Button variant="ghost" size="sm" className="w-full">
                   로그인
                 </Button>
-                <Button size="sm" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white">
                   무료 체험 시작
                 </Button>
               </div>

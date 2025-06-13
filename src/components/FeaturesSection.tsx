@@ -11,14 +11,14 @@ const FeaturesSection = () => {
       title: "AI 시장 분석",
       description: "중국 소셜미디어 플랫폼의 실시간 트렌드와 소비자 인사이트를 AI로 분석하여 최적의 마케팅 전략을 제공합니다.",
       badge: "AI 기반",
-      color: "text-blue-600"
+      color: "text-green-600"
     },
     {
       icon: Users,
       title: "인플루언서 매칭",
       description: "브랜드와 제품에 최적화된 인플루언서를 AI가 추천하고, 성과 예측까지 제공하여 ROI를 극대화합니다.",
       badge: "스마트 매칭",
-      color: "text-purple-600"
+      color: "text-gray-700"
     },
     {
       icon: Search,
@@ -32,21 +32,21 @@ const FeaturesSection = () => {
       title: "실시간 성과 분석",
       description: "캠페인의 실시간 성과를 모니터링하고, 데이터 기반의 인사이트를 제공하여 즉시 최적화할 수 있습니다.",
       badge: "실시간",
-      color: "text-orange-600"
+      color: "text-gray-700"
     },
     {
       icon: MessageSquare,
       title: "통합 커뮤니케이션",
       description: "브랜드, 에이전시, 인플루언서 간의 모든 소통을 한 플랫폼에서 관리하여 프로젝트 효율성을 높입니다.",
       badge: "올인원",
-      color: "text-cyan-600"
+      color: "text-green-600"
     },
     {
       icon: Shield,
       title: "계약 관리",
       description: "인플루언서와의 계약부터 정산까지 전 과정을 투명하고 안전하게 관리할 수 있는 시스템을 제공합니다.",
       badge: "안전한",
-      color: "text-red-600"
+      color: "text-gray-700"
     }
   ];
 
@@ -55,11 +55,11 @@ const FeaturesSection = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <Badge variant="outline" className="mb-4 px-4 py-2 text-sm font-medium border-blue-200 text-blue-700">
+          <Badge variant="outline" className="mb-4 px-4 py-2 text-sm font-medium border-green-200 text-green-700">
             핵심 기능
           </Badge>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
               AI가 만드는
             </span>
             <br />

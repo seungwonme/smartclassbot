@@ -6,11 +6,11 @@ import { ArrowRight, Play, TrendingUp, Users, Zap } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-blue-50/20">
+    <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-4xl mx-auto">
           {/* Badge */}
-          <Badge variant="outline" className="mb-6 px-4 py-2 text-sm font-medium border-blue-200 text-blue-700">
+          <Badge variant="outline" className="mb-6 px-4 py-2 text-sm font-medium border-green-200 text-green-700">
             <Zap className="w-4 h-4 mr-2" />
             AI 기반 인플루언서 마케팅 플랫폼
           </Badge>
@@ -18,7 +18,7 @@ const HeroSection = () => {
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
             <span className="block text-foreground">중국 시장에서</span>
-            <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-green-600 via-green-500 to-green-700 bg-clip-text text-transparent">
               성공하는 방법
             </span>
           </h1>
@@ -34,7 +34,7 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button 
               size="lg" 
-              className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
+              className="text-lg px-8 py-4 bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
               무료로 시작하기
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -53,24 +53,24 @@ const HeroSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="h-6 w-6 text-blue-600 mr-2" />
-                <span className="text-3xl font-bold text-foreground">300%</span>
+                <TrendingUp className="h-6 w-6 text-green-600 mr-2" />
+                <span className="text-3xl font-bold text-foreground">AI 기반</span>
               </div>
-              <p className="text-sm text-muted-foreground">평균 ROI 증가</p>
+              <p className="text-sm text-muted-foreground">시장 분석 및 매칭</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
-                <Users className="h-6 w-6 text-purple-600 mr-2" />
-                <span className="text-3xl font-bold text-foreground">10,000+</span>
+                <Users className="h-6 w-6 text-green-600 mr-2" />
+                <span className="text-3xl font-bold text-foreground">12,000+</span>
               </div>
-              <p className="text-sm text-muted-foreground">검증된 인플루언서</p>
+              <p className="text-sm text-muted-foreground">중국 인플루언서 DB</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
-                <Zap className="h-6 w-6 text-blue-600 mr-2" />
-                <span className="text-3xl font-bold text-foreground">50%</span>
+                <Zap className="h-6 w-6 text-green-600 mr-2" />
+                <span className="text-3xl font-bold text-foreground">통합</span>
               </div>
-              <p className="text-sm text-muted-foreground">캠페인 시간 단축</p>
+              <p className="text-sm text-muted-foreground">캠페인 관리 시스템</p>
             </div>
           </div>
         </div>

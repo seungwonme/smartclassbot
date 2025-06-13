@@ -52,8 +52,12 @@ const Footer = () => {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
             {/* Company Info */}
             <div className="lg:col-span-2">
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-                Circlue.ai
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="relative">
+                  <div className="w-8 h-8 bg-green-500 rounded-full"></div>
+                  <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
+                </div>
+                <span className="text-2xl font-bold text-foreground">circlue</span>
               </div>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
                 AI 기반 중국 인플루언서 마케팅 플랫폼으로 브랜드의 글로벌 성장을 가속화합니다.
@@ -62,15 +66,15 @@ const Footer = () => {
               {/* Contact Info */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center text-muted-foreground">
-                  <Mail className="h-5 w-5 mr-3 text-blue-600" />
+                  <Mail className="h-5 w-5 mr-3 text-green-600" />
                   <span>contact@circlue.ai</span>
                 </div>
                 <div className="flex items-center text-muted-foreground">
-                  <Phone className="h-5 w-5 mr-3 text-blue-600" />
+                  <Phone className="h-5 w-5 mr-3 text-green-600" />
                   <span>+82-2-1234-5678</span>
                 </div>
                 <div className="flex items-center text-muted-foreground">
-                  <MapPin className="h-5 w-5 mr-3 text-blue-600" />
+                  <MapPin className="h-5 w-5 mr-3 text-green-600" />
                   <span>서울특별시 강남구 테헤란로 123</span>
                 </div>
               </div>
