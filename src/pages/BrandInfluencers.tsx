@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, Eye, Users } from 'lucide-react';
+import { Search, Eye, Users, BarChart3 } from 'lucide-react';
 import {
   Table,
   TableBody,

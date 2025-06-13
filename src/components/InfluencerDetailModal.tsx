@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -124,134 +123,141 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
       </div>
 
       {/* 팔로워 인구통계 분석 */}
-      <div className="grid grid-cols-4 gap-6">
-        {/* 팔로워 증감량 및 활성도 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              팔로워 증감량 및 활성도
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {influencerDetail.followerGrowth}
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">
-              {influencerDetail.growthRate}
-            </div>
-            <Badge variant="secondary" className="mt-2">
-              {influencerDetail.growthStatus}
-            </Badge>
-            <div className="text-xs text-muted-foreground mt-2">
-              {influencerDetail.growthDate}
-            </div>
-          </CardContent>
-        </Card>
+      <div>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5" />
+          팔로워 인구통계분석
+        </h2>
+        
+        <div className="grid grid-cols-4 gap-6">
+          {/* 팔로워 증감량 및 활성도 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                팔로워 증감량 및 활성도
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {influencerDetail.followerGrowth}
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {influencerDetail.growthRate}
+              </div>
+              <Badge variant="secondary" className="mt-2">
+                {influencerDetail.growthStatus}
+              </Badge>
+              <div className="text-xs text-muted-foreground mt-2">
+                {influencerDetail.growthDate}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* 성별 분포 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              성별 분포
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={genderData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={50}
-                    paddingAngle={0}
-                    dataKey="value"
-                  >
-                    {genderData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-2 space-y-1">
-              {genderData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span>{item.name}</span>
+          {/* 성별 분포 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                성별 분포
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={genderData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={50}
+                      paddingAngle={0}
+                      dataKey="value"
+                    >
+                      {genderData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-2 space-y-1">
+                {genderData.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span>{item.name}</span>
+                    </div>
+                    <span className="font-medium">{item.value}%</span>
                   </div>
-                  <span className="font-medium">{item.value}%</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* 연령 분포 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              연령 분포
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={ageData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={50}
-                    paddingAngle={0}
-                    dataKey="value"
-                  >
-                    {ageData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-2 space-y-1">
-              {ageData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span>{item.name}</span>
+          {/* 연령 분포 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                연령 분포
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={ageData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={50}
+                      paddingAngle={0}
+                      dataKey="value"
+                    >
+                      {ageData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-2 space-y-1">
+                {ageData.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span>{item.name}</span>
+                    </div>
+                    <span className="font-medium">{item.value}%</span>
                   </div>
-                  <span className="font-medium">{item.value}%</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* 지역 분포 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              지역 분포
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(influencerDetail.regionDistribution).map(([region, percentage]) => (
-                <div key={region} className="flex justify-between text-sm">
-                  <span>{region}</span>
-                  <span className="font-medium">{percentage}%</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+          {/* 지역 분포 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                지역 분포
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(influencerDetail.regionDistribution).map(([region, percentage]) => (
+                  <div key={region} className="flex justify-between text-sm">
+                    <span>{region}</span>
+                    <span className="font-medium">{percentage}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* 라이브 방송 분석 */}
