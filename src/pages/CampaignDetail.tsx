@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Campaign } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
@@ -103,6 +102,69 @@ const CampaignDetail = () => {
     }
   };
 
+  const handleInfluencerApproval = async (influencerId: string, approved: boolean) => {
+    if (!campaign) return;
+    
+    try {
+      const updatedInfluencers = campaign.influencers.map(inf => 
+        inf.id === influencerId 
+          ? { ...inf, status: approved ? 'approved' as const : 'rejected' as const }
+          : inf
+      );
+
+      const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
+      
+      // 모든 인플루언서에 대한 결정이 완료되었는지 확인
+      const allDecided = updatedInfluencers.every(inf => inf.status === 'approved' || inf.status === 'rejected');
+      const hasRejected = updatedInfluencers.some(inf => inf.status === 'rejected');
+      
+      let newStatus = campaign.status;
+      if (allDecided) {
+        if (hasRejected) {
+          newStatus = 'recruiting'; // 거절된 인플루언서가 있으면 다시 섭외중으로
+        } else {
+          newStatus = 'approved'; // 모든 인플루언서가 승인되면 승인완료
+        }
+      }
+
+      await campaignService.updateCampaign(campaign.id, {
+        influencers: updatedInfluencers,
+        status: newStatus
+      });
+
+      setCampaign({ ...updatedCampaign, status: newStatus });
+      
+      toast({
+        title: approved ? "인플루언서 승인" : "인플루언서 거절",
+        description: approved ? "인플루언서가 승인되었습니다." : "인플루언서가 거절되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "처리 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFinalConfirmation = async () => {
+    if (!campaign) return;
+    
+    try {
+      await campaignService.updateCampaign(campaign.id, { status: 'completed' });
+      setCampaign(prev => prev ? { ...prev, status: 'completed' } : null);
+      
+      toast({
+        title: "캠페인 확정 완료",
+        description: "캠페인이 최종 확정되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "확정 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -126,6 +188,8 @@ const CampaignDetail = () => {
   }
 
   const isCreating = campaign.status === 'creating';
+  const isProposing = campaign.status === 'proposing';
+  const isApproved = campaign.status === 'approved';
 
   return (
     <div className="flex min-h-screen w-full">
@@ -163,6 +227,12 @@ const CampaignDetail = () => {
                   제출
                 </Button>
               </>
+            )}
+            {isApproved && (
+              <Button onClick={handleFinalConfirmation} className="bg-blue-600 hover:bg-blue-700">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                최종 확정
+              </Button>
             )}
           </div>
         </div>
@@ -252,6 +322,9 @@ const CampaignDetail = () => {
               <CardTitle className="flex items-center">
                 <Users className="w-5 h-5 mr-2" />
                 선택된 인플루언서 ({campaign.influencers.length}명)
+                {isProposing && (
+                  <Badge className="ml-2 bg-yellow-100 text-yellow-800">승인 대기</Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -259,7 +332,7 @@ const CampaignDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {campaign.influencers.map((influencer) => (
                     <Card key={influencer.id} className="p-4">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 mb-3">
                         <img
                           src={influencer.profileImage}
                           alt={influencer.name}
@@ -277,6 +350,40 @@ const CampaignDetail = () => {
                             </p>
                           )}
                         </div>
+                      </div>
+                      
+                      {/* 상태 표시 및 승인/거절 버튼 */}
+                      <div className="flex items-center justify-between">
+                        {influencer.status === 'accepted' && !isProposing && (
+                          <Badge className="bg-green-100 text-green-800">섭외 완료</Badge>
+                        )}
+                        {influencer.status === 'accepted' && isProposing && (
+                          <div className="flex space-x-2 w-full">
+                            <Button
+                              size="sm"
+                              onClick={() => handleInfluencerApproval(influencer.id, true)}
+                              className="bg-green-600 hover:bg-green-700 flex-1"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              승인
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleInfluencerApproval(influencer.id, false)}
+                              className="flex-1"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              거절
+                            </Button>
+                          </div>
+                        )}
+                        {influencer.status === 'approved' && (
+                          <Badge className="bg-blue-100 text-blue-800">승인 완료</Badge>
+                        )}
+                        {influencer.status === 'rejected' && (
+                          <Badge className="bg-red-100 text-red-800">거절됨</Badge>
+                        )}
                       </div>
                     </Card>
                   ))}
