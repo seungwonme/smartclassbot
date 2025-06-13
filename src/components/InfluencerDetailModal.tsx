@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -289,37 +288,31 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
         </h2>
         
         <div className="grid grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">라이브방송 횟수</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-600">{influencerDetail.liveStreams}회</div>
-              <div className="text-sm text-muted-foreground mt-1">총 방송 횟수</div>
+          <Card className="bg-red-50 border-red-100">
+            <CardContent className="p-6 text-center">
+              <div className="text-sm text-muted-foreground mb-2">라이브방송 횟수</div>
+              <div className="text-3xl font-bold text-red-600 mb-1">{influencerDetail.liveStreams}회</div>
+              <div className="text-sm text-muted-foreground">총 방송 횟수</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">최당 평균 시청자수</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
+          <Card className="bg-blue-50 border-blue-100">
+            <CardContent className="p-6 text-center">
+              <div className="text-sm text-muted-foreground mb-2">최당 평균 시청자수</div>
+              <div className="text-3xl font-bold text-blue-600 mb-1">
                 {formatNumber(influencerDetail.totalViewers)}명
               </div>
-              <div className="text-sm text-muted-foreground mt-1">평균 동시접속자</div>
+              <div className="text-sm text-muted-foreground">평균 동시접속자</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">최당 평균 시청시간</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
+          <Card className="bg-green-50 border-green-100">
+            <CardContent className="p-6 text-center">
+              <div className="text-sm text-muted-foreground mb-2">최당 평균 시청시간</div>
+              <div className="text-3xl font-bold text-green-600 mb-1">
                 {influencerDetail.avgViewersPerStream.toLocaleString()}초
               </div>
-              <div className="text-sm text-muted-foreground mt-1">평균 시청 시간</div>
+              <div className="text-sm text-muted-foreground">평균 시청 시간</div>
             </CardContent>
           </Card>
         </div>
