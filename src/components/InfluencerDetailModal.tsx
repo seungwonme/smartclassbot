@@ -69,6 +69,12 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
     return { formatted, original };
   };
 
+  const formatTimeToMinutesSeconds = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}분${remainingSeconds.toString().padStart(2, '0')}초`;
+  };
+
   // 성별 분포 데이터 (차트용)
   const genderData = [
     { name: '남성', value: influencerDetail.genderDistribution.male, color: '#3B82F6' },
@@ -318,7 +324,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
             <CardContent className="p-6 text-center">
               <div className="text-sm text-muted-foreground mb-2">회당 평균 시청시간</div>
               <div className="text-3xl font-bold text-green-600 mb-1">
-                {influencerDetail.avgViewersPerStream.toLocaleString()}초
+                {formatTimeToMinutesSeconds(influencerDetail.avgViewersPerStream)}
               </div>
               <div className="text-sm text-muted-foreground">평균 시청 시간</div>
             </CardContent>
