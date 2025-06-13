@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -307,7 +306,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
 
           <Card className="bg-blue-50 border-blue-100">
             <CardContent className="p-6 text-center">
-              <div className="text-sm text-muted-foreground mb-2">최당 평균 시청자수</div>
+              <div className="text-sm text-muted-foreground mb-2">회당 평균 시청자수</div>
               <div className="text-3xl font-bold text-blue-600 mb-1">
                 {formatNumber(influencerDetail.totalViewers)}명
               </div>
@@ -317,7 +316,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
 
           <Card className="bg-green-50 border-green-100">
             <CardContent className="p-6 text-center">
-              <div className="text-sm text-muted-foreground mb-2">최당 평균 시청시간</div>
+              <div className="text-sm text-muted-foreground mb-2">회당 평균 시청시간</div>
               <div className="text-3xl font-bold text-green-600 mb-1">
                 {influencerDetail.avgViewersPerStream.toLocaleString()}초
               </div>
