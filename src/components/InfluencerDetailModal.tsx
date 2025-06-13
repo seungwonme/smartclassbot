@@ -149,14 +149,14 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
         
         <div className="grid grid-cols-4 gap-6">
           {/* 팔로워 증감량 및 활성도 */}
-          <Card className="h-64">
+          <Card className="h-64 flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
                 팔로워 증감량 및 활성도
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-full flex flex-col justify-center items-center text-center">
+            <CardContent className="flex-1 flex items-center justify-center text-center">
               <div className="space-y-4">
                 <div>
                   <div className="text-2xl font-bold text-green-600">
