@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +22,13 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import InfluencerDetailModal from '@/components/InfluencerDetailModal';
 
 // 임시 인플루언서 데이터 타입
 interface Influencer {
@@ -42,6 +48,8 @@ export default function BrandInfluencers() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [followerRange, setFollowerRange] = useState('all');
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedInfluencer, setSelectedInfluencer] = useState<Influencer | null>(null);
 
   // 임시 인플루언서 데이터
   const influencers: Influencer[] = [
@@ -94,8 +102,11 @@ export default function BrandInfluencers() {
   };
 
   const handleInfluencerDetail = (influencerId: string) => {
-    // 브랜드 관리자용 인플루언서 상세 페이지로 이동
-    console.log('Navigate to influencer detail:', influencerId);
+    const influencer = influencers.find(inf => inf.id === influencerId);
+    if (influencer) {
+      setSelectedInfluencer(influencer);
+      setIsModalOpen(true);
+    }
   };
 
   return (
@@ -326,6 +337,18 @@ export default function BrandInfluencers() {
           </Card>
         </div>
       </div>
+
+      {/* 인플루언서 상세보기 모달 */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>인플루언서 상세정보</DialogTitle>
+          </DialogHeader>
+          {selectedInfluencer && (
+            <InfluencerDetailModal influencer={selectedInfluencer} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
