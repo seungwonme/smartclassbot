@@ -371,12 +371,9 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
           </Card>
         </div>
 
-        {/* 최근 활동 */}
+        {/* 최근 활동 - 타이틀 제거 */}
         <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-base">최근 커머스 활동</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center p-4 bg-orange-50 rounded-lg">
                 <ShoppingCart className="w-6 h-6 mx-auto mb-2 text-orange-600" />
