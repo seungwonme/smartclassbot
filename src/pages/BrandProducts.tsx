@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -271,68 +270,53 @@ const BrandProducts = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
-                    <Card key={product.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center space-x-2">
-                            <Package className="h-5 w-5 text-green-600" />
-                            <span className="text-lg">{product.name}</span>
-                          </CardTitle>
-                          {product.activeCampaigns > 0 && (
-                            <Badge className="bg-blue-100 text-blue-700">
-                              {product.activeCampaigns}개 진행중
-                            </Badge>
-                          )}
-                        </div>
-                        <CardDescription>
-                          <span className="text-green-600 font-medium">{product.brandName}</span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">판매가</span>
-                            <span className="font-semibold text-lg">{product.price.toLocaleString()}원</span>
-                          </div>
-                          
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">용량/사이즈</span>
-                            <span className="text-sm">{product.unit}</span>
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium text-gray-500 mb-1">타겟</p>
-                            <div className="flex gap-1">
-                              <Badge variant="outline" className="text-xs">
-                                {product.targetGender}
+                    <Link key={product.id} to={`/brand/products/product/${product.id}`}>
+                      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center space-x-2">
+                              <Package className="h-5 w-5 text-green-600" />
+                              <span className="text-lg">{product.name}</span>
+                            </CardTitle>
+                            {product.activeCampaigns > 0 && (
+                              <Badge className="bg-blue-100 text-blue-700">
+                                {product.activeCampaigns}개 진행중
                               </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {product.targetAge}
-                              </Badge>
+                            )}
+                          </div>
+                          <CardDescription>
+                            <span className="text-green-600 font-medium">{product.brandName}</span>
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500">판매가</span>
+                              <span className="font-semibold text-lg">{product.price.toLocaleString()}원</span>
                             </div>
-                          </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500">용량/사이즈</span>
+                              <span className="text-sm">{product.unit}</span>
+                            </div>
 
-                          <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 mb-1">타겟</p>
+                              <div className="flex gap-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {product.targetGender}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {product.targetAge}
+                                </Badge>
+                              </div>
+                            </div>
 
-                          <div className="flex gap-2 pt-2">
-                            <Link to={`/brand/products/product/${product.id}`} className="flex-1">
-                              <Button variant="outline" size="sm" className="w-full">
-                                <Edit className="h-3 w-3 mr-1" />
-                                수정
-                              </Button>
-                            </Link>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-red-600 hover:text-red-700"
-                              disabled={product.activeCampaigns > 0}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               )}
