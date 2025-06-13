@@ -13,9 +13,9 @@ const StatsSection = () => {
     },
     {
       icon: Globe,
-      value: "10+",
-      label: "플랫폼 연동",
-      description: "주요 중국 소셜미디어 플랫폼 지원"
+      value: "2개",
+      label: "주요 플랫폼",
+      description: "샤오홍슈(小红书), 도우인(抖音) 데이터 수집"
     },
     {
       icon: Users,
