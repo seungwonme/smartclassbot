@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,7 +90,16 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
           </Avatar>
           
           <div className="flex-1">
-            <h1 className="text-2xl font-bold mb-2">{influencerDetail.nickname}</h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-bold">{influencerDetail.nickname}</h1>
+              {influencer.platform === 'douyin' && (
+                <img 
+                  src="/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png" 
+                  alt="도우인" 
+                  className="w-6 h-6 rounded"
+                />
+              )}
+            </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
               <span>{influencerDetail.username}</span>
               <Badge variant="secondary">{influencerDetail.verification}</Badge>
@@ -110,8 +120,8 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
           </div>
           
           <div className="text-right">
-            <div className="text-3xl font-bold">{formatNumber(influencerDetail.followers)}</div>
-            <div className="text-sm text-muted-foreground">팔로워</div>
+            <div className="text-sm text-muted-foreground mb-1">팔로워</div>
+            <div className="text-3xl font-bold">{influencerDetail.followers.toLocaleString()}</div>
             <div className="mt-2">
               <Badge variant="default" className="bg-green-500">
                 <TrendingUp className="w-3 h-3 mr-1" />
