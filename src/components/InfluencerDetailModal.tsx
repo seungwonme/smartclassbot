@@ -36,8 +36,8 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
       '25-34세': 18.0
     },
     regionDistribution: {
-      '广东,16.34%': 16.34,
-      '广州,2.63%': 2.63,
+      '广东': 16.34,
+      '广州': 2.63,
       '기타': 35
     },
     liveStreams: 14,
