@@ -346,7 +346,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-center">판매액</CardTitle>
+              <CardTitle className="text-base text-center">총 판매액</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <div className="text-3xl font-bold text-blue-600">
