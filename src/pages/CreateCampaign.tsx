@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, Sparkles } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ArrowLeft, Users, Sparkles, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Campaign, CampaignInfluencer, Persona } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
@@ -32,9 +36,9 @@ const CreateCampaign = () => {
     productId: 'p1',
     productName: '테스트 제품',
     budget: '',
-    proposalDeadline: '',
-    campaignStartDate: '',
-    campaignEndDate: '',
+    proposalDeadline: undefined as Date | undefined,
+    campaignStartDate: undefined as Date | undefined,
+    campaignEndDate: undefined as Date | undefined,
     adType: 'branding' as 'branding' | 'live-commerce',
     targetContent: {
       influencerCategories: [] as string[],
@@ -148,9 +152,9 @@ const CreateCampaign = () => {
         productId: formData.productId,
         productName: formData.productName,
         budget: parseInt(formData.budget.replace(/,/g, '')),
-        proposalDeadline: formData.proposalDeadline,
-        campaignStartDate: formData.campaignStartDate,
-        campaignEndDate: formData.campaignEndDate,
+        proposalDeadline: formData.proposalDeadline ? format(formData.proposalDeadline, 'yyyy-MM-dd') : '',
+        campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
+        campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
         status: 'creating',
         targetContent: formData.targetContent,
@@ -215,31 +219,97 @@ const CreateCampaign = () => {
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="proposalDeadline">제안 마감일</Label>
-            <Input
-              id="proposalDeadline"
-              type="date"
-              value={formData.proposalDeadline}
-              onChange={(e) => setFormData(prev => ({ ...prev, proposalDeadline: e.target.value }))}
-            />
+            <Label>제안 마감일</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.proposalDeadline && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.proposalDeadline ? (
+                    format(formData.proposalDeadline, "PPP", { locale: ko })
+                  ) : (
+                    <span>날짜 선택</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.proposalDeadline}
+                  onSelect={(date) => setFormData(prev => ({ ...prev, proposalDeadline: date }))}
+                  disabled={(date) => date < new Date()}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
-            <Label htmlFor="campaignStartDate">캠페인 시작일</Label>
-            <Input
-              id="campaignStartDate"
-              type="date"
-              value={formData.campaignStartDate}
-              onChange={(e) => setFormData(prev => ({ ...prev, campaignStartDate: e.target.value }))}
-            />
+            <Label>캠페인 시작일</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.campaignStartDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.campaignStartDate ? (
+                    format(formData.campaignStartDate, "PPP", { locale: ko })
+                  ) : (
+                    <span>날짜 선택</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.campaignStartDate}
+                  onSelect={(date) => setFormData(prev => ({ ...prev, campaignStartDate: date }))}
+                  disabled={(date) => date < new Date()}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
-            <Label htmlFor="campaignEndDate">캠페인 종료일</Label>
-            <Input
-              id="campaignEndDate"
-              type="date"
-              value={formData.campaignEndDate}
-              onChange={(e) => setFormData(prev => ({ ...prev, campaignEndDate: e.target.value }))}
-            />
+            <Label>캠페인 종료일</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.campaignEndDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.campaignEndDate ? (
+                    format(formData.campaignEndDate, "PPP", { locale: ko })
+                  ) : (
+                    <span>날짜 선택</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.campaignEndDate}
+                  onSelect={(date) => setFormData(prev => ({ ...prev, campaignEndDate: date }))}
+                  disabled={(date) => date < new Date() || (formData.campaignStartDate && date < formData.campaignStartDate)}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
