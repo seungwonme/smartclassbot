@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -221,6 +220,7 @@ export const useCampaignForm = () => {
         description: "캠페인이 성공적으로 생성되었습니다."
       });
       
+      // Navigate to campaigns list page after successful creation
       navigate('/brand/campaigns');
     } catch (error) {
       toast({
