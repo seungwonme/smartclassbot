@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Users, Sparkles } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { CampaignInfluencer, Persona } from '@/types/campaign';
 import { CampaignFormData } from '@/hooks/useCampaignForm';
 
@@ -28,6 +37,15 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
   handleAIRecommendation,
   handleInfluencerToggle
 }) => {
+  const formatFollowers = (count: number): string => {
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(0)}K`;
+    }
+    return count.toString();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -77,39 +95,60 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
         {recommendedInfluencers.length > 0 && (
           <div>
             <Label>추천 인플루언서</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              {recommendedInfluencers.map((influencer) => (
-                <Card 
-                  key={influencer.id} 
-                  className={`p-4 cursor-pointer transition-colors ${
-                    formData.selectedInfluencers.includes(influencer.id) 
-                      ? 'border-green-500 bg-green-50' 
-                      : ''
-                  }`}
-                  onClick={() => handleInfluencerToggle(influencer.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={influencer.profileImage}
-                      alt={influencer.name}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium">{influencer.name}</h4>
-                      <p className="text-sm text-muted-foreground">{influencer.category}</p>
-                      <p className="text-xs text-muted-foreground">
-                        팔로워: {influencer.followers.toLocaleString()}명 | 
-                        참여율: {influencer.engagementRate}%
-                      </p>
-                    </div>
-                    <Checkbox
-                      checked={formData.selectedInfluencers.includes(influencer.id)}
-                      onChange={() => {}} // onClick으로 처리
-                    />
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <Card className="mt-4">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">선택</TableHead>
+                      <TableHead>프로필</TableHead>
+                      <TableHead>인플루언서명</TableHead>
+                      <TableHead>팔로워 수</TableHead>
+                      <TableHead>참여율</TableHead>
+                      <TableHead>카테고리</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recommendedInfluencers.map((influencer) => (
+                      <TableRow 
+                        key={influencer.id}
+                        className={`cursor-pointer transition-colors ${
+                          formData.selectedInfluencers.includes(influencer.id) 
+                            ? 'bg-green-50' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleInfluencerToggle(influencer.id)}
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={formData.selectedInfluencers.includes(influencer.id)}
+                            onChange={() => {}} // onClick으로 처리
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Avatar>
+                            <AvatarImage src={influencer.profileImage} />
+                            <AvatarFallback>
+                              {influencer.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{influencer.name}</div>
+                        </TableCell>
+                        <TableCell>{formatFollowers(influencer.followers)}</TableCell>
+                        <TableCell>{influencer.engagementRate}%</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {influencer.category}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </div>
         )}
 
