@@ -156,14 +156,14 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
                 팔로워 증감량 및 활성도
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-center">
+            <CardContent className="text-center flex flex-col justify-center">
               <div className="text-2xl font-bold text-green-600">
                 {influencerDetail.followerGrowth}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
+              <div className="text-sm text-muted-foreground mt-1 mb-3">
                 {influencerDetail.growthRate}
               </div>
-              <div className="mt-2 pt-2 border-t">
+              <div className="pt-2 border-t flex flex-col justify-center">
                 <div className="text-green-600 font-medium">
                   높음
                 </div>
