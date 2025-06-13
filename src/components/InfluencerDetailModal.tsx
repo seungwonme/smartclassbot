@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -377,7 +378,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
           </Card>
         </div>
 
-        {/* 최근 활동 - 타이틀 제거 */}
+        {/* 최근 활동 */}
         <Card className="mt-6">
           <CardContent className="p-6">
             <div className="grid grid-cols-4 gap-4">
@@ -386,31 +387,31 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
                 <div className="text-2xl font-bold text-orange-600">
                   {influencerDetail.recentActivities.커머스방송}회
                 </div>
-                <div className="text-sm text-muted-foreground">총 커머스 방송</div>
+                <div className="text-sm text-muted-foreground">라이브커머스 방송횟수</div>
               </div>
               
               <div className="text-center p-4 bg-purple-50 rounded-lg">
                 <BarChart3 className="w-6 h-6 mx-auto mb-2 text-purple-600" />
                 <div className="text-2xl font-bold text-purple-600">
-                  {influencerDetail.recentActivities.최댓전환율}
+                  {influencerDetail.recentActivities.최댓전환율}%
                 </div>
-                <div className="text-sm text-muted-foreground">평균 전환율</div>
+                <div className="text-sm text-muted-foreground">회당 전환율</div>
               </div>
               
               <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <DollarSign className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                <ShoppingCart className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                 <div className="text-2xl font-bold text-blue-600">
                   {influencerDetail.recentActivities.최댓판매액}개
                 </div>
-                <div className="text-sm text-muted-foreground">평균 판매 개수</div>
+                <div className="text-sm text-muted-foreground">회당 판매량</div>
               </div>
               
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <Activity className="w-6 h-6 mx-auto mb-2 text-green-600" />
                 <div className="text-2xl font-bold text-green-600">
-                  {influencerDetail.recentActivities.최댓판매액원}원
+                  {(influencerDetail.recentActivities.최댓판매액원 * 1000).toLocaleString()}원
                 </div>
-                <div className="text-sm text-muted-foreground">평균 매출액<br/>(1,584.4만원)</div>
+                <div className="text-sm text-muted-foreground">회당 판매액<br/>({influencerDetail.recentActivities.최댓판매액원}만위안)</div>
               </div>
             </div>
           </CardContent>
