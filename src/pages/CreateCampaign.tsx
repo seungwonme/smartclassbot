@@ -16,7 +16,9 @@ import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Campaign, CampaignInfluencer, Persona } from '@/types/campaign';
+import { Brand, Product } from '@/types/brand';
 import { campaignService } from '@/services/campaign.service';
+import { brandService } from '@/services/brand.service';
 import { useToast } from '@/hooks/use-toast';
 
 const CreateCampaign = () => {
@@ -28,14 +30,17 @@ const CreateCampaign = () => {
   const [recommendedInfluencers, setRecommendedInfluencers] = useState<CampaignInfluencer[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [customCategory, setCustomCategory] = useState('');
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   
   // 폼 데이터
   const [formData, setFormData] = useState({
     title: '',
-    brandId: 'b1',
-    brandName: '테스트 브랜드',
-    productId: 'p1',
-    productName: '테스트 제품',
+    brandId: '',
+    brandName: '',
+    productId: '',
+    productName: '',
     budget: '',
     proposalDeadline: undefined as Date | undefined,
     campaignStartDate: undefined as Date | undefined,
@@ -55,6 +60,42 @@ const CreateCampaign = () => {
   const categories = ['뷰티', '패션', '푸드', '여행', '라이프스타일', '테크', '피트니스', '육아', '기타'];
   const influencerImpacts = ['마이크로 인플루언서 (1만-10만)', '미드 인플루언서 (10만-100만)', '매크로 인플루언서 (100만+)'];
 
+  // 브랜드와 제품 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [brandsData, productsData] = await Promise.all([
+          brandService.getBrands(),
+          brandService.getProducts()
+        ]);
+        setBrands(brandsData);
+        setProducts(productsData);
+      } catch (error) {
+        toast({
+          title: "데이터 로드 실패",
+          description: "브랜드와 제품 데이터를 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+      }
+    };
+    loadData();
+  }, [toast]);
+
+  // 브랜드 선택 시 해당 제품들로 필터링
+  useEffect(() => {
+    if (formData.brandId) {
+      const brandProducts = products.filter(p => p.brandId === formData.brandId);
+      setFilteredProducts(brandProducts);
+      
+      // 현재 선택된 제품이 새로운 브랜드에 속하지 않으면 초기화
+      if (formData.productId && !brandProducts.find(p => p.id === formData.productId)) {
+        setFormData(prev => ({ ...prev, productId: '', productName: '' }));
+      }
+    } else {
+      setFilteredProducts([]);
+    }
+  }, [formData.brandId, products]);
+
   const formatBudget = (value: string) => {
     const numbers = value.replace(/[^\d]/g, '');
     return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -63,6 +104,26 @@ const CreateCampaign = () => {
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatBudget(e.target.value);
     setFormData(prev => ({ ...prev, budget: formatted }));
+  };
+
+  const handleBrandChange = (brandId: string) => {
+    const selectedBrand = brands.find(b => b.id === brandId);
+    setFormData(prev => ({
+      ...prev,
+      brandId,
+      brandName: selectedBrand?.name || '',
+      productId: '',
+      productName: ''
+    }));
+  };
+
+  const handleProductChange = (productId: string) => {
+    const selectedProduct = filteredProducts.find(p => p.id === productId);
+    setFormData(prev => ({
+      ...prev,
+      productId,
+      productName: selectedProduct?.name || ''
+    }));
   };
 
   const handleCategoryToggle = (category: string) => {
@@ -219,11 +280,37 @@ const CreateCampaign = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="brand">브랜드</Label>
-            <Input id="brand" value={formData.brandName} disabled />
+            <Select value={formData.brandId} onValueChange={handleBrandChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="브랜드를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="product">제품</Label>
-            <Input id="product" value={formData.productName} disabled />
+            <Select 
+              value={formData.productId} 
+              onValueChange={handleProductChange}
+              disabled={!formData.brandId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="제품을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredProducts.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -375,7 +462,6 @@ const CreateCampaign = () => {
             ))}
           </div>
           
-          {/* Custom category display */}
           {formData.targetContent.influencerCategories.filter(cat => !categories.includes(cat)).length > 0 && (
             <div className="mt-2">
               <Label className="text-sm text-muted-foreground">추가된 카테고리:</Label>
@@ -396,7 +482,6 @@ const CreateCampaign = () => {
             </div>
           )}
           
-          {/* Custom category input */}
           {formData.targetContent.influencerCategories.includes('기타') && (
             <div className="mt-3 space-y-2">
               <Label htmlFor="customCategory">기타 카테고리 입력</Label>
@@ -610,7 +695,6 @@ const CreateCampaign = () => {
           <h1 className="text-3xl font-bold">캠페인 생성</h1>
         </div>
 
-        {/* 진행 표시 */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
             {[1, 2, 3].map((step) => (
