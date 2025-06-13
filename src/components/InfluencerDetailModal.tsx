@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -274,8 +275,11 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
             <CardContent>
               <div className="space-y-2">
                 {Object.entries(influencerDetail.regionDistribution).map(([region, percentage]) => (
-                  <div key={region} className="flex justify-between text-sm">
-                    <span>{region}</span>
+                  <div key={region} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                      <span>{region}</span>
+                    </div>
                     <span className="font-medium">{percentage}%</span>
                   </div>
                 ))}
