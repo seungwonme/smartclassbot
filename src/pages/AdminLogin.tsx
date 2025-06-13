@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ const AdminLogin = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2">
-            <img src="/placeholder.svg" alt="Circlue Logo" className="w-10 h-10" />
+            <img src="/lovable-uploads/0f1a6de4-0dc9-4e15-acb2-66b900ce33db.png" alt="Circlue Logo" className="w-10 h-10" />
             <span className="text-3xl font-bold text-foreground">circlue</span>
           </Link>
         </div>
