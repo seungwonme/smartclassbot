@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +13,7 @@ const AdminLogin = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2">
-            <div className="relative">
-              <div className="w-10 h-10 bg-green-500 rounded-full"></div>
-              <div className="absolute top-2.5 left-2.5 w-7 h-7 bg-black rounded-full"></div>
-            </div>
+            <img src="/placeholder.svg" alt="Circlue Logo" className="w-10 h-10" />
             <span className="text-3xl font-bold text-foreground">circlue</span>
           </Link>
         </div>

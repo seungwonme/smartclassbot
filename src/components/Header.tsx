@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
@@ -23,10 +22,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="relative">
-                <div className="w-8 h-8 bg-green-500 rounded-full"></div>
-                <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
-              </div>
+              <img src="/placeholder.svg" alt="Circlue Logo" className="w-8 h-8" />
               <span className="text-2xl font-bold text-foreground">circlue</span>
             </Link>
           </div>

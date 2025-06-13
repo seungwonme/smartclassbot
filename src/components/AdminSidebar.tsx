@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -30,10 +29,7 @@ const AdminSidebar = () => {
       {/* Logo */}
       <div className="p-6 border-b border-gray-200">
         <Link to="/" className="flex items-center space-x-2">
-          <div className="relative">
-            <div className="w-8 h-8 bg-green-500 rounded-full"></div>
-            <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
-          </div>
+          <img src="/placeholder.svg" alt="Circlue Logo" className="w-8 h-8" />
           <span className="text-2xl font-bold text-foreground">circlue</span>
         </Link>
         <p className="text-sm text-muted-foreground mt-1">시스템 관리자</p>
