@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -265,14 +264,14 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
           </Card>
 
           {/* 지역 분포 */}
-          <Card>
+          <Card className="h-64 flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 지역 분포
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex items-center justify-center">
               <div className="space-y-2">
                 {Object.entries(influencerDetail.regionDistribution).map(([region, percentage]) => (
                   <div key={region} className="flex items-center justify-between text-sm">
