@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +63,12 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
     return num.toLocaleString();
   };
 
+  const formatFollowersDisplay = (num: number) => {
+    const formatted = formatNumber(num);
+    const original = num.toLocaleString();
+    return { formatted, original };
+  };
+
   // 성별 분포 데이터 (차트용)
   const genderData = [
     { name: '남성', value: influencerDetail.genderDistribution.male, color: '#3B82F6' },
@@ -76,6 +81,8 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
     value: value,
     color: index === 0 ? '#8B5CF6' : '#06B6D4'
   }));
+
+  const followersDisplay = formatFollowersDisplay(influencerDetail.followers);
 
   return (
     <div className="space-y-6">
@@ -121,7 +128,8 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
           
           <div className="text-right">
             <div className="text-sm text-muted-foreground mb-1">팔로워</div>
-            <div className="text-3xl font-bold">{influencerDetail.followers.toLocaleString()}</div>
+            <div className="text-3xl font-bold">{followersDisplay.formatted}</div>
+            <div className="text-sm text-muted-foreground">({followersDisplay.original}명)</div>
             <div className="mt-2">
               <Badge variant="default" className="bg-green-500">
                 <TrendingUp className="w-3 h-3 mr-1" />
