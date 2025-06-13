@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { CampaignInfluencer, Persona } from '@/types/campaign';
 import { CampaignFormData } from '@/hooks/useCampaignForm';
 
@@ -37,6 +45,9 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
   handleAIRecommendation,
   handleInfluencerToggle
 }) => {
+  const [selectedPersona, setSelectedPersona] = useState<string>('');
+  const [isPersonaDialogOpen, setIsPersonaDialogOpen] = useState(false);
+
   const formatFollowers = (count: number): string => {
     if (count >= 1000000) {
       return `${(count / 1000000).toFixed(1)}M`;
@@ -46,6 +57,17 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
     return count.toString();
   };
 
+  const handlePersonaSelect = (personaId: string) => {
+    setSelectedPersona(personaId);
+  };
+
+  const handlePersonaRecommendationWithSelection = () => {
+    if (selectedPersona) {
+      handlePersonaRecommendation();
+      setIsPersonaDialogOpen(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -53,15 +75,81 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex gap-4">
-          <Button
-            onClick={handlePersonaRecommendation}
-            disabled={isLoading}
-            className="flex-1"
-            variant="outline"
-          >
-            <Users className="w-4 h-4 mr-2" />
-            페르소나로 추천받기
-          </Button>
+          <Dialog open={isPersonaDialogOpen} onOpenChange={setIsPersonaDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                disabled={isLoading}
+                className="flex-1"
+                variant="outline"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                페르소나로 추천받기
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>페르소나 선택</DialogTitle>
+                <DialogDescription>
+                  인플루언서 추천을 받을 페르소나를 선택해주세요.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {personas.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4">
+                    {personas.map((persona) => (
+                      <Card 
+                        key={persona.id} 
+                        className={`p-4 cursor-pointer transition-colors ${
+                          selectedPersona === persona.id 
+                            ? 'border-green-500 bg-green-50' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => handlePersonaSelect(persona.id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">{persona.name}</h4>
+                            <p className="text-sm text-muted-foreground">연령: {persona.age}</p>
+                            <div className="flex flex-wrap gap-1">
+                              {persona.interests.map((interest) => (
+                                <Badge key={interest} variant="outline" className="text-xs">
+                                  {interest}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <Checkbox
+                            checked={selectedPersona === persona.id}
+                            onChange={() => {}} // onClick으로 처리
+                          />
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    페르소나 데이터를 먼저 생성해주세요.
+                  </div>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsPersonaDialogOpen(false)}
+                  >
+                    취소
+                  </Button>
+                  <Button 
+                    onClick={handlePersonaRecommendationWithSelection}
+                    disabled={!selectedPersona || isLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isLoading ? '추천 중...' : '선택한 페르소나로 추천받기'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
           <Button
             onClick={handleAIRecommendation}
             disabled={isLoading}
