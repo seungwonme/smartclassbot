@@ -271,7 +271,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
                 지역 분포
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex items-start justify-start pt-4">
+            <CardContent className="flex-1 flex items-center justify-center">
               <div className="space-y-2">
                 {Object.entries(influencerDetail.regionDistribution).map(([region, percentage]) => (
                   <div key={region} className="flex items-center justify-between text-sm">
