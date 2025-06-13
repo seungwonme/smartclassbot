@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +39,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
     regionDistribution: {
       '广东': 16.34,
       '广州': 2.63,
-      '기타': 35
+      '기타': 35.00
     },
     liveStreams: 14,
     totalViewers: 5046216,
@@ -279,7 +280,7 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
                       <div className="w-2 h-2 bg-gray-400 rounded-full" />
                       <span>{region}</span>
                     </div>
-                    <span className="font-medium ml-4">{percentage}%</span>
+                    <span className="font-medium ml-4">{percentage.toFixed(2)}%</span>
                   </div>
                 ))}
               </div>
