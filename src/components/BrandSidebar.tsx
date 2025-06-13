@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -30,11 +31,10 @@ const BrandSidebar = () => {
     <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       {/* Logo */}
       <div className="p-6 border-b border-gray-200">
-        <Link to="/" className="flex items-center space-x-2">
-          <img src="/lovable-uploads/0f1a6de4-0dc9-4e15-acb2-66b900ce33db.png" alt="Circlue Logo" className="w-8 h-8" />
-          <span className="text-2xl font-bold text-foreground">circlue</span>
+        <Link to="/" className="flex items-center justify-center">
+          <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-10" />
         </Link>
-        <p className="text-sm text-muted-foreground mt-1">브랜드 관리자</p>
+        <p className="text-sm text-muted-foreground mt-2 text-center">브랜드 관리자</p>
       </div>
 
       {/* Navigation */}

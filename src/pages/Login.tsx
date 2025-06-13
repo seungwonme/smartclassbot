@@ -12,9 +12,8 @@ const Login = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2">
-            <img src="/lovable-uploads/0f1a6de4-0dc9-4e15-acb2-66b900ce33db.png" alt="Circlue Logo" className="w-10 h-10" />
-            <span className="text-3xl font-bold text-foreground">circlue</span>
+          <Link to="/" className="inline-flex items-center">
+            <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-12" />
           </Link>
         </div>
 
