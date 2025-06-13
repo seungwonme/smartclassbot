@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, Tag, TrendingUp, Users, Calendar, DollarSign, BarChart3, Activity, ShoppingCart } from 'lucide-react';
+import { MapPin, Tag, TrendingUp, Users, Calendar, DollarSign, BarChart3, Activity, ShoppingCart, Clock } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface InfluencerDetailProps {
