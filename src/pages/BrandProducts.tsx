@@ -4,7 +4,7 @@ import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Plus, Globe, Package } from 'lucide-react';
+import { Building2, Plus, Globe, Package, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Brand {
@@ -58,12 +58,20 @@ const BrandProducts = () => {
               <h1 className="text-3xl font-bold text-gray-900">브랜드 및 제품관리</h1>
               <p className="text-gray-600 mt-2">브랜드를 생성하고 관리하세요</p>
             </div>
-            <Link to="/brand/products/create">
-              <Button className="bg-green-500 hover:bg-green-600 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                새 브랜드 생성
-              </Button>
-            </Link>
+            <div className="flex space-x-4">
+              <Link to="/brand/products/manage">
+                <Button variant="outline" className="text-green-600 border-green-300 hover:bg-green-50">
+                  <ShoppingBag className="h-4 w-4 mr-2" />
+                  제품 관리
+                </Button>
+              </Link>
+              <Link to="/brand/products/create">
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  <Plus className="h-4 w-4 mr-2" />
+                  새 브랜드 생성
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Brand Grid */}
