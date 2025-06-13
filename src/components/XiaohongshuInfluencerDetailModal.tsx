@@ -48,7 +48,8 @@ export default function XiaohongshuInfluencerDetailModal({ influencer }: Xiaohon
     imageTextPrice: 15000,
     videoPrice: 25000,
     // 팔로워 주요관심사
-    mainInterest: 32.85
+    mainInterest: 32.85,
+    mainInterestCategory: '엔터테이먼트'
   };
 
   const formatNumber = (num: number): string => {
@@ -168,6 +169,9 @@ export default function XiaohongshuInfluencerDetailModal({ influencer }: Xiaohon
                 </div>
                 
                 <div className="pt-4 border-t w-full">
+                  <div className="text-gray-800 font-medium text-sm mb-1">
+                    {influencerDetail.mainInterestCategory}
+                  </div>
                   <div className="text-purple-600 font-medium">
                     {influencerDetail.mainInterest}%
                   </div>
