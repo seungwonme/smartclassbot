@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,13 +22,13 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <div className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2">
               <div className="relative">
                 <div className="w-8 h-8 bg-green-500 rounded-full"></div>
                 <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
               </div>
               <span className="text-2xl font-bold text-foreground">circlue</span>
-            </div>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -45,11 +46,11 @@ const Header = () => {
 
           {/* Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              로그인
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/login">로그인</Link>
             </Button>
-            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-              무료 체험 시작
+            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white" asChild>
+              <Link to="/signup">무료 체험 시작</Link>
             </Button>
           </div>
 
@@ -80,11 +81,11 @@ const Header = () => {
                 </a>
               ))}
               <div className="pt-4 border-t border-border space-y-2">
-                <Button variant="ghost" size="sm" className="w-full">
-                  로그인
+                <Button variant="ghost" size="sm" className="w-full" asChild>
+                  <Link to="/login">로그인</Link>
                 </Button>
-                <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white">
-                  무료 체험 시작
+                <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white" asChild>
+                  <Link to="/signup">무료 체험 시작</Link>
                 </Button>
               </div>
             </div>
