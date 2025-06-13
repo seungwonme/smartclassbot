@@ -272,14 +272,14 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex items-center justify-center">
-              <div className="space-y-2">
+              <div className="space-y-2 w-full">
                 {Object.entries(influencerDetail.regionDistribution).map(([region, percentage]) => (
-                  <div key={region} className="flex items-center justify-between text-sm">
+                  <div key={region} className="flex items-center justify-between text-sm w-full">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-gray-400 rounded-full" />
                       <span>{region}</span>
                     </div>
-                    <span className="font-medium">{percentage}%</span>
+                    <span className="font-medium ml-4">{percentage}%</span>
                   </div>
                 ))}
               </div>
