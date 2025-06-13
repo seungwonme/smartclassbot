@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, Users } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -114,7 +114,10 @@ export default function BrandInfluencers() {
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">총 인플루언서</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  총 인플루언서
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total}</div>
@@ -122,7 +125,14 @@ export default function BrandInfluencers() {
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">도우인</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <img 
+                    src="/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png" 
+                    alt="도우인" 
+                    className="w-5 h-5"
+                  />
+                  도우인
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.douyin}</div>
@@ -130,7 +140,14 @@ export default function BrandInfluencers() {
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">샤오홍슈</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <img 
+                    src="/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" 
+                    alt="샤오홍슈" 
+                    className="w-5 h-5"
+                  />
+                  샤오홍슈
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.xiaohongshu}</div>
@@ -262,16 +279,20 @@ export default function BrandInfluencers() {
                         <div className="flex items-center gap-2">
                           {influencer.platform === 'douyin' ? (
                             <>
-                              <div className="w-5 h-5 bg-black rounded flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">D</span>
-                              </div>
+                              <img 
+                                src="/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png" 
+                                alt="도우인" 
+                                className="w-5 h-5"
+                              />
                               <span>도우인</span>
                             </>
                           ) : (
                             <>
-                              <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">X</span>
-                              </div>
+                              <img 
+                                src="/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" 
+                                alt="샤오홍슈" 
+                                className="w-5 h-5"
+                              />
                               <span>샤오홍슈</span>
                             </>
                           )}
