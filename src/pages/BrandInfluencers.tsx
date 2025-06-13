@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ interface Influencer {
   followers: number;
   region: string;
   category: string[];
+  engagementRate: number;
 }
 
 export default function BrandInfluencers() {
@@ -51,37 +53,119 @@ export default function BrandInfluencers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInfluencer, setSelectedInfluencer] = useState<Influencer | null>(null);
 
-  // 임시 인플루언서 데이터
+  // 다양한 인플루언서 데모 데이터
   const influencers: Influencer[] = [
+    // 도우인 인플루언서 5명
     {
       id: '1',
-      profileImage: '',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
       nickname: '뷰티마스터',
       channelUrl: 'https://www.douyin.com/user/beauty_master',
       platform: 'douyin',
       followers: 1500000,
       region: '베이징',
       category: ['뷰티', '패션'],
+      engagementRate: 4.2,
     },
     {
       id: '2',
-      profileImage: '',
-      nickname: '라이프스타일러',
-      channelUrl: 'https://www.xiaohongshu.com/user/lifestyle',
-      platform: 'xiaohongshu',
-      followers: 850000,
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '요리왕김셰프',
+      channelUrl: 'https://www.douyin.com/user/cooking_chef_kim',
+      platform: 'douyin',
+      followers: 890000,
       region: '상하이',
-      category: ['라이프스타일', '패션'],
+      category: ['요리', '라이프스타일'],
+      engagementRate: 6.8,
     },
     {
       id: '3',
-      profileImage: '',
-      nickname: '육아맘',
-      channelUrl: 'https://www.douyin.com/user/parenting_mom',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '피트니스걸',
+      channelUrl: 'https://www.douyin.com/user/fitness_girl',
+      platform: 'douyin',
+      followers: 650000,
+      region: '광저우',
+      category: ['피트니스', '건강'],
+      engagementRate: 5.4,
+    },
+    {
+      id: '4',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '테크리뷰어',
+      channelUrl: 'https://www.douyin.com/user/tech_reviewer',
+      platform: 'douyin',
+      followers: 420000,
+      region: '선전',
+      category: ['테크', '리뷰'],
+      engagementRate: 3.9,
+    },
+    {
+      id: '5',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '육아맘일상',
+      channelUrl: 'https://www.douyin.com/user/parenting_mom_daily',
       platform: 'douyin',
       followers: 320000,
-      region: '광저우',
+      region: '항저우',
       category: ['육아', '라이프스타일'],
+      engagementRate: 7.2,
+    },
+    // 샤오홍슈 인플루언서 5명
+    {
+      id: '6',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '패션스타일러',
+      channelUrl: 'https://www.xiaohongshu.com/user/fashion_styler',
+      platform: 'xiaohongshu',
+      followers: 1200000,
+      region: '상하이',
+      category: ['패션', '뷰티'],
+      engagementRate: 5.1,
+    },
+    {
+      id: '7',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '홈카페마스터',
+      channelUrl: 'https://www.xiaohongshu.com/user/home_cafe_master',
+      platform: 'xiaohongshu',
+      followers: 780000,
+      region: '베이징',
+      category: ['라이프스타일', '요리'],
+      engagementRate: 4.7,
+    },
+    {
+      id: '8',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '여행작가',
+      channelUrl: 'https://www.xiaohongshu.com/user/travel_writer',
+      platform: 'xiaohongshu',
+      followers: 950000,
+      region: '청두',
+      category: ['여행', '라이프스타일'],
+      engagementRate: 6.3,
+    },
+    {
+      id: '9',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '독서인플루언서',
+      channelUrl: 'https://www.xiaohongshu.com/user/book_influencer',
+      platform: 'xiaohongshu',
+      followers: 280000,
+      region: '난징',
+      category: ['독서', '교육'],
+      engagementRate: 8.1,
+    },
+    {
+      id: '10',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '반려동물전문가',
+      channelUrl: 'https://www.xiaohongshu.com/user/pet_expert',
+      platform: 'xiaohongshu',
+      followers: 540000,
+      region: '시안',
+      category: ['반려동물', '라이프스타일'],
+      engagementRate: 5.8,
     },
   ];
 
@@ -108,6 +192,36 @@ export default function BrandInfluencers() {
       setIsModalOpen(true);
     }
   };
+
+  // 필터링 로직
+  const filteredInfluencers = influencers.filter(influencer => {
+    const matchesSearch = influencer.nickname.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPlatform = selectedPlatform === 'all' || influencer.platform === selectedPlatform;
+    const matchesCategory = selectedCategory === 'all' || influencer.category.some(cat => 
+      cat.toLowerCase().includes(selectedCategory.toLowerCase())
+    );
+    const matchesRegion = selectedRegion === 'all' || influencer.region === selectedRegion;
+    
+    let matchesFollowerRange = true;
+    if (followerRange !== 'all') {
+      switch (followerRange) {
+        case '0-10k':
+          matchesFollowerRange = influencer.followers < 10000;
+          break;
+        case '10k-100k':
+          matchesFollowerRange = influencer.followers >= 10000 && influencer.followers < 100000;
+          break;
+        case '100k-1m':
+          matchesFollowerRange = influencer.followers >= 100000 && influencer.followers < 1000000;
+          break;
+        case '1m+':
+          matchesFollowerRange = influencer.followers >= 1000000;
+          break;
+      }
+    }
+
+    return matchesSearch && matchesPlatform && matchesCategory && matchesRegion && matchesFollowerRange;
+  });
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -206,10 +320,16 @@ export default function BrandInfluencers() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">전체</SelectItem>
-                      <SelectItem value="beauty">뷰티</SelectItem>
-                      <SelectItem value="fashion">패션</SelectItem>
-                      <SelectItem value="lifestyle">라이프스타일</SelectItem>
-                      <SelectItem value="parenting">육아</SelectItem>
+                      <SelectItem value="뷰티">뷰티</SelectItem>
+                      <SelectItem value="패션">패션</SelectItem>
+                      <SelectItem value="라이프스타일">라이프스타일</SelectItem>
+                      <SelectItem value="요리">요리</SelectItem>
+                      <SelectItem value="피트니스">피트니스</SelectItem>
+                      <SelectItem value="테크">테크</SelectItem>
+                      <SelectItem value="육아">육아</SelectItem>
+                      <SelectItem value="여행">여행</SelectItem>
+                      <SelectItem value="독서">독서</SelectItem>
+                      <SelectItem value="반려동물">반려동물</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -236,10 +356,14 @@ export default function BrandInfluencers() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">전체</SelectItem>
-                      <SelectItem value="beijing">베이징</SelectItem>
-                      <SelectItem value="shanghai">상하이</SelectItem>
-                      <SelectItem value="guangzhou">광저우</SelectItem>
-                      <SelectItem value="shenzhen">선전</SelectItem>
+                      <SelectItem value="베이징">베이징</SelectItem>
+                      <SelectItem value="상하이">상하이</SelectItem>
+                      <SelectItem value="광저우">광저우</SelectItem>
+                      <SelectItem value="선전">선전</SelectItem>
+                      <SelectItem value="청두">청두</SelectItem>
+                      <SelectItem value="항저우">항저우</SelectItem>
+                      <SelectItem value="난징">난징</SelectItem>
+                      <SelectItem value="시안">시안</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -250,7 +374,7 @@ export default function BrandInfluencers() {
           {/* 인플루언서 목록 */}
           <Card>
             <CardHeader>
-              <CardTitle>인플루언서 목록</CardTitle>
+              <CardTitle>인플루언서 목록 ({filteredInfluencers.length}명)</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -260,13 +384,14 @@ export default function BrandInfluencers() {
                     <TableHead>닉네임</TableHead>
                     <TableHead>플랫폼</TableHead>
                     <TableHead>팔로워 수</TableHead>
+                    <TableHead>참여율</TableHead>
                     <TableHead>지역</TableHead>
                     <TableHead>카테고리</TableHead>
                     <TableHead className="text-right">상세보기</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {influencers.map((influencer) => (
+                  {filteredInfluencers.map((influencer) => (
                     <TableRow key={influencer.id}>
                       <TableCell>
                         <Avatar>
@@ -310,6 +435,12 @@ export default function BrandInfluencers() {
                         </div>
                       </TableCell>
                       <TableCell>{formatFollowers(influencer.followers)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <BarChart3 className="w-4 h-4 text-green-600" />
+                          <span>{influencer.engagementRate}%</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{influencer.region}</TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
