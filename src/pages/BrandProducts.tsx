@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Building2, Plus, Globe, Package, ShoppingBag, Edit, Trash2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -39,7 +40,6 @@ interface Product {
 }
 
 const BrandProducts = () => {
-  const [activeTab, setActiveTab] = useState<'brands' | 'products'>('brands');
   const [searchTerm, setSearchTerm] = useState('');
 
   const [brands] = useState<Brand[]>([
@@ -125,62 +125,49 @@ const BrandProducts = () => {
             <p className="text-gray-600 mt-2">브랜드와 제품을 관리하고 새로운 항목을 추가하세요</p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 mb-6">
-            <Link to="/brand/products/create">
-              <Button className="bg-green-500 hover:bg-green-600 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                브랜드 생성
-              </Button>
-            </Link>
-            <Link to="/brand/products/create-product">
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                제품 생성
-              </Button>
-            </Link>
-          </div>
+          <Tabs defaultValue="brands" className="w-full">
+            {/* Tab Navigation */}
+            <TabsList className="grid w-fit grid-cols-2 mb-6">
+              <TabsTrigger value="brands" className="flex items-center space-x-2">
+                <Building2 className="h-4 w-4" />
+                <span>브랜드 ({brands.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="products" className="flex items-center space-x-2">
+                <Package className="h-4 w-4" />
+                <span>제품 ({products.length})</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-            <button
-              onClick={() => setActiveTab('brands')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'brands'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Building2 className="h-4 w-4" />
-              <span>브랜드 ({brands.length})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'products'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Package className="h-4 w-4" />
-              <span>제품 ({products.length})</span>
-            </button>
-          </div>
+            {/* Search and Action Buttons */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <div className="flex space-x-4">
+                <Link to="/brand/products/create">
+                  <Button className="bg-green-500 hover:bg-green-600 text-white">
+                    <Plus className="h-4 w-4 mr-2" />
+                    브랜드 생성
+                  </Button>
+                </Link>
+                <Link to="/brand/products/create-product">
+                  <Button variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    제품 생성
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
-          {/* Search */}
-          <div className="relative mb-6 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Content */}
-          {activeTab === 'brands' ? (
-            <div className="space-y-6">
+            {/* Brand Tab Content */}
+            <TabsContent value="brands" className="space-y-6">
               <div className="text-sm text-gray-600 mb-4">
                 등록된 브랜드를 관리하세요
               </div>
@@ -261,9 +248,10 @@ const BrandProducts = () => {
                   ))}
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="space-y-6">
+            </TabsContent>
+
+            {/* Product Tab Content */}
+            <TabsContent value="products" className="space-y-6">
               <div className="text-sm text-gray-600 mb-4">
                 등록된 제품을 관리하세요
               </div>
@@ -348,8 +336,8 @@ const BrandProducts = () => {
                   ))}
                 </div>
               )}
-            </div>
-          )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
