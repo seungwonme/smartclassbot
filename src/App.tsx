@@ -27,6 +27,7 @@ import BrandCampaigns from "./pages/BrandCampaigns";
 import CreateCampaign from "./pages/CreateCampaign";
 import CampaignDetail from "./pages/CampaignDetail";
 import AdminCampaigns from "./pages/AdminCampaigns";
+import BrandInfluencers from "./pages/BrandInfluencers";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/brand/campaigns/create" element={<CreateCampaign />} />
           <Route path="/brand/campaigns/:id" element={<CampaignDetail />} />
           <Route path="/brand/campaigns/edit/:id" element={<CreateCampaign />} />
+          <Route path="/brand/influencers" element={<BrandInfluencers />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/brands" element={<AdminBrandManagement />} />
           <Route path="/admin/brands/create" element={<AdminCreateBrand />} />
