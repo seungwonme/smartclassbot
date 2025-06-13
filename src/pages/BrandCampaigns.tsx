@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Campaign } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 
 const BrandCampaigns = () => {
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,6 +53,10 @@ const BrandCampaigns = () => {
     }
   };
 
+  const handleCampaignClick = (campaignId: string) => {
+    navigate(`/brand/campaigns/${campaignId}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -79,7 +84,11 @@ const BrandCampaigns = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => (
-            <Card key={campaign.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              key={campaign.id} 
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleCampaignClick(campaign.id)}
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg">{campaign.title}</CardTitle>
