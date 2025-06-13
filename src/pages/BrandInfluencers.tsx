@@ -129,7 +129,7 @@ export default function BrandInfluencers() {
                   <img 
                     src="/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png" 
                     alt="도우인" 
-                    className="w-5 h-5"
+                    className="w-5 h-5 rounded"
                   />
                   도우인
                 </CardTitle>
@@ -144,7 +144,7 @@ export default function BrandInfluencers() {
                   <img 
                     src="/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" 
                     alt="샤오홍슈" 
-                    className="w-5 h-5"
+                    className="w-5 h-5 rounded"
                   />
                   샤오홍슈
                 </CardTitle>
@@ -282,7 +282,7 @@ export default function BrandInfluencers() {
                               <img 
                                 src="/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png" 
                                 alt="도우인" 
-                                className="w-5 h-5"
+                                className="w-5 h-5 rounded"
                               />
                               <span>도우인</span>
                             </>
@@ -291,7 +291,7 @@ export default function BrandInfluencers() {
                               <img 
                                 src="/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" 
                                 alt="샤오홍슈" 
-                                className="w-5 h-5"
+                                className="w-5 h-5 rounded"
                               />
                               <span>샤오홍슈</span>
                             </>
