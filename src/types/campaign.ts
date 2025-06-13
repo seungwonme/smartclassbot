@@ -1,4 +1,5 @@
 
+
 export interface Campaign {
   id: string;
   title: string;
@@ -21,6 +22,12 @@ export interface Campaign {
     secondaryContentUsage: boolean;
   };
   influencers: CampaignInfluencer[];
+  quote?: {
+    subtotal: number;
+    agencyFee: number;
+    vat: number;
+    total: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -34,7 +41,7 @@ export interface CampaignInfluencer {
   profileImage: string;
   socialChannels: string[];
   isSelected: boolean;
-  status: 'pending' | 'accepted' | 'rejected' | 'replaced';
+  status: 'pending' | 'accepted' | 'rejected' | 'replaced' | 'approved';
   adFee?: number;
 }
 
@@ -46,3 +53,4 @@ export interface Persona {
   interests: string[];
   characteristics: string[];
 }
+
