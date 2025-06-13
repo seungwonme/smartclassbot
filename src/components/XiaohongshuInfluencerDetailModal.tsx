@@ -26,7 +26,6 @@ export default function XiaohongshuInfluencerDetailModal({ influencer }: Xiaohon
     gender: '여성',
     verification: '인증됨',
     idProperty: '개인계정',
-    location: '上海市 静安区',
     // 팔로워 인구통계
     followerGrowth: '+8,547',
     avgLikes: 2847,
@@ -108,7 +107,7 @@ export default function XiaohongshuInfluencerDetailModal({ influencer }: Xiaohon
               <span>성별: {influencerDetail.gender}</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="flex items-center gap-6 mb-3">
               <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4" />
                 <span>ID속성: {influencerDetail.idProperty}</span>
@@ -117,18 +116,12 @@ export default function XiaohongshuInfluencerDetailModal({ influencer }: Xiaohon
                 <MapPin className="w-4 h-4" />
                 <span>{influencerDetail.region}</span>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm">위치: {influencerDetail.location}</span>
-            </div>
-            
-            <div className="flex items-center gap-2 mt-2">
-              <Tag className="w-4 h-4" />
-              {influencerDetail.category.map((cat) => (
-                <Badge key={cat} variant="outline">{cat}</Badge>
-              ))}
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                {influencerDetail.category.map((cat) => (
+                  <Badge key={cat} variant="outline">{cat}</Badge>
+                ))}
+              </div>
             </div>
           </div>
           
