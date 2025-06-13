@@ -11,6 +11,9 @@ import Signup from "./pages/Signup";
 import AdminLogin from "./pages/AdminLogin";
 import BrandDashboard from "./pages/BrandDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import BrandProducts from "./pages/BrandProducts";
+import CreateBrand from "./pages/CreateBrand";
+import BrandDetail from "./pages/BrandDetail";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +29,9 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/brand/dashboard" element={<BrandDashboard />} />
+          <Route path="/brand/products" element={<BrandProducts />} />
+          <Route path="/brand/products/create" element={<CreateBrand />} />
+          <Route path="/brand/products/:id" element={<BrandDetail />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
