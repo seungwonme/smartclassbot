@@ -336,9 +336,9 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
         <div className="grid grid-cols-3 gap-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">총 판매량</CardTitle>
+              <CardTitle className="text-base text-center">총 판매량</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               <div className="text-3xl font-bold">{influencerDetail.totalSales.toLocaleString()}개</div>
               <div className="text-sm text-muted-foreground mt-1">누적 판매 상품 수</div>
             </CardContent>
@@ -346,9 +346,9 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">판매액</CardTitle>
+              <CardTitle className="text-base text-center">판매액</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               <div className="text-3xl font-bold text-blue-600">
                 {influencerDetail.totalRevenue.toLocaleString()}만원
               </div>
@@ -360,9 +360,9 @@ export default function InfluencerDetailModal({ influencer }: InfluencerDetailPr
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">주요 소비자 타겟</CardTitle>
+              <CardTitle className="text-base text-center">주요 소비자 타겟</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               <div className="text-2xl font-bold text-purple-600">
                 小镇青年,{influencerDetail.conversionRate}%
               </div>
