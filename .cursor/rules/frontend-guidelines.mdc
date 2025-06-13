@@ -1,0 +1,39 @@
+---
+description:
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+- **더미 데이터 우선 (Mock-First)**
+  - 백엔드 준비 전 모든 데이터는 `src/mocks/**/*.ts` 에 정의한다.
+  - API 연동 이후에도 인터페이스 차원에서 변경 없이 교체할 수 있도록 `src/services/{domain}.ts` 내 함수만 호출한다.
+  - 예시: `const brands = await brandService.getBrands()`
+
+- **서비스 레이어 추상화**
+  - `src/services` 하위에 도메인별 파일(`brand.service.ts`, `product.service.ts` …)을 생성한다.
+  - 각 서비스는 Promise 기반 CRUD 함수를 제공한다.
+  - 네트워크 지연을 시뮬레이션하려면 `setTimeout` 으로 래핑한다.
+
+- **폴더 구조 표준화**
+  - 주요 디렉터리
+    - `api/`, `mocks/`, `services/`, `hooks/`, `pages/`, `components/`, `layouts/`.
+  - 라우터 정의는 `routes.tsx` 한곳에서 관리한다.
+
+- **도메인 모델 타입 정의**
+  - `types.ts` 또는 도메인별 타입 파일에 `Brand`, `Product`, `Influencer`, `Campaign` 등 인터페이스를 정의한다.
+  - 모든 컴포넌트/서비스는 해당 타입을 사용해 타입 안정성을 확보한다.
+
+- **UX 컴포넌트 규칙**
+  - Form: `react-hook-form` + `zod`.
+  - Table/List: shadcn/ui Table 래핑 + pagination/sorting/searching 프론트 처리.
+  - Toast: `use-toast` 훅을 사용해 CRUD 피드백 제공.
+  - 모달: 상세 보기 및 편집은 Dialog/Sheet 컴포넌트를 활용.
+
+- **접근성 & 반응형**
+  - 모바일 퍼스트, WAI-ARIA 속성, 키보드 네비게이션 필수.
+
+- **i18n 전략**
+  - 기본 언어는 한국어, 확장 가능성을 위해 텍스트는 상수/리소스 파일에 분리한다.
+
+- **작업 프로세스**
+  - `1 PR = 1 기능` 원칙.
+  - Storybook 컴포넌트 문서화를 권장한다.
