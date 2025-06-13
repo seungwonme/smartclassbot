@@ -27,6 +27,7 @@ const CreateCampaign = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedInfluencers, setRecommendedInfluencers] = useState<CampaignInfluencer[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
+  const [customCategory, setCustomCategory] = useState('');
   
   // 폼 데이터
   const [formData, setFormData] = useState({
@@ -51,7 +52,7 @@ const CreateCampaign = () => {
     selectedInfluencers: [] as string[]
   });
 
-  const categories = ['뷰티', '패션', '푸드', '여행', '라이프스타일', '테크', '피트니스', '육아'];
+  const categories = ['뷰티', '패션', '푸드', '여행', '라이프스타일', '테크', '피트니스', '육아', '기타'];
   const influencerImpacts = ['마이크로 인플루언서 (1만-10만)', '미드 인플루언서 (10만-100만)', '매크로 인플루언서 (100만+)'];
 
   const formatBudget = (value: string) => {
@@ -74,6 +75,25 @@ const CreateCampaign = () => {
           : [...prev.targetContent.influencerCategories, category]
       }
     }));
+  };
+
+  const handleCustomCategoryAdd = () => {
+    if (customCategory.trim() && !formData.targetContent.influencerCategories.includes(customCategory.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        targetContent: {
+          ...prev.targetContent,
+          influencerCategories: [...prev.targetContent.influencerCategories, customCategory.trim()]
+        }
+      }));
+      setCustomCategory('');
+    }
+  };
+
+  const handleCustomCategoryKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCustomCategoryAdd();
+    }
   };
 
   const handlePersonaRecommendation = async () => {
@@ -354,6 +374,52 @@ const CreateCampaign = () => {
               </Badge>
             ))}
           </div>
+          
+          {/* Custom category display */}
+          {formData.targetContent.influencerCategories.filter(cat => !categories.includes(cat)).length > 0 && (
+            <div className="mt-2">
+              <Label className="text-sm text-muted-foreground">추가된 카테고리:</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {formData.targetContent.influencerCategories
+                  .filter(cat => !categories.includes(cat))
+                  .map((category) => (
+                    <Badge
+                      key={category}
+                      variant="default"
+                      className="cursor-pointer"
+                      onClick={() => handleCategoryToggle(category)}
+                    >
+                      {category}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Custom category input */}
+          {formData.targetContent.influencerCategories.includes('기타') && (
+            <div className="mt-3 space-y-2">
+              <Label htmlFor="customCategory">기타 카테고리 입력</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="customCategory"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  onKeyPress={handleCustomCategoryKeyPress}
+                  placeholder="직접 입력하세요"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={handleCustomCategoryAdd}
+                  disabled={!customCategory.trim()}
+                  variant="outline"
+                >
+                  추가
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
