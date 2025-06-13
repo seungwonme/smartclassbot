@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { Bot, ArrowLeft, Building2, Eye, Edit } from 'lucide-react';
+import { Bot, ArrowLeft, Building2, Eye, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -134,6 +133,32 @@ const AdminProductDetail = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('정말로 이 제품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "제품이 삭제되었습니다",
+        description: "제품이 성공적으로 삭제되었습니다."
+      });
+      
+      navigate('/admin/brands');
+    } catch (error) {
+      toast({
+        title: "삭제 실패",
+        description: "제품 삭제 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const selectedBrand = brands.find(brand => brand.id === form.watch('brandId'));
 
   return (
@@ -160,22 +185,32 @@ const AdminProductDetail = () => {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant={isEditing ? "outline" : "default"}
-            >
-              {isEditing ? (
-                <>
-                  <Eye className="h-4 w-4 mr-2" />
-                  보기 모드
-                </>
-              ) : (
-                <>
-                  <Edit className="h-4 w-4 mr-2" />
-                  수정 모드
-                </>
-              )}
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setIsEditing(!isEditing)}
+                variant={isEditing ? "outline" : "default"}
+              >
+                {isEditing ? (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    보기 모드
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4 mr-2" />
+                    수정 모드
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleDelete}
+                variant="destructive"
+                disabled={isLoading}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                삭제
+              </Button>
+            </div>
           </div>
 
           <Card className="max-w-4xl">

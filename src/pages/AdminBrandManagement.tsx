@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -301,29 +300,12 @@ const AdminBrandManagement = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex space-x-2">
-                              <Link to={`/admin/brands/${brand.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  상세
-                                </Button>
-                              </Link>
-                              <Link to={`/admin/brands/edit/${brand.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  수정
-                                </Button>
-                              </Link>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() => handleDeleteBrand(brand.id)}
-                                disabled={brand.activeCampaigns > 0}
-                              >
-                                <Trash2 className="h-3 w-3" />
+                            <Link to={`/admin/brands/${brand.id}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3 mr-1" />
+                                상세
                               </Button>
-                            </div>
+                            </Link>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -442,29 +424,12 @@ const AdminBrandManagement = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex space-x-2">
-                              <Link to={`/admin/products/${product.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  상세
-                                </Button>
-                              </Link>
-                              <Link to={`/admin/products/edit/${product.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  수정
-                                </Button>
-                              </Link>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() => handleDeleteProduct(product.id)}
-                                disabled={product.activeCampaigns > 0}
-                              >
-                                <Trash2 className="h-3 w-3" />
+                            <Link to={`/admin/products/${product.id}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3 mr-1" />
+                                상세
                               </Button>
-                            </div>
+                            </Link>
                           </TableCell>
                         </TableRow>
                       ))}
