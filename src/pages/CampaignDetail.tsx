@@ -71,7 +71,7 @@ const CampaignDetail = () => {
     
     if (confirm('정말로 이 캠페인을 삭제하시겠습니까?')) {
       try {
-        // 삭제 로직 구현 (서비스에 삭제 메서드 추가 필요)
+        await campaignService.deleteCampaign(campaign.id);
         toast({
           title: "캠페인이 삭제되었습니다"
         });

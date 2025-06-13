@@ -43,6 +43,17 @@ export const campaignService = {
       }, 300);
     }),
 
+  deleteCampaign: async (id: string): Promise<void> =>
+    new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockCampaigns.findIndex(c => c.id === id);
+        if (index !== -1) {
+          mockCampaigns.splice(index, 1);
+        }
+        resolve();
+      }, 300);
+    }),
+
   getInfluencerRecommendations: async (budget: number, categories: string[]): Promise<CampaignInfluencer[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
