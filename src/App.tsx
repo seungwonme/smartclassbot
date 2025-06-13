@@ -14,7 +14,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import BrandProducts from "./pages/BrandProducts";
 import CreateBrand from "./pages/CreateBrand";
 import BrandDetail from "./pages/BrandDetail";
-import ProductManagement from "./pages/ProductManagement";
 import CreateProduct from "./pages/CreateProduct";
 import ProductDetail from "./pages/ProductDetail";
 
@@ -35,7 +34,6 @@ const App = () => (
           <Route path="/brand/products" element={<BrandProducts />} />
           <Route path="/brand/products/create" element={<CreateBrand />} />
           <Route path="/brand/products/:id" element={<BrandDetail />} />
-          <Route path="/brand/products/manage" element={<ProductManagement />} />
           <Route path="/brand/products/create-product" element={<CreateProduct />} />
           <Route path="/brand/products/product/:id" element={<ProductDetail />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
