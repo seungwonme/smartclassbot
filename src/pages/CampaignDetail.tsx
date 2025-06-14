@@ -772,7 +772,7 @@ const CampaignDetail = () => {
                     id="adFee"
                     value={editForm.adFee}
                     onChange={handleAdFeeChange}
-                    placeholder="500,000"
+                    placeholder="5,000,000"
                   />
                 </div>
 
