@@ -53,9 +53,9 @@ export default function BrandInfluencers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInfluencer, setSelectedInfluencer] = useState<Influencer | null>(null);
 
-  // 다양한 인플루언서 데모 데이터
+  // 20명의 다양한 인플루언서 데모 데이터
   const influencers: Influencer[] = [
-    // 도우인 인플루언서 5명
+    // 도우인 인플루언서 10명
     {
       id: '1',
       profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
@@ -111,9 +111,64 @@ export default function BrandInfluencers() {
       category: ['육아', '라이프스타일'],
       engagementRate: 7.2,
     },
-    // 샤오홍슈 인플루언서 5명
     {
       id: '6',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '게임스트리머',
+      channelUrl: 'https://www.douyin.com/user/gaming_streamer',
+      platform: 'douyin',
+      followers: 2100000,
+      region: '베이징',
+      category: ['게임', '엔터테이먼트'],
+      engagementRate: 8.5,
+    },
+    {
+      id: '7',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '댄스크루',
+      channelUrl: 'https://www.douyin.com/user/dance_crew',
+      platform: 'douyin',
+      followers: 750000,
+      region: '청두',
+      category: ['댄스', '음악'],
+      engagementRate: 9.2,
+    },
+    {
+      id: '8',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '자동차리뷰',
+      channelUrl: 'https://www.douyin.com/user/car_review',
+      platform: 'douyin',
+      followers: 580000,
+      region: '상하이',
+      category: ['자동차', '리뷰'],
+      engagementRate: 4.6,
+    },
+    {
+      id: '9',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '홈인테리어',
+      channelUrl: 'https://www.douyin.com/user/home_interior',
+      platform: 'douyin',
+      followers: 380000,
+      region: '난징',
+      category: ['인테리어', '라이프스타일'],
+      engagementRate: 5.8,
+    },
+    {
+      id: '10',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '코미디킹',
+      channelUrl: 'https://www.douyin.com/user/comedy_king',
+      platform: 'douyin',
+      followers: 1200000,
+      region: '광저우',
+      category: ['코미디', '엔터테이먼트'],
+      engagementRate: 7.8,
+    },
+    // 샤오홍슈 인플루언서 10명
+    {
+      id: '11',
       profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
       nickname: '패션스타일러',
       channelUrl: 'https://www.xiaohongshu.com/user/fashion_styler',
@@ -124,7 +179,7 @@ export default function BrandInfluencers() {
       engagementRate: 5.1,
     },
     {
-      id: '7',
+      id: '12',
       profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
       nickname: '홈카페마스터',
       channelUrl: 'https://www.xiaohongshu.com/user/home_cafe_master',
@@ -135,7 +190,7 @@ export default function BrandInfluencers() {
       engagementRate: 4.7,
     },
     {
-      id: '8',
+      id: '13',
       profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
       nickname: '여행작가',
       channelUrl: 'https://www.xiaohongshu.com/user/travel_writer',
@@ -146,7 +201,7 @@ export default function BrandInfluencers() {
       engagementRate: 6.3,
     },
     {
-      id: '9',
+      id: '14',
       profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
       nickname: '독서인플루언서',
       channelUrl: 'https://www.xiaohongshu.com/user/book_influencer',
@@ -157,7 +212,7 @@ export default function BrandInfluencers() {
       engagementRate: 8.1,
     },
     {
-      id: '10',
+      id: '15',
       profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
       nickname: '반려동물전문가',
       channelUrl: 'https://www.xiaohongshu.com/user/pet_expert',
@@ -166,6 +221,61 @@ export default function BrandInfluencers() {
       region: '시안',
       category: ['반려동물', '라이프스타일'],
       engagementRate: 5.8,
+    },
+    {
+      id: '16',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '스킨케어전문가',
+      channelUrl: 'https://www.xiaohongshu.com/user/skincare_expert',
+      platform: 'xiaohongshu',
+      followers: 2800000,
+      region: '상하이',
+      category: ['뷰티', '스킨케어'],
+      engagementRate: 6.9,
+    },
+    {
+      id: '17',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '요가라이프',
+      channelUrl: 'https://www.xiaohongshu.com/user/yoga_life',
+      platform: 'xiaohongshu',
+      followers: 620000,
+      region: '베이징',
+      category: ['요가', '건강'],
+      engagementRate: 7.4,
+    },
+    {
+      id: '18',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '미니멀라이프',
+      channelUrl: 'https://www.xiaohongshu.com/user/minimal_life',
+      platform: 'xiaohongshu',
+      followers: 450000,
+      region: '항저우',
+      category: ['미니멀', '라이프스타일'],
+      engagementRate: 5.6,
+    },
+    {
+      id: '19',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '디저트장인',
+      channelUrl: 'https://www.xiaohongshu.com/user/dessert_master',
+      platform: 'xiaohongshu',
+      followers: 890000,
+      region: '광저우',
+      category: ['디저트', '베이킹'],
+      engagementRate: 6.2,
+    },
+    {
+      id: '20',
+      profileImage: '/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png',
+      nickname: '아트크리에이터',
+      channelUrl: 'https://www.xiaohongshu.com/user/art_creator',
+      platform: 'xiaohongshu',
+      followers: 350000,
+      region: '선전',
+      category: ['아트', '창작'],
+      engagementRate: 8.7,
     },
   ];
 
@@ -330,6 +440,16 @@ export default function BrandInfluencers() {
                       <SelectItem value="여행">여행</SelectItem>
                       <SelectItem value="독서">독서</SelectItem>
                       <SelectItem value="반려동물">반려동물</SelectItem>
+                      <SelectItem value="게임">게임</SelectItem>
+                      <SelectItem value="댄스">댄스</SelectItem>
+                      <SelectItem value="자동차">자동차</SelectItem>
+                      <SelectItem value="인테리어">인테리어</SelectItem>
+                      <SelectItem value="코미디">코미디</SelectItem>
+                      <SelectItem value="스킨케어">스킨케어</SelectItem>
+                      <SelectItem value="요가">요가</SelectItem>
+                      <SelectItem value="미니멀">미니멀</SelectItem>
+                      <SelectItem value="디저트">디저트</SelectItem>
+                      <SelectItem value="아트">아트</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
