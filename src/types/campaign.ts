@@ -2,13 +2,15 @@
 export interface Campaign {
   id: string;
   title: string;
+  brandId: string;
   brandName: string;
+  productId: string;
   productName: string;
   budget: number;
   campaignStartDate: string;
   campaignEndDate: string;
   proposalDeadline: string;
-  adType: 'branding' | 'livecommerce';
+  adType: 'branding' | 'live-commerce';
   status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'live' | 'monitoring' | 'completed';
   targetContent: TargetContent;
   influencers: CampaignInfluencer[];
@@ -23,7 +25,7 @@ export interface TargetContent {
   targetAge: string;
   uspImportance: number;
   influencerImpact: string;
-  additionalDescription?: string;
+  additionalDescription: string;
   secondaryContentUsage: boolean;
 }
 
@@ -37,13 +39,13 @@ export interface CampaignInfluencer {
   avgComments: number;
   engagementRate: number;
   profileImageUrl: string;
-  profileImage?: string; // 호환성을 위한 추가 필드
+  profileImage?: string;
   instagramUrl: string;
   youtubeUrl?: string;
   xiaohongshuUrl?: string;
   tiktokUrl?: string;
   proposedFee: number;
-  adFee?: number; // 추가된 필드
+  adFee?: number;
   deliverables: string[];
   additionalTerms?: string;
   status: 'pending' | 'confirmed' | 'rejected' | 'accepted' | 'admin-rejected' | 'brand-rejected';
@@ -83,4 +85,5 @@ export interface Persona {
   name: string;
   age: string;
   interests: string[];
+  productId: string;
 }

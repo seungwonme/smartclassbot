@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
@@ -84,7 +83,10 @@ export const useCampaignForm = (campaignId?: string) => {
               campaignStartDate: campaign.campaignStartDate ? parseISO(campaign.campaignStartDate) : undefined,
               campaignEndDate: campaign.campaignEndDate ? parseISO(campaign.campaignEndDate) : undefined,
               adType: campaign.adType,
-              targetContent: campaign.targetContent,
+              targetContent: {
+                ...campaign.targetContent,
+                additionalDescription: campaign.targetContent.additionalDescription || ''
+              },
               selectedInfluencers: campaign.influencers.map(inf => inf.id)
             });
             setRecommendedInfluencers(campaign.influencers);
@@ -277,7 +279,6 @@ export const useCampaignForm = (campaignId?: string) => {
         const createdCampaign = await campaignService.createCampaign(campaignData);
         console.log('생성된 캠페인:', createdCampaign);
         
-        // 캠페인 객체에서 ID 추출
         const newCampaignId = createdCampaign.id || createdCampaign;
         console.log('추출된 캠페인 ID:', newCampaignId);
         
@@ -286,7 +287,6 @@ export const useCampaignForm = (campaignId?: string) => {
           description: "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
         });
         
-        // 생성된 캠페인 상세 페이지로 이동
         navigate(`/brand/campaigns/${newCampaignId}`);
         return;
       }

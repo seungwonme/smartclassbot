@@ -32,8 +32,7 @@ export const campaignService = {
           const updatedCampaign = {
             ...campaign,
             currentStage: campaign.currentStage || 1,
-            contentPlans: campaign.contentPlans || [],
-            contentProductions: campaign.contentProductions || []
+            contentPlans: campaign.contentPlans || []
           };
           resolve(updatedCampaign);
         } else {
@@ -53,10 +52,8 @@ export const campaignService = {
         const newCampaign: Campaign = {
           ...campaign,
           id: `c${Date.now()}`,
-          // status는 받은 그대로 사용 (강제 변경하지 않음)
           currentStage: 1,
           contentPlans: [],
-          contentProductions: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -83,7 +80,6 @@ export const campaignService = {
         console.log('업데이트할 캠페인 ID:', id);
         console.log('업데이트 데이터:', updates);
         
-        // 인플루언서 광고비 정보 상세 로그
         if (updates.influencers) {
           console.log('=== 인플루언서 광고비 정보 업데이트 ===');
           updates.influencers.forEach(inf => {
@@ -97,7 +93,6 @@ export const campaignService = {
           const originalCampaign = campaigns[index];
           console.log('원본 캠페인:', originalCampaign);
           
-          // 인플루언서 정보 업데이트 시 광고비 보존 확인
           if (updates.influencers && originalCampaign.influencers) {
             console.log('=== 광고비 보존 확인 ===');
             updates.influencers.forEach(updatedInf => {
@@ -120,7 +115,6 @@ export const campaignService = {
           console.log('업데이트된 캠페인:', campaigns[index]);
           console.log('업데이트된 캠페인 상태:', campaigns[index].status);
           
-          // 최종 저장된 인플루언서 광고비 확인
           if (campaigns[index].influencers) {
             console.log('=== 최종 저장된 인플루언서 광고비 ===');
             campaigns[index].influencers.forEach(inf => {
@@ -155,7 +149,6 @@ export const campaignService = {
         
         let filtered = mockInfluencers;
         
-        // 카테고리가 선택된 경우에만 필터링
         if (categories && categories.length > 0) {
           filtered = mockInfluencers.filter(inf => 
             categories.some(selectedCategory => 
@@ -165,12 +158,10 @@ export const campaignService = {
           );
         }
         
-        // 예산에 따른 추가 필터링 (예산이 높을수록 더 많은 인플루언서 추천)
         if (budget > 0) {
           const budgetTier = budget >= 50000000 ? 10 : budget >= 10000000 ? 8 : budget >= 5000000 ? 6 : 4;
           filtered = filtered.slice(0, budgetTier);
         } else {
-          // 예산 정보가 없어도 기본적으로 5명 정도는 추천
           filtered = filtered.slice(0, 5);
         }
         
@@ -190,7 +181,6 @@ export const campaignService = {
   getPersonaBasedInfluencers: async (personaId: string, budget: number): Promise<CampaignInfluencer[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
-        // 페르소나 기반 인플루언서 추천 로직
         const recommendedCount = budget >= 50000000 ? 8 : budget >= 10000000 ? 6 : 4;
         resolve(mockInfluencers.slice(0, recommendedCount));
       }, 800);

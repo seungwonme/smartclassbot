@@ -1,3 +1,4 @@
+
 import { Campaign, CampaignInfluencer, Persona } from "@/types/campaign";
 
 export const mockInfluencers: CampaignInfluencer[] = [
@@ -6,10 +7,14 @@ export const mockInfluencers: CampaignInfluencer[] = [
     name: "뷰티 크리에이터 김소영",
     category: "뷰티",
     followers: 250000,
+    avgViews: 180000,
+    avgLikes: 7200,
+    avgComments: 360,
     engagementRate: 4.2,
-    profileImage: "/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png",
-    socialChannels: ["@beauty_soyoung"],
-    isSelected: false,
+    profileImageUrl: "/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png",
+    instagramUrl: "@beauty_soyoung",
+    proposedFee: 800000,
+    deliverables: ["인스타그램 포스트", "스토리"],
     status: "pending"
   },
   {
@@ -17,10 +22,14 @@ export const mockInfluencers: CampaignInfluencer[] = [
     name: "패션 인플루언서 이민지",
     category: "패션",
     followers: 180000,
+    avgViews: 120000,
+    avgLikes: 4560,
+    avgComments: 228,
     engagementRate: 3.8,
-    profileImage: "/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png",
-    socialChannels: ["@fashion_minji"],
-    isSelected: false,
+    profileImageUrl: "/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png",
+    instagramUrl: "@fashion_minji",
+    proposedFee: 600000,
+    deliverables: ["인스타그램 포스트", "스토리"],
     status: "pending"
   },
   {
@@ -28,10 +37,15 @@ export const mockInfluencers: CampaignInfluencer[] = [
     name: "라이프스타일 유튜버 박지혜",
     category: "라이프스타일",
     followers: 320000,
+    avgViews: 250000,
+    avgLikes: 12750,
+    avgComments: 638,
     engagementRate: 5.1,
-    profileImage: "/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png",
-    socialChannels: ["@lifestyle_jihye"],
-    isSelected: false,
+    profileImageUrl: "/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png",
+    instagramUrl: "@lifestyle_jihye",
+    youtubeUrl: "https://youtube.com/c/jihye",
+    proposedFee: 1200000,
+    deliverables: ["유튜브 영상", "인스타그램 포스트"],
     status: "pending"
   }
 ];
@@ -42,16 +56,14 @@ export const mockPersonas: Persona[] = [
     name: "20대 직장인 여성",
     productId: "p1",
     age: "20-29",
-    interests: ["뷰티", "패션", "커리어"],
-    characteristics: ["실용적", "트렌드 민감", "가성비 중시"]
+    interests: ["뷰티", "패션", "커리어"]
   },
   {
     id: "p2",
     name: "30대 주부",
     productId: "p1",
     age: "30-39",
-    interests: ["육아", "라이프스타일", "건강"],
-    characteristics: ["신중함", "품질 중시", "가족 우선"]
+    interests: ["육아", "라이프스타일", "건강"]
   }
 ];
 
