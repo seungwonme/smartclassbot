@@ -303,6 +303,8 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
             influencer={{
               ...selectedInfluencer,
               nickname: selectedInfluencer.name,
+              platform: selectedInfluencer.platform || 'xiaohongshu',
+              region: selectedInfluencer.region || '서울',
               category: [selectedInfluencer.category]
             }}
             isOpen={isDetailModalOpen}
@@ -313,6 +315,8 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
             influencer={{
               ...selectedInfluencer,
               nickname: selectedInfluencer.name,
+              platform: selectedInfluencer.platform || 'douyin',
+              region: selectedInfluencer.region || '서울',
               category: [selectedInfluencer.category]
             }}
             isOpen={isDetailModalOpen}
@@ -334,10 +338,13 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
       {/* 유사 인플루언서 모달 */}
       {similarInfluencerId && (
         <SimilarInfluencerModal
-          influencerId={similarInfluencerId}
+          rejectedInfluencer={campaign.influencers.find(inf => inf.id === similarInfluencerId) || null}
           isOpen={isSimilarModalOpen}
           onClose={handleCloseSimilarModal}
-          onAddInfluencer={handleAddSimilarInfluencer}
+          onAddInfluencers={async (influencers: CampaignInfluencer[]) => {
+            const updatedInfluencers = [...campaign.influencers, ...influencers];
+            await onUpdateInfluencers(updatedInfluencers);
+          }}
         />
       )}
 
