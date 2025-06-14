@@ -1,15 +1,33 @@
 
 import { Campaign, CampaignInfluencer, Persona } from "@/types/campaign";
 import { mockCampaigns, mockInfluencers, mockPersonas } from "@/mocks/campaign.mock";
+import { storageService } from "./storage.service";
+
+// 초기 데이터 시드 함수
+const initializeCampaignData = () => {
+  if (!storageService.isInitialized()) {
+    storageService.setCampaigns(mockCampaigns);
+    storageService.setInitialized();
+  }
+};
+
+// 앱 시작 시 초기화
+initializeCampaignData();
 
 export const campaignService = {
   getCampaigns: async (): Promise<Campaign[]> =>
-    new Promise((resolve) => setTimeout(() => resolve(mockCampaigns), 300)),
+    new Promise((resolve) => {
+      setTimeout(() => {
+        const campaigns = storageService.getCampaigns();
+        resolve(campaigns);
+      }, 300);
+    }),
 
   getCampaignById: async (id: string): Promise<Campaign | null> =>
     new Promise((resolve) => 
       setTimeout(() => {
-        const campaign = mockCampaigns.find(c => c.id === id);
+        const campaigns = storageService.getCampaigns();
+        const campaign = campaigns.find(c => c.id === id);
         if (campaign) {
           // 기존 캠페인에 새 필드 기본값 추가
           const updatedCampaign = {
@@ -28,6 +46,7 @@ export const campaignService = {
   createCampaign: async (campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<Campaign> =>
     new Promise((resolve) => {
       setTimeout(() => {
+        const campaigns = storageService.getCampaigns();
         const newCampaign: Campaign = {
           ...campaign,
           id: `c${Date.now()}`,
@@ -37,7 +56,8 @@ export const campaignService = {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        mockCampaigns.push(newCampaign);
+        campaigns.push(newCampaign);
+        storageService.setCampaigns(campaigns);
         resolve(newCampaign);
       }, 500);
     }),
@@ -45,14 +65,16 @@ export const campaignService = {
   updateCampaign: async (id: string, updates: Partial<Campaign>): Promise<Campaign> =>
     new Promise((resolve) => {
       setTimeout(() => {
-        const index = mockCampaigns.findIndex(c => c.id === id);
+        const campaigns = storageService.getCampaigns();
+        const index = campaigns.findIndex(c => c.id === id);
         if (index !== -1) {
-          mockCampaigns[index] = { 
-            ...mockCampaigns[index], 
+          campaigns[index] = { 
+            ...campaigns[index], 
             ...updates, 
             updatedAt: new Date().toISOString() 
           };
-          resolve(mockCampaigns[index]);
+          storageService.setCampaigns(campaigns);
+          resolve(campaigns[index]);
         }
       }, 300);
     }),
@@ -60,9 +82,11 @@ export const campaignService = {
   deleteCampaign: async (id: string): Promise<void> =>
     new Promise((resolve) => {
       setTimeout(() => {
-        const index = mockCampaigns.findIndex(c => c.id === id);
+        const campaigns = storageService.getCampaigns();
+        const index = campaigns.findIndex(c => c.id === id);
         if (index !== -1) {
-          mockCampaigns.splice(index, 1);
+          campaigns.splice(index, 1);
+          storageService.setCampaigns(campaigns);
         }
         resolve();
       }, 300);
