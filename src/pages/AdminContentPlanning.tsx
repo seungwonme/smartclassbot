@@ -168,7 +168,7 @@ const AdminContentPlanning = () => {
     loadData();
   }, [campaignId, toast]);
 
-  // 기획 완료 여부 확인 함수
+  // 기획 완료 여부 확인 함수 - 브랜드 관리자 승인 기준으로 수정
   const checkPlanningCompletion = () => {
     if (!campaign || !contentPlans.length) return false;
     
@@ -184,17 +184,39 @@ const AdminContentPlanning = () => {
     
     if (!allInfluencersHavePlans) return false;
     
-    // 모든 기획안이 승인되었는지 확인
+    // 브랜드 관리자 승인 기준으로 기획안 완료 여부 확인
     const allPlansApproved = confirmedInfluencers.every(influencer => {
       const plan = contentPlans.find(p => p.influencerId === influencer.id);
-      return plan && plan.status === 'approved';
+      if (!plan) return false;
+      
+      // 브랜드 관리자가 승인한 기준으로 판단
+      // 1. status가 'approved'이거나
+      // 2. pending 브랜드 수정요청이 없는 상태
+      const hasPendingBrandRevision = plan.revisions.some(r => 
+        r.requestedBy === 'brand' && r.status === 'pending'
+      );
+      
+      // 브랜드 관리자 관점에서 승인된 상태 = approved이거나 pending 브랜드 수정요청이 없음
+      return plan.status === 'approved' || !hasPendingBrandRevision;
     });
     
-    console.log('=== 기획 완료 여부 확인 ===');
+    console.log('=== 기획 완료 여부 확인 (브랜드 승인 기준) ===');
     console.log('확정 인플루언서 수:', confirmedInfluencers.length);
     console.log('기획안 수:', contentPlans.length);
     console.log('모든 인플루언서가 기획안 보유:', allInfluencersHavePlans);
-    console.log('모든 기획안 승인됨:', allPlansApproved);
+    console.log('브랜드 관리자 기준 모든 기획안 승인됨:', allPlansApproved);
+    
+    // 각 인플루언서별 상세 확인
+    confirmedInfluencers.forEach(influencer => {
+      const plan = contentPlans.find(p => p.influencerId === influencer.id);
+      if (plan) {
+        const hasPendingBrandRevision = plan.revisions.some(r => 
+          r.requestedBy === 'brand' && r.status === 'pending'
+        );
+        console.log(`${influencer.name}: status=${plan.status}, pending브랜드수정=${hasPendingBrandRevision}`);
+      }
+    });
+    
     console.log('기획 완료 여부:', allPlansApproved);
     
     return allPlansApproved;
