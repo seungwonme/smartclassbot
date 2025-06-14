@@ -415,7 +415,7 @@ const AdminCampaignDetail = () => {
                       />
                     ) : editingPlan ? (
                       <ContentPlanForm
-                        influencer={{ id: editingPlan.influencerId, name: editingPlan.influencerName }}
+                        influencer={confirmedInfluencers.find(inf => inf.id === editingPlan.influencerId) || selectedInfluencer}
                         campaignId={id!}
                         existingPlan={editingPlan}
                         onSave={handleUpdatePlan}
