@@ -1,17 +1,18 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video } from 'lucide-react';
+import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 
 const AdminCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const {
     campaign,
     isLoading,
@@ -57,6 +58,10 @@ const AdminCampaignDetail = () => {
       case 'completed': return '완료됨';
       default: return status;
     }
+  };
+
+  const handleContentPlanningManage = () => {
+    navigate(`/admin/campaigns/${id}/content-planning`);
   };
 
   if (isLoading) {
@@ -105,6 +110,12 @@ const AdminCampaignDetail = () => {
               </div>
             </div>
           </div>
+          {campaign.currentStage >= 2 && (
+            <Button onClick={handleContentPlanningManage} className="bg-blue-600 hover:bg-blue-700">
+              <Edit className="w-4 h-4 mr-2" />
+              콘텐츠 기획 관리
+            </Button>
+          )}
         </div>
 
         <CampaignWorkflowSteps campaign={campaign} />
@@ -217,15 +228,32 @@ const AdminCampaignDetail = () => {
           <TabsContent value="planning" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
-                  콘텐츠 기획
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileText className="w-5 h-5 mr-2" />
+                    콘텐츠 기획
+                  </div>
+                  {campaign.currentStage >= 2 && (
+                    <Button onClick={handleContentPlanningManage}>
+                      콘텐츠 기획 관리 페이지로
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  콘텐츠 기획 기능이 곧 추가될 예정입니다.
-                </div>
+                {campaign.currentStage >= 2 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600 mb-4">콘텐츠 기획 관리는 별도 페이지에서 진행됩니다.</p>
+                    <Button onClick={handleContentPlanningManage} className="bg-blue-600 hover:bg-blue-700">
+                      <Edit className="w-4 h-4 mr-2" />
+                      콘텐츠 기획 관리
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    캠페인이 콘텐츠 기획 단계에 도달하면 관리할 수 있습니다.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
