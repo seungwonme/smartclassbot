@@ -25,6 +25,13 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const { toast } = useToast();
 
+  // 디버깅을 위한 로그 추가
+  console.log('BrandContentPlanReview received plans:', plans);
+  plans.forEach((plan, index) => {
+    console.log(`Plan ${index}:`, plan);
+    console.log(`Plan ${index} planData:`, plan.planData);
+  });
+
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return 'bg-yellow-100 text-yellow-800';
@@ -73,19 +80,21 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   };
 
   const renderPlanData = (plan: ContentPlanDetail) => {
+    console.log('Rendering plan data for:', plan.influencerName, plan.planData);
+    
     if (plan.contentType === 'image') {
       const imageData = plan.planData as ImagePlanData;
       return (
         <div className="space-y-4">
           <div>
             <Label className="font-medium">포스팅 제목</Label>
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.postTitle}</p>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.postTitle || '제목이 입력되지 않았습니다.'}</p>
           </div>
           <div>
             <Label className="font-medium">썸네일 제목</Label>
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.thumbnailTitle}</p>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.thumbnailTitle || '썸네일 제목이 입력되지 않았습니다.'}</p>
           </div>
-          {imageData.referenceImages.length > 0 && (
+          {imageData.referenceImages && imageData.referenceImages.length > 0 && (
             <div>
               <Label className="font-medium">참고 이미지</Label>
               <div className="grid grid-cols-3 gap-2 mt-2">
@@ -97,9 +106,9 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           )}
           <div>
             <Label className="font-medium">스크립트</Label>
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{imageData.script}</p>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{imageData.script || '스크립트가 입력되지 않았습니다.'}</p>
           </div>
-          {imageData.hashtags.length > 0 && (
+          {imageData.hashtags && imageData.hashtags.length > 0 && (
             <div>
               <Label className="font-medium">해시태그</Label>
               <div className="flex flex-wrap gap-1 mt-1">
@@ -117,13 +126,13 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         <div className="space-y-4">
           <div>
             <Label className="font-medium">포스팅 제목</Label>
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{videoData.postTitle}</p>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{videoData.postTitle || '제목이 입력되지 않았습니다.'}</p>
           </div>
           <div>
             <Label className="font-medium">시나리오</Label>
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.scenario}</p>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.scenario || '시나리오가 입력되지 않았습니다.'}</p>
           </div>
-          {videoData.scenarioFiles.length > 0 && (
+          {videoData.scenarioFiles && videoData.scenarioFiles.length > 0 && (
             <div>
               <Label className="font-medium">시나리오 파일</Label>
               <div className="space-y-2 mt-2">
@@ -137,9 +146,9 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           )}
           <div>
             <Label className="font-medium">스크립트</Label>
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.script}</p>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.script || '스크립트가 입력되지 않았습니다.'}</p>
           </div>
-          {videoData.hashtags.length > 0 && (
+          {videoData.hashtags && videoData.hashtags.length > 0 && (
             <div>
               <Label className="font-medium">해시태그</Label>
               <div className="flex flex-wrap gap-1 mt-1">

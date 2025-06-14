@@ -36,15 +36,38 @@ const CampaignDetail = () => {
   // Load content plans when campaign is loaded
   React.useEffect(() => {
     if (campaign?.contentPlans) {
-      const plans: ContentPlanDetail[] = campaign.contentPlans.map(plan => ({
-        id: plan.id,
-        campaignId: plan.campaignId,
-        influencerId: plan.influencerId,
-        influencerName: plan.influencerName,
-        contentType: plan.contentType,
-        status: plan.status,
-        planData: plan.planDocument ? JSON.parse(plan.planDocument) : (
-          plan.contentType === 'image' ? {
+      console.log('Processing content plans:', campaign.contentPlans);
+      
+      const plans: ContentPlanDetail[] = campaign.contentPlans.map(plan => {
+        console.log('Processing plan:', plan);
+        
+        let planData;
+        try {
+          // planDocument가 이미 객체인 경우와 문자열인 경우 모두 처리
+          if (typeof plan.planDocument === 'string') {
+            planData = JSON.parse(plan.planDocument);
+          } else if (plan.planDocument && typeof plan.planDocument === 'object') {
+            planData = plan.planDocument;
+          } else {
+            // 기본값 설정
+            planData = plan.contentType === 'image' ? {
+              postTitle: '',
+              thumbnailTitle: '',
+              referenceImages: [],
+              script: '',
+              hashtags: []
+            } : {
+              postTitle: '',
+              scenario: '',
+              scenarioFiles: [],
+              script: '',
+              hashtags: []
+            };
+          }
+        } catch (error) {
+          console.error('Error parsing plan document:', error, plan.planDocument);
+          // 파싱 실패시 기본값 사용
+          planData = plan.contentType === 'image' ? {
             postTitle: '',
             thumbnailTitle: '',
             referenceImages: [],
@@ -56,12 +79,26 @@ const CampaignDetail = () => {
             scenarioFiles: [],
             script: '',
             hashtags: []
-          }
-        ),
-        revisions: plan.revisions || [],
-        createdAt: plan.createdAt,
-        updatedAt: plan.updatedAt
-      }));
+          };
+        }
+        
+        console.log('Processed plan data:', planData);
+        
+        return {
+          id: plan.id,
+          campaignId: plan.campaignId,
+          influencerId: plan.influencerId,
+          influencerName: plan.influencerName,
+          contentType: plan.contentType,
+          status: plan.status,
+          planData: planData,
+          revisions: plan.revisions || [],
+          createdAt: plan.createdAt,
+          updatedAt: plan.updatedAt
+        };
+      });
+      
+      console.log('Final processed plans:', plans);
       setContentPlans(plans);
     }
   }, [campaign]);
