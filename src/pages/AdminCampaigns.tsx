@@ -230,7 +230,7 @@ const AdminCampaigns = () => {
     if (!selectedCampaign) return { subtotal: 0, agencyFee: 0, vat: 0, total: 0 };
     
     const subtotal = selectedCampaign.influencers
-      .filter(inf => inf.status === 'accepted' && inf.adFee)
+      .filter(inf => (inf.status === 'accepted' || inf.status === 'confirmed') && inf.adFee)
       .reduce((sum, inf) => sum + (inf.adFee || 0), 0);
     
     const agencyFee = subtotal * 0.15;
@@ -483,20 +483,24 @@ const AdminCampaigns = () => {
                                                   </Button>
                                                 </>
                                               )}
-                                              {influencer.status === 'accepted' && (
+                                              {(influencer.status === 'accepted' || influencer.status === 'confirmed') && (
                                                 <div className="flex items-center space-x-2">
-                                                  <Badge className="bg-green-100 text-green-800">승인됨</Badge>
+                                                  <Badge className="bg-green-100 text-green-800">
+                                                    {influencer.status === 'accepted' ? '수락됨' : '승인됨'}
+                                                  </Badge>
                                                   <span className="text-sm font-medium text-green-600">
-                                                    {influencer.adFee?.toLocaleString()}원
+                                                    {influencer.adFee?.toLocaleString() || 0}원
                                                   </span>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleInfluencerEdit(influencer)}
-                                                  >
-                                                    <Edit className="w-4 h-4 mr-1" />
-                                                    수정
-                                                  </Button>
+                                                  {influencer.status === 'accepted' && (
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={() => handleInfluencerEdit(influencer)}
+                                                    >
+                                                      <Edit className="w-4 h-4 mr-1" />
+                                                      수정
+                                                    </Button>
+                                                  )}
                                                 </div>
                                               )}
                                               {influencer.status === 'admin-rejected' && (
@@ -566,17 +570,17 @@ const AdminCampaigns = () => {
                                       </div>
                                       
                                       {/* 승인된 인플루언서 목록 표시 */}
-                                      {selectedCampaign.influencers.filter(inf => inf.status === 'accepted').length > 0 && (
+                                      {selectedCampaign.influencers.filter(inf => inf.status === 'accepted' || inf.status === 'confirmed').length > 0 && (
                                         <div className="mt-4 pt-4 border-t">
                                           <h4 className="text-sm font-medium mb-2">승인된 인플루언서:</h4>
                                           <div className="space-y-1">
                                             {selectedCampaign.influencers
-                                              .filter(inf => inf.status === 'accepted')
+                                              .filter(inf => inf.status === 'accepted' || inf.status === 'confirmed')
                                               .map((influencer) => (
                                                 <div key={influencer.id} className="flex justify-between text-sm">
                                                   <span>{influencer.name}</span>
                                                   <span className="text-green-600">
-                                                    {influencer.adFee?.toLocaleString()}원
+                                                    {influencer.adFee?.toLocaleString() || 0}원
                                                   </span>
                                                 </div>
                                               ))}
