@@ -446,15 +446,6 @@ const AdminCampaignDetail = () => {
                         <FileText className="w-5 h-5 mr-2" />
                         콘텐츠 기획 상세
                       </div>
-                      {selectedPlan && !showCreateForm && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setShowRevisionForm(true)}
-                        >
-                          수정피드백 전송
-                        </Button>
-                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="h-full overflow-auto">
