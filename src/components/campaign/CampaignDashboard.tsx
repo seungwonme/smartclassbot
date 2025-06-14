@@ -112,6 +112,20 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     }));
   };
 
+  const handleCampaignCardClick = (campaignId: string, event: React.MouseEvent) => {
+    console.log('Campaign card clicked:', campaignId);
+    console.log('onCampaignClick function:', onCampaignClick);
+    
+    // Stop event propagation to prevent any parent handlers
+    event.stopPropagation();
+    
+    if (onCampaignClick) {
+      onCampaignClick(campaignId);
+    } else {
+      console.warn('onCampaignClick handler not provided');
+    }
+  };
+
   const renderCampaignCard = (campaign: Campaign) => {
     const shouldShowReceiveButton = userType === 'admin' && campaign.status === 'submitted';
     const shouldShowManageButton = userType === 'admin' && 
@@ -122,7 +136,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       <Card 
         key={campaign.id} 
         className="hover:shadow-lg transition-shadow cursor-pointer relative"
-        onClick={() => onCampaignClick?.(campaign.id)}
+        onClick={(e) => handleCampaignCardClick(campaign.id, e)}
       >
         <CardHeader>
           <div className="flex justify-between items-start">

@@ -47,6 +47,12 @@ const AdminCampaigns = () => {
     loadCampaigns();
   }, []);
 
+  const handleCampaignClick = (campaignId: string) => {
+    console.log('Admin - Campaign clicked:', campaignId);
+    // Navigate to campaign detail page
+    window.location.href = `/admin/campaigns/${campaignId}`;
+  };
+
   const handleCampaignDelete = async (campaignId: string, campaignTitle: string) => {
     if (!confirm(`정말로 "${campaignTitle}" 캠페인을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
       return;
@@ -347,8 +353,6 @@ const AdminCampaigns = () => {
 
   const quote = selectedCampaign ? calculateQuote() : { subtotal: 0, agencyFee: 0, vat: 0, total: 0 };
 
-  const shouldShowManageButton = campaign => campaign.status === 'recruiting' || campaign.status === 'proposing' || campaign.status === 'revising' || campaign.status === 'revision-feedback';
-
   return (
     <div className="flex min-h-screen w-full">
       <AdminSidebar />
@@ -360,6 +364,7 @@ const AdminCampaigns = () => {
         <CampaignDashboard
           campaigns={campaigns}
           userType="admin"
+          onCampaignClick={handleCampaignClick}
           onCampaignDelete={handleCampaignDelete}
           onCampaignReceive={handleCampaignReceive}
           onCampaignManage={handleCampaignManage}
