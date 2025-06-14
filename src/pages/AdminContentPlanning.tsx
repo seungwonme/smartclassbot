@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -46,8 +47,15 @@ const AdminContentPlanning = () => {
             influencerName: plan.influencerName,
             contentType: plan.contentType,
             status: plan.status,
-            planData: {
+            planData: plan.contentType === 'image' ? {
               postTitle: '',
+              thumbnailTitle: '',
+              referenceImages: [],
+              script: '',
+              hashtags: []
+            } : {
+              postTitle: '',
+              scenario: '',
               script: '',
               hashtags: []
             },
