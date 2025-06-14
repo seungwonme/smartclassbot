@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock } from 'lucide-react';
+import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,6 +13,12 @@ interface BrandContentPlanReviewProps {
   plans: ContentPlanDetail[];
   onApprove: (planId: string) => void;
   onRequestRevision: (planId: string, feedback: string) => void;
+}
+
+interface FieldFeedback {
+  planId: string;
+  fieldName: string;
+  fieldLabel: string;
 }
 
 const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
@@ -23,6 +29,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [feedback, setFeedback] = useState('');
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [fieldFeedback, setFieldFeedback] = useState<FieldFeedback | null>(null);
   const { toast } = useToast();
 
   // 디버깅을 위한 로그 추가
@@ -91,14 +98,53 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       return;
     }
 
-    onRequestRevision(selectedPlan.id, feedback);
+    const finalFeedback = fieldFeedback 
+      ? `[${fieldFeedback.fieldLabel}] ${feedback}`
+      : feedback;
+
+    onRequestRevision(selectedPlan.id, finalFeedback);
     setFeedback('');
     setShowFeedbackForm(false);
     setSelectedPlan(null);
+    setFieldFeedback(null);
     toast({
       title: "수정 요청 전송",
       description: "콘텐츠 기획 수정 요청이 전송되었습니다."
     });
+  };
+
+  const handleFieldFeedback = (plan: ContentPlanDetail, fieldName: string, fieldLabel: string) => {
+    setSelectedPlan(plan);
+    setFieldFeedback({ planId: plan.id, fieldName, fieldLabel });
+    setShowFeedbackForm(true);
+  };
+
+  const renderFieldWithFeedback = (
+    plan: ContentPlanDetail,
+    fieldName: string,
+    fieldLabel: string,
+    content: React.ReactNode,
+    canAddFeedback: boolean = true
+  ) => {
+    return (
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <Label className="font-medium">{fieldLabel}</Label>
+          {canAddFeedback && canReviewPlan(plan) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleFieldFeedback(plan, fieldName, fieldLabel)}
+              className="text-xs px-2 py-1 h-6"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              수정요청
+            </Button>
+          )}
+        </div>
+        {content}
+      </div>
+    );
   };
 
   const renderPlanData = (plan: ContentPlanDetail) => {
@@ -108,31 +154,45 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       const imageData = plan.planData as ImagePlanData;
       return (
         <div className="space-y-4">
-          <div>
-            <Label className="font-medium">포스팅 제목</Label>
+          {renderFieldWithFeedback(
+            plan,
+            'postTitle',
+            '포스팅 제목',
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.postTitle || '제목이 입력되지 않았습니다.'}</p>
-          </div>
-          <div>
-            <Label className="font-medium">썸네일 제목</Label>
+          )}
+          
+          {renderFieldWithFeedback(
+            plan,
+            'thumbnailTitle',
+            '썸네일 제목',
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.thumbnailTitle || '썸네일 제목이 입력되지 않았습니다.'}</p>
-          </div>
-          {imageData.referenceImages && imageData.referenceImages.length > 0 && (
-            <div>
-              <Label className="font-medium">참고 이미지</Label>
+          )}
+          
+          {imageData.referenceImages && imageData.referenceImages.length > 0 && 
+            renderFieldWithFeedback(
+              plan,
+              'referenceImages',
+              '참고 이미지',
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {imageData.referenceImages.map((image, index) => (
                   <img key={index} src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded border" />
                 ))}
               </div>
-            </div>
-          )}
-          <div>
-            <Label className="font-medium">스크립트</Label>
+            )
+          }
+          
+          {renderFieldWithFeedback(
+            plan,
+            'script',
+            '스크립트',
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{imageData.script || '스크립트가 입력되지 않았습니다.'}</p>
-          </div>
-          <div>
-            <Label className="font-medium">해시태그</Label>
-            {imageData.hashtags && imageData.hashtags.length > 0 ? (
+          )}
+          
+          {renderFieldWithFeedback(
+            plan,
+            'hashtags',
+            '해시태그',
+            imageData.hashtags && imageData.hashtags.length > 0 ? (
               <div className="flex flex-wrap gap-1 mt-1">
                 {imageData.hashtags.map((tag, index) => (
                   <Badge key={index} variant="outline">{tag}</Badge>
@@ -140,25 +200,33 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
               </div>
             ) : (
               <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">해시태그가 입력되지 않았습니다.</p>
-            )}
-          </div>
+            )
+          )}
         </div>
       );
     } else {
       const videoData = plan.planData as VideoPlanData;
       return (
         <div className="space-y-4">
-          <div>
-            <Label className="font-medium">포스팅 제목</Label>
+          {renderFieldWithFeedback(
+            plan,
+            'postTitle',
+            '포스팅 제목',
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{videoData.postTitle || '제목이 입력되지 않았습니다.'}</p>
-          </div>
-          <div>
-            <Label className="font-medium">시나리오</Label>
+          )}
+          
+          {renderFieldWithFeedback(
+            plan,
+            'scenario',
+            '시나리오',
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.scenario || '시나리오가 입력되지 않았습니다.'}</p>
-          </div>
-          {videoData.scenarioFiles && videoData.scenarioFiles.length > 0 && (
-            <div>
-              <Label className="font-medium">시나리오 파일</Label>
+          )}
+          
+          {videoData.scenarioFiles && videoData.scenarioFiles.length > 0 && 
+            renderFieldWithFeedback(
+              plan,
+              'scenarioFiles',
+              '시나리오 파일',
               <div className="space-y-2 mt-2">
                 {videoData.scenarioFiles.map((file, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
@@ -166,15 +234,21 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-          <div>
-            <Label className="font-medium">스크립트</Label>
+            )
+          }
+          
+          {renderFieldWithFeedback(
+            plan,
+            'script',
+            '스크립트',
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.script || '스크립트가 입력되지 않았습니다.'}</p>
-          </div>
-          <div>
-            <Label className="font-medium">해시태그</Label>
-            {videoData.hashtags && videoData.hashtags.length > 0 ? (
+          )}
+          
+          {renderFieldWithFeedback(
+            plan,
+            'hashtags',
+            '해시태그',
+            videoData.hashtags && videoData.hashtags.length > 0 ? (
               <div className="flex flex-wrap gap-1 mt-1">
                 {videoData.hashtags.map((tag, index) => (
                   <Badge key={index} variant="outline">{tag}</Badge>
@@ -182,8 +256,8 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
               </div>
             ) : (
               <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">해시태그가 입력되지 않았습니다.</p>
-            )}
-          </div>
+            )
+          )}
         </div>
       );
     }
@@ -262,11 +336,12 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedPlan(plan);
+                        setFieldFeedback(null);
                         setShowFeedbackForm(true);
                       }}
                     >
                       <MessageSquare className="w-4 h-4 mr-1" />
-                      수정요청
+                      전체 수정요청
                     </Button>
                   </div>
                 )}
@@ -314,10 +389,13 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setShowFeedbackForm(true)}
+                  onClick={() => {
+                    setFieldFeedback(null);
+                    setShowFeedbackForm(true);
+                  }}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  수정요청
+                  전체 수정요청
                 </Button>
               </div>
             )}
@@ -330,10 +408,16 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         <Card className="fixed inset-4 z-50 overflow-auto bg-white">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>수정 요청 - {selectedPlan.influencerName}</CardTitle>
+              <CardTitle>
+                {fieldFeedback 
+                  ? `${fieldFeedback.fieldLabel} 수정 요청 - ${selectedPlan.influencerName}`
+                  : `전체 수정 요청 - ${selectedPlan.influencerName}`
+                }
+              </CardTitle>
               <Button variant="outline" onClick={() => {
                 setShowFeedbackForm(false);
                 setSelectedPlan(null);
+                setFieldFeedback(null);
                 setFeedback('');
               }}>
                 닫기
@@ -342,13 +426,26 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {fieldFeedback && (
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <strong>{fieldFeedback.fieldLabel}</strong>에 대한 수정 요청입니다.
+                  </p>
+                </div>
+              )}
               <div>
-                <Label htmlFor="feedback">수정 요청 사항</Label>
+                <Label htmlFor="feedback">
+                  {fieldFeedback ? `${fieldFeedback.fieldLabel} 수정 요청 사항` : '수정 요청 사항'}
+                </Label>
                 <Textarea
                   id="feedback"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="구체적인 수정 요청 사항을 입력해주세요..."
+                  placeholder={
+                    fieldFeedback 
+                      ? `${fieldFeedback.fieldLabel}에 대한 구체적인 수정 요청 사항을 입력해주세요...`
+                      : "구체적인 수정 요청 사항을 입력해주세요..."
+                  }
                   rows={6}
                 />
               </div>
@@ -359,6 +456,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                 <Button variant="outline" onClick={() => {
                   setShowFeedbackForm(false);
                   setSelectedPlan(null);
+                  setFieldFeedback(null);
                   setFeedback('');
                 }}>
                   취소
