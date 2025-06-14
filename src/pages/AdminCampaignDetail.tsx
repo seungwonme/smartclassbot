@@ -221,16 +221,9 @@ const AdminCampaignDetail = () => {
           <TabsContent value="planning" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <FileText className="w-5 h-5 mr-2" />
-                    콘텐츠 기획
-                  </div>
-                  {campaign.currentStage >= 2 && (
-                    <Button onClick={handleContentPlanningManage}>
-                      콘텐츠 기획 관리 페이지로
-                    </Button>
-                  )}
+                <CardTitle className="flex items-center">
+                  <FileText className="w-5 h-5 mr-2" />
+                  콘텐츠 기획
                 </CardTitle>
               </CardHeader>
               <CardContent>
