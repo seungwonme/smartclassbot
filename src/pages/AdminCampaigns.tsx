@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,7 @@ const AdminCampaigns = () => {
     const loadCampaigns = async () => {
       try {
         const data = await campaignService.getCampaigns();
+        console.log('로드된 캠페인 데이터:', data); // 디버깅용 로그 추가
         setCampaigns(data);
       } catch (error) {
         console.error('캠페인 로딩 실패:', error);
@@ -57,8 +59,12 @@ const AdminCampaigns = () => {
   };
 
   const handleCampaignReceive = async (campaignId: string) => {
-    console.log('캠페인 수령 시작:', campaignId); // 디버깅용 로그
+    console.log('캠페인 수령 시작:', campaignId, '현재 상태 확인'); // 디버깅용 로그
     try {
+      // 현재 캠페인 상태 확인
+      const currentCampaign = campaigns.find(c => c.id === campaignId);
+      console.log('현재 캠페인 상태:', currentCampaign?.status);
+      
       await campaignService.updateCampaign(campaignId, { status: 'recruiting' });
       setCampaigns(prev => 
         prev.map(c => c.id === campaignId ? { ...c, status: 'recruiting' as const } : c)
@@ -200,7 +206,7 @@ const AdminCampaigns = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => {
-            console.log(`캠페인 ${campaign.title} 상태:`, campaign.status); // 각 캠페인 상태 확인
+            console.log(`캠페인 "${campaign.title}" 상태:`, campaign.status); // 각 캠페인 상태 확인
             return (
               <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -229,7 +235,10 @@ const AdminCampaigns = () => {
                     <div className="flex justify-between mt-4">
                       {campaign.status === 'creating' && (
                         <Button
-                          onClick={() => handleCampaignReceive(campaign.id)}
+                          onClick={() => {
+                            console.log('캠페인 수령 버튼 클릭:', campaign.id, campaign.status);
+                            handleCampaignReceive(campaign.id);
+                          }}
                           className="bg-blue-600 hover:bg-blue-700 flex-1"
                         >
                           캠페인 수령
@@ -239,7 +248,10 @@ const AdminCampaigns = () => {
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                           <DialogTrigger asChild>
                             <Button
-                              onClick={() => setSelectedCampaign(campaign)}
+                              onClick={() => {
+                                console.log('섭외관리 버튼 클릭:', campaign.id, campaign.status);
+                                setSelectedCampaign(campaign);
+                              }}
                               variant="outline"
                               className="flex-1"
                             >
