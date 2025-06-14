@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, Users, DollarSign, Eye, CheckCircle, XCircle, Plus, Edit, Trash2 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
+import CampaignDashboard from '@/components/campaign/CampaignDashboard';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
@@ -46,43 +47,6 @@ const AdminCampaigns = () => {
     loadCampaigns();
   }, []);
 
-  const getStatusColor = (status: Campaign['status']) => {
-    switch (status) {
-      case 'creating': return 'bg-yellow-100 text-yellow-800';
-      case 'submitted': return 'bg-orange-100 text-orange-800';
-      case 'recruiting': return 'bg-blue-100 text-blue-800';
-      case 'proposing': return 'bg-purple-100 text-purple-800';
-      case 'revising': return 'bg-red-100 text-red-800';
-      case 'revision-feedback': return 'bg-amber-100 text-amber-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: Campaign['status']) => {
-    switch (status) {
-      case 'creating': return '생성중';
-      case 'submitted': return '제출됨';
-      case 'recruiting': return '섭외중';
-      case 'proposing': return '제안중';
-      case 'revising': return '제안수정요청';
-      case 'revision-feedback': return '제안수정피드백';
-      case 'confirmed': return '확정됨';
-      case 'completed': return '완료됨';
-      default: return status;
-    }
-  };
-
-  // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
-  const getActiveInfluencersCount = (influencers: Campaign['influencers']) => {
-    return influencers.filter(inf => 
-      inf.status !== 'brand-rejected' && 
-      inf.status !== 'admin-rejected' && 
-      inf.status !== 'rejected'
-    ).length;
-  };
-
   const handleCampaignDelete = async (campaignId: string, campaignTitle: string) => {
     if (!confirm(`정말로 "${campaignTitle}" 캠페인을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
       return;
@@ -95,7 +59,6 @@ const AdminCampaigns = () => {
       
       await campaignService.deleteCampaign(campaignId);
       
-      // 로컬 상태에서 캠페인 제거
       setCampaigns(prev => prev.filter(c => c.id !== campaignId));
       
       console.log('=== 시스템 관리자 캠페인 삭제 완료 ===');
@@ -139,6 +102,48 @@ const AdminCampaigns = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleCampaignManage = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setIsDialogOpen(true);
+  };
+
+  const getStatusColor = (status: Campaign['status']) => {
+    switch (status) {
+      case 'creating': return 'bg-yellow-100 text-yellow-800';
+      case 'submitted': return 'bg-orange-100 text-orange-800';
+      case 'recruiting': return 'bg-blue-100 text-blue-800';
+      case 'proposing': return 'bg-purple-100 text-purple-800';
+      case 'revising': return 'bg-red-100 text-red-800';
+      case 'revision-feedback': return 'bg-amber-100 text-amber-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: Campaign['status']) => {
+    switch (status) {
+      case 'creating': return '생성중';
+      case 'submitted': return '제출됨';
+      case 'recruiting': return '섭외중';
+      case 'proposing': return '제안중';
+      case 'revising': return '제안수정요청';
+      case 'revision-feedback': return '제안수정피드백';
+      case 'confirmed': return '확정됨';
+      case 'completed': return '완료됨';
+      default: return status;
+    }
+  };
+
+  // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
+  const getActiveInfluencersCount = (influencers: Campaign['influencers']) => {
+    return influencers.filter(inf => 
+      inf.status !== 'brand-rejected' && 
+      inf.status !== 'admin-rejected' && 
+      inf.status !== 'rejected'
+    ).length;
   };
 
   const handleInfluencerFeeChange = (influencerId: string, fee: number) => {
@@ -352,305 +357,237 @@ const AdminCampaigns = () => {
           <h1 className="text-3xl font-bold">캠페인 관리</h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campaigns.map((campaign) => {
-            const shouldShowReceiveButton = campaign.status === 'submitted';
+        <CampaignDashboard
+          campaigns={campaigns}
+          userType="admin"
+          onCampaignDelete={handleCampaignDelete}
+          onCampaignReceive={handleCampaignReceive}
+          onCampaignManage={handleCampaignManage}
+        />
+
+        {/* 기존 모달들 유지 */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedCampaign?.title} - 인플루언서 섭외</DialogTitle>
+            </DialogHeader>
             
-            console.log(`캠페인 "${campaign.title}" - 상태: ${campaign.status}, 수령 버튼 표시: ${shouldShowReceiveButton}, 관리 버튼 표시: ${shouldShowManageButton}`);
-            
-            return (
-              <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getStatusColor(campaign.status)}>
-                        {getStatusText(campaign.status)}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleCampaignDelete(campaign.id, campaign.title)}
-                        className="p-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center text-sm">
-                      <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                      예산: {campaign.budget.toLocaleString()}원
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-                      {campaign.campaignStartDate} ~ {campaign.campaignEndDate}
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Users className="w-4 h-4 mr-2 text-purple-600" />
-                      인플루언서: {getActiveInfluencersCount(campaign.influencers)}명
-                    </div>
-                    <div className="flex justify-between mt-4">
-                      {shouldShowReceiveButton && (
-                        <Button
-                          onClick={() => handleCampaignReceive(campaign.id)}
-                          className="bg-blue-600 hover:bg-blue-700 flex-1"
-                        >
-                          캠페인 수령
-                        </Button>
-                      )}
-                      {shouldShowManageButton(campaign) && (
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button
-                              onClick={() => setSelectedCampaign(campaign)}
-                              variant="outline"
-                              className="flex-1"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              {campaign.status === 'revising' ? '재제안' : '섭외 관리'}
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>{selectedCampaign?.title} - 인플루언서 섭외</DialogTitle>
-                            </DialogHeader>
-                            
-                            {selectedCampaign && (
-                              <div className="space-y-6">
+            {selectedCampaign && (
+              <div className="space-y-6">
                                 
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle>기본 정보</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div>
-                                        <Label>브랜드</Label>
-                                        <p className="text-sm font-medium">{selectedCampaign.brandName}</p>
-                                      </div>
-                                      <div>
-                                        <Label>제품</Label>
-                                        <p className="text-sm font-medium">{selectedCampaign.productName}</p>
-                                      </div>
-                                      <div>
-                                        <Label>예산</Label>
-                                        <p className="text-sm font-medium">{selectedCampaign.budget.toLocaleString()}원</p>
-                                      </div>
-                                      <div>
-                                        <Label>광고 유형</Label>
-                                        <p className="text-sm font-medium">{selectedCampaign.adType === 'branding' ? '브랜딩' : '라이브커머스'}</p>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>기본 정보</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>브랜드</Label>
+                        <p className="text-sm font-medium">{selectedCampaign.brandName}</p>
+                      </div>
+                      <div>
+                        <Label>제품</Label>
+                        <p className="text-sm font-medium">{selectedCampaign.productName}</p>
+                      </div>
+                      <div>
+                        <Label>예산</Label>
+                        <p className="text-sm font-medium">{selectedCampaign.budget.toLocaleString()}원</p>
+                      </div>
+                      <div>
+                        <Label>광고 유형</Label>
+                        <p className="text-sm font-medium">{selectedCampaign.adType === 'branding' ? '브랜딩' : '라이브커머스'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle>인플루언서 섭외 현황</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-4">
-                                      {selectedCampaign.influencers.map((influencer) => (
-                                        <Card key={influencer.id} className="p-4">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                              <img
-                                                src={influencer.profileImage}
-                                                alt={influencer.name}
-                                                className="w-12 h-12 rounded-full"
-                                              />
-                                              <div>
-                                                <h4 className="font-medium">{influencer.name}</h4>
-                                                <p className="text-sm text-muted-foreground">
-                                                  {influencer.followers.toLocaleString()}명 팔로워 • {influencer.category}
-                                                </p>
-                                              </div>
-                                            </div>
-                                            
-                                            <div className="flex items-center space-x-2">
-                                              {influencer.status === 'pending' && (
-                                                <>
-                                                  <Input
-                                                    type="number"
-                                                    placeholder="광고비 (원)"
-                                                    className="w-32"
-                                                    value={influencerFees[influencer.id] || ''}
-                                                    onChange={(e) => handleInfluencerFeeChange(influencer.id, parseInt(e.target.value) || 0)}
-                                                  />
-                                                  <Button
-                                                    size="sm"
-                                                    onClick={() => handleInfluencerConfirm(influencer.id)}
-                                                    className="bg-green-600 hover:bg-green-700"
-                                                  >
-                                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                                    확인
-                                                  </Button>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => handleInfluencerReject(influencer.id)}
-                                                  >
-                                                    <XCircle className="w-4 h-4 mr-1" />
-                                                    거절
-                                                  </Button>
-                                                </>
-                                              )}
-                                              {(influencer.status === 'accepted' || influencer.status === 'confirmed') && (
-                                                <div className="flex items-center space-x-2">
-                                                  <Badge className="bg-green-100 text-green-800">
-                                                    {influencer.status === 'accepted' ? '수락됨' : '승인됨'}
-                                                  </Badge>
-                                                  <span className="text-sm font-medium text-green-600">
-                                                    {influencer.adFee?.toLocaleString() || 0}원
-                                                  </span>
-                                                  {influencer.status === 'accepted' && (
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={() => handleInfluencerEdit(influencer)}
-                                                    >
-                                                      <Edit className="w-4 h-4 mr-1" />
-                                                      수정
-                                                    </Button>
-                                                  )}
-                                                </div>
-                                              )}
-                                              {influencer.status === 'admin-rejected' && (
-                                                <div className="flex items-center space-x-2">
-                                                  <Badge className="bg-red-100 text-red-800">시스템 거절</Badge>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleAddSimilarInfluencer(influencer.id)}
-                                                  >
-                                                    <Plus className="w-4 h-4 mr-1" />
-                                                    유사 인플루언서 추가
-                                                  </Button>
-                                                </div>
-                                              )}
-                                              {influencer.status === 'brand-rejected' && (
-                                                <div className="flex items-center space-x-2">
-                                                  <Badge className="bg-orange-100 text-orange-800">브랜드 거절</Badge>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleAddSimilarInfluencer(influencer.id)}
-                                                  >
-                                                    <Plus className="w-4 h-4 mr-1" />
-                                                    유사 인플루언서 추가
-                                                  </Button>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </Card>
-                                      ))}
-                                    </div>
-                                  </CardContent>
-                                </Card>
-
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle>견적서</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-3">
-                                      <div className="flex justify-between">
-                                        <span>인플루언서 광고비 소계</span>
-                                        <span className="font-medium">
-                                          {calculateQuote().subtotal.toLocaleString()}원
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>대행료 (15%)</span>
-                                        <span className="font-medium">
-                                          {calculateQuote().agencyFee.toLocaleString()}원
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>VAT (10%)</span>
-                                        <span className="font-medium">
-                                          {calculateQuote().vat.toLocaleString()}원
-                                        </span>
-                                      </div>
-                                      <hr />
-                                      <div className="flex justify-between font-bold text-lg">
-                                        <span>총 합계</span>
-                                        <span className="text-green-600">
-                                          {calculateQuote().total.toLocaleString()}원
-                                        </span>
-                                      </div>
-                                      
-                                      {/* 승인된 인플루언서 목록 표시 */}
-                                      {selectedCampaign.influencers.filter(inf => inf.status === 'accepted' || inf.status === 'confirmed').length > 0 && (
-                                        <div className="mt-4 pt-4 border-t">
-                                          <h4 className="text-sm font-medium mb-2">승인된 인플루언서:</h4>
-                                          <div className="space-y-1">
-                                            {selectedCampaign.influencers
-                                              .filter(inf => inf.status === 'accepted' || inf.status === 'confirmed')
-                                              .map((influencer) => (
-                                                <div key={influencer.id} className="flex justify-between text-sm">
-                                                  <span>{influencer.name}</span>
-                                                  <span className="text-green-600">
-                                                    {influencer.adFee?.toLocaleString() || 0}원
-                                                  </span>
-                                                </div>
-                                              ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </CardContent>
-                                </Card>
-
-                                <div className="flex justify-end">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>인플루언서 섭외 현황</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {selectedCampaign.influencers.map((influencer) => (
+                        <Card key={influencer.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <img
+                                src={influencer.profileImage}
+                                alt={influencer.name}
+                                className="w-12 h-12 rounded-full"
+                              />
+                              <div>
+                                <h4 className="font-medium">{influencer.name}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {influencer.followers.toLocaleString()}명 팔로워 • {influencer.category}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              {influencer.status === 'pending' && (
+                                <>
+                                  <Input
+                                    type="number"
+                                    placeholder="광고비 (원)"
+                                    className="w-32"
+                                    value={influencerFees[influencer.id] || ''}
+                                    onChange={(e) => handleInfluencerFeeChange(influencer.id, parseInt(e.target.value) || 0)}
+                                  />
                                   <Button
-                                    onClick={handleProposalSubmit}
+                                    size="sm"
+                                    onClick={() => handleInfluencerConfirm(influencer.id)}
                                     className="bg-green-600 hover:bg-green-700"
-                                    disabled={selectedCampaign.influencers.filter(inf => inf.status === 'accepted').length === 0}
                                   >
-                                    제안 제출하기
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    확인
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleInfluencerReject(influencer.id)}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    거절
+                                  </Button>
+                                </>
+                              )}
+                              {(influencer.status === 'accepted' || influencer.status === 'confirmed') && (
+                                <div className="flex items-center space-x-2">
+                                  <Badge className="bg-green-100 text-green-800">
+                                    {influencer.status === 'accepted' ? '수락됨' : '승인됨'}
+                                  </Badge>
+                                  <span className="text-sm font-medium text-green-600">
+                                    {influencer.adFee?.toLocaleString() || 0}원
+                                  </span>
+                                  {influencer.status === 'accepted' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleInfluencerEdit(influencer)}
+                                    >
+                                      <Edit className="w-4 h-4 mr-1" />
+                                      수정
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                              {influencer.status === 'admin-rejected' && (
+                                <div className="flex items-center space-x-2">
+                                  <Badge className="bg-red-100 text-red-800">시스템 거절</Badge>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleAddSimilarInfluencer(influencer.id)}
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    유사 인플루언서 추가
                                   </Button>
                                 </div>
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                              )}
+                              {influencer.status === 'brand-rejected' && (
+                                <div className="flex items-center space-x-2">
+                                  <Badge className="bg-orange-100 text-orange-800">브랜드 거절</Badge>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleAddSimilarInfluencer(influencer.id)}
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    유사 인플루언서 추가
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>견적서</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span>인플루언서 광고비 소계</span>
+                        <span className="font-medium">
+                          {calculateQuote().subtotal.toLocaleString()}원
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>대행료 (15%)</span>
+                        <span className="font-medium">
+                          {calculateQuote().agencyFee.toLocaleString()}원
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>VAT (10%)</span>
+                        <span className="font-medium">
+                          {calculateQuote().vat.toLocaleString()}원
+                        </span>
+                      </div>
+                      <hr />
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>총 합계</span>
+                        <span className="text-green-600">
+                          {calculateQuote().total.toLocaleString()}원
+                        </span>
+                      </div>
+                      
+                      {/* 승인된 인플루언서 목록 표시 */}
+                      {selectedCampaign.influencers.filter(inf => inf.status === 'accepted' || inf.status === 'confirmed').length > 0 && (
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="text-sm font-medium mb-2">승인된 인플루언서:</h4>
+                          <div className="space-y-1">
+                            {selectedCampaign.influencers
+                              .filter(inf => inf.status === 'accepted' || inf.status === 'confirmed')
+                              .map((influencer) => (
+                                <div key={influencer.id} className="flex justify-between text-sm">
+                                  <span>{influencer.name}</span>
+                                  <span className="text-green-600">
+                                    {influencer.adFee?.toLocaleString() || 0}원
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  </CardContent>
+                </Card>
 
-        {campaigns.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500">진행 중인 캠페인이 없습니다.</div>
-          </div>
-        )}
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleProposalSubmit}
+                    className="bg-green-600 hover:bg-green-700"
+                    disabled={selectedCampaign.influencers.filter(inf => inf.status === 'accepted').length === 0}
+                  >
+                    제안 제출하기
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <InfluencerEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          influencer={editingInfluencer}
+          onSave={handleSaveInfluencerEdit}
+        />
+
+        <SimilarInfluencerModal
+          isOpen={isSimilarModalOpen}
+          onClose={() => setIsSimilarModalOpen(false)}
+          rejectedInfluencer={rejectedInfluencerForSimilar}
+          onAddInfluencers={handleAddSimilarInfluencers}
+        />
       </div>
-
-      {/* 인플루언서 수정 모달 */}
-      <InfluencerEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        influencer={editingInfluencer}
-        onSave={handleSaveInfluencerEdit}
-      />
-
-      {/* 유사 인플루언서 추천 모달 */}
-      <SimilarInfluencerModal
-        isOpen={isSimilarModalOpen}
-        onClose={() => setIsSimilarModalOpen(false)}
-        rejectedInfluencer={rejectedInfluencerForSimilar}
-        onAddInfluencers={handleAddSimilarInfluencers}
-      />
     </div>
   );
 };

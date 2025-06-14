@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, Users, DollarSign, Edit } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
+import CampaignDashboard from '@/components/campaign/CampaignDashboard';
 import { Campaign } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 
@@ -28,46 +28,12 @@ const BrandCampaigns = () => {
     loadCampaigns();
   }, []);
 
-  const getStatusColor = (status: Campaign['status']) => {
-    switch (status) {
-      case 'creating': return 'bg-yellow-100 text-yellow-800';
-      case 'submitted': return 'bg-orange-100 text-orange-800';
-      case 'recruiting': return 'bg-blue-100 text-blue-800';
-      case 'proposing': return 'bg-purple-100 text-purple-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: Campaign['status']) => {
-    switch (status) {
-      case 'creating': return '생성중';
-      case 'submitted': return '제출됨';
-      case 'recruiting': return '섭외중';
-      case 'proposing': return '제안중';
-      case 'confirmed': return '확정됨';
-      case 'completed': return '완료됨';
-      default: return status;
-    }
-  };
-
   const handleCampaignClick = (campaignId: string) => {
     navigate(`/brand/campaigns/${campaignId}`);
   };
 
-  const handleEditClick = (e: React.MouseEvent, campaignId: string) => {
-    e.stopPropagation();
+  const handleEditClick = (campaignId: string) => {
     navigate(`/brand/campaigns/edit/${campaignId}`);
-  };
-
-  // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
-  const getActiveInfluencersCount = (influencers: Campaign['influencers']) => {
-    return influencers.filter(inf => 
-      inf.status !== 'brand-rejected' && 
-      inf.status !== 'admin-rejected' && 
-      inf.status !== 'rejected'
-    ).length;
   };
 
   if (isLoading) {
@@ -95,62 +61,7 @@ const BrandCampaigns = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campaigns.map((campaign) => (
-            <Card 
-              key={campaign.id} 
-              className="hover:shadow-lg transition-shadow cursor-pointer relative"
-              onClick={() => handleCampaignClick(campaign.id)}
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(campaign.status)}>
-                      {getStatusText(campaign.status)}
-                    </Badge>
-                    {campaign.status === 'creating' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => handleEditClick(e, campaign.id)}
-                        className="p-1 h-6 w-6"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm">
-                    <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                    예산: {campaign.budget.toLocaleString()}원
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-                    {campaign.campaignStartDate} ~ {campaign.campaignEndDate}
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <Users className="w-4 h-4 mr-2 text-purple-600" />
-                    인플루언서: {getActiveInfluencersCount(campaign.influencers)}명
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {campaign.targetContent.influencerCategories.map((category) => (
-                      <Badge key={category} variant="outline" className="text-xs">
-                        {category}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {campaigns.length === 0 && (
+        {campaigns.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-500 mb-4">생성된 캠페인이 없습니다.</div>
             <Link to="/brand/campaigns/create">
@@ -159,6 +70,13 @@ const BrandCampaigns = () => {
               </Button>
             </Link>
           </div>
+        ) : (
+          <CampaignDashboard
+            campaigns={campaigns}
+            userType="brand"
+            onCampaignClick={handleCampaignClick}
+            onCampaignEdit={handleEditClick}
+          />
         )}
       </div>
     </div>
