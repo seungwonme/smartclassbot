@@ -172,7 +172,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(null);
     setWorkMode('create');
-    setShowRevisionFeedback(false);
+    setShowRevisionFeedback(false); // 항상 false로 초기화
   };
 
   const handleEditPlan = (influencer: any) => {
@@ -184,7 +184,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('edit');
-    setShowRevisionFeedback(false);
+    setShowRevisionFeedback(false); // 항상 false로 초기화 - 저장 후에만 나타나도록
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
@@ -192,7 +192,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('revision');
-    setShowRevisionFeedback(true);
+    setShowRevisionFeedback(true); // 수정요청 보기에서는 바로 true
   };
 
   const handleContentUpdated = () => {
