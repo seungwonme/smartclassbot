@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, XCircle, ExternalLink, Eye, FileText, Video } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
-import { Campaign } from '@/types/campaign';
+import { Campaign, CampaignInfluencer } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,7 +24,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import InfluencerDetailModal from '@/components/InfluencerDetailModal';
 import XiaohongshuInfluencerDetailModal from '@/components/XiaohongshuInfluencerDetailModal';
 
@@ -37,6 +40,68 @@ const CampaignDetail = () => {
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [editingInfluencer, setEditingInfluencer] = useState<CampaignInfluencer | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    adFee: '',
+    region: '',
+    category: ''
+  });
+
+  const handleEditInfluencer = (influencer: CampaignInfluencer) => {
+    setEditingInfluencer(influencer);
+    setEditForm({
+      adFee: influencer.adFee?.toString() || '',
+      region: influencer.region || '',
+      category: influencer.category || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveInfluencerEdit = async () => {
+    if (!campaign || !editingInfluencer) return;
+
+    try {
+      const updatedInfluencers = campaign.influencers.map(inf => 
+        inf.id === editingInfluencer.id 
+          ? { 
+              ...inf, 
+              adFee: editForm.adFee ? parseInt(editForm.adFee.replace(/,/g, '')) : undefined,
+              region: editForm.region,
+              category: editForm.category
+            }
+          : inf
+      );
+
+      await campaignService.updateCampaign(campaign.id, {
+        influencers: updatedInfluencers
+      });
+
+      setCampaign(prev => prev ? { ...prev, influencers: updatedInfluencers } : null);
+      setIsEditModalOpen(false);
+      setEditingInfluencer(null);
+      
+      toast({
+        title: "인플루언서 정보 수정 완료",
+        description: "인플루언서 정보가 성공적으로 수정되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "수정 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatBudget = (value: string) => {
+    const numbers = value.replace(/[^\d]/g, '');
+    return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+
+  const handleAdFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatBudget(e.target.value);
+    setEditForm(prev => ({ ...prev, adFee: formatted }));
+  };
 
   useEffect(() => {
     const loadCampaign = async () => {
@@ -76,6 +141,7 @@ const CampaignDetail = () => {
   const getStatusColor = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return 'bg-yellow-100 text-yellow-800';
+      case 'submitted': return 'bg-orange-100 text-orange-800';
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
@@ -87,6 +153,7 @@ const CampaignDetail = () => {
   const getStatusText = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return '생성중';
+      case 'submitted': return '제출됨';
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
       case 'confirmed': return '확정됨';
@@ -355,7 +422,6 @@ const CampaignDetail = () => {
 
           <TabsContent value="basic" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 기본 정보 카드 - 기존 코드 유지 */}
               <Card>
                 <CardHeader>
                   <CardTitle>기본 정보</CardTitle>
@@ -394,7 +460,6 @@ const CampaignDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* 타겟 콘텐츠 정보 카드 - 기존 코드 유지 */}
               <Card>
                 <CardHeader>
                   <CardTitle>타겟 콘텐츠 정보</CardTitle>
@@ -459,7 +524,9 @@ const CampaignDetail = () => {
                           <TableHead className="text-center">참여율</TableHead>
                           <TableHead className="text-center">지역</TableHead>
                           <TableHead className="text-center">카테고리</TableHead>
-                          <TableHead className="text-center w-20">상세보기</TableHead>
+                          <TableHead className="text-center">광고비</TableHead>
+                          <TableHead className="text-center">상태</TableHead>
+                          <TableHead className="text-center w-32">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -506,14 +573,48 @@ const CampaignDetail = () => {
                               </div>
                             </TableCell>
                             <TableCell className="text-center">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleViewInfluencerDetail(influencer)}
-                                className="p-2"
+                              {influencer.adFee ? (
+                                <span className="text-green-600 font-medium">
+                                  {influencer.adFee.toLocaleString()}원
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">미정</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge 
+                                variant={influencer.status === 'confirmed' ? 'default' : 'outline'}
+                                className={
+                                  influencer.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                  influencer.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }
                               >
-                                <Eye className="w-4 h-4" />
-                              </Button>
+                                {influencer.status === 'confirmed' ? '확정' :
+                                 influencer.status === 'rejected' ? '거절' : '대기'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex gap-1 justify-center">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleViewInfluencerDetail(influencer)}
+                                  className="p-2"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                {influencer.status === 'confirmed' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditInfluencer(influencer)}
+                                    className="p-2"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -524,7 +625,6 @@ const CampaignDetail = () => {
                   <p className="text-gray-500">선택된 인플루언서가 없습니다.</p>
                 )}
 
-                {/* 승인/거절 버튼 섹션 (제안중 상태일 때만 표시) */}
                 {isProposing && campaign.influencers.some(inf => inf.status === 'accepted') && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                     <h3 className="font-medium mb-4">인플루언서 승인 관리</h3>
@@ -639,6 +739,72 @@ const CampaignDetail = () => {
                 <InfluencerDetailModal influencer={selectedInfluencer} />
               )
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 인플루언서 수정 모달 */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Edit className="w-5 h-5" />
+                인플루언서 정보 수정
+              </DialogTitle>
+            </DialogHeader>
+            {editingInfluencer && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={editingInfluencer.profileImage} />
+                    <AvatarFallback>
+                      {editingInfluencer.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{editingInfluencer.name}</div>
+                    <div className="text-sm text-gray-500">{formatFollowers(editingInfluencer.followers)} 팔로워</div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="adFee">광고비 (원)</Label>
+                  <Input
+                    id="adFee"
+                    value={editForm.adFee}
+                    onChange={handleAdFeeChange}
+                    placeholder="500,000"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="region">지역</Label>
+                  <Input
+                    id="region"
+                    value={editForm.region}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, region: e.target.value }))}
+                    placeholder="서울"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category">카테고리</Label>
+                  <Input
+                    id="category"
+                    value={editForm.category}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                    placeholder="뷰티"
+                  />
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                취소
+              </Button>
+              <Button onClick={handleSaveInfluencerEdit} className="bg-green-600 hover:bg-green-700">
+                저장
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
