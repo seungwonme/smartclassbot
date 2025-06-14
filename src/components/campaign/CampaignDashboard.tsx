@@ -14,7 +14,8 @@ import {
   PlayCircle, 
   BarChart3,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MessageSquare
 } from 'lucide-react';
 import { Campaign } from '@/types/campaign';
 
@@ -88,11 +89,11 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'revising': return '제안수정요청';
       case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
-      case 'planning': return '콘텐츠 기획중';
+      case 'planning': return '기획중';
       case 'plan-review': return '기획검토';
       case 'plan-revision': return '기획수정';
       case 'plan-approved': return '기획승인';
-      case 'producing': return '콘텐츠 제작중';
+      case 'producing': return '제작중';
       case 'content-review': return '콘텐츠검수';
       case 'content-approved': return '콘텐츠 승인완료';
       case 'live': return '라이브';
@@ -110,6 +111,54 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     ).length;
   };
 
+  // 기획 완료 여부 확인 (브랜드 관리자 승인 기준)
+  const checkPlanningCompletion = (campaign: Campaign) => {
+    if (!campaign.contentPlans?.length) return false;
+    
+    const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+    if (confirmedInfluencers.length === 0) return false;
+    
+    const allInfluencersHavePlans = confirmedInfluencers.every(influencer => 
+      campaign.contentPlans?.some(plan => plan.influencerId === influencer.id)
+    );
+    
+    if (!allInfluencersHavePlans) return false;
+    
+    const allPlansApproved = confirmedInfluencers.every(influencer => {
+      const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
+      if (!plan) return false;
+      
+      const hasPendingBrandRevision = plan.revisions?.some(r => 
+        r.requestedBy === 'brand' && r.status === 'pending'
+      );
+      
+      return plan.status === 'approved' || !hasPendingBrandRevision;
+    });
+    
+    return allPlansApproved;
+  };
+
+  // 수정요청 개수 및 정보 가져오기
+  const getRevisionInfo = (campaign: Campaign) => {
+    if (!campaign.contentPlans?.length) return { count: 0, hasRevisions: false };
+    
+    let revisionCount = 0;
+    let hasRevisions = false;
+    
+    campaign.contentPlans.forEach(plan => {
+      const hasPendingBrandRevision = plan.revisions?.some(r => 
+        r.requestedBy === 'brand' && r.status === 'pending'
+      );
+      
+      if (plan.status === 'revision' || hasPendingBrandRevision) {
+        revisionCount++;
+        hasRevisions = true;
+      }
+    });
+    
+    return { count: revisionCount, hasRevisions };
+  };
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -121,7 +170,6 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     console.log('Campaign card clicked:', campaignId);
     console.log('onCampaignClick function:', onCampaignClick);
     
-    // Stop event propagation to prevent any parent handlers
     event.stopPropagation();
     
     if (onCampaignClick) {
@@ -137,6 +185,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       ['recruiting', 'proposing', 'revising', 'revision-feedback'].includes(campaign.status);
     const shouldShowEditButton = userType === 'brand' && campaign.status === 'creating';
 
+    const isPlanningCompleted = campaign.status === 'planning' && checkPlanningCompletion(campaign);
+    const revisionInfo = getRevisionInfo(campaign);
+
     return (
       <Card 
         key={campaign.id} 
@@ -150,6 +201,22 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
               <Badge className={getStatusColor(campaign.status)}>
                 {getStatusText(campaign.status)}
               </Badge>
+              
+              {/* 기획 완료 배지 */}
+              {isPlanningCompleted && (
+                <Badge className="bg-green-100 text-green-800">
+                  ✓ 기획완료
+                </Badge>
+              )}
+              
+              {/* 수정요청 배지 */}
+              {revisionInfo.hasRevisions && (
+                <Badge className="bg-orange-100 text-orange-800">
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  {revisionInfo.count}차 수정요청
+                </Badge>
+              )}
+
               {userType === 'admin' && (
                 <Button
                   size="sm"
