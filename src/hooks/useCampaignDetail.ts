@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
@@ -112,7 +113,7 @@ export const useCampaignDetail = () => {
       console.log('시스템 관리자가 설정한 광고비:', originalInfluencer.adFee);
       console.log('광고비 타입:', typeof originalInfluencer.adFee);
       
-      // 인플루언서 상태 업데이트 - 광고비는 절대 변경하지 않음
+      // 인플루언서 상태 업데이트
       const updatedInfluencers = campaign.influencers.map(inf => {
         if (inf.id === influencerId) {
           console.log('=== 인플루언서 상태 업데이트 ===');
@@ -121,8 +122,8 @@ export const useCampaignDetail = () => {
           const updatedInfluencer = { 
             ...inf, 
             status: approved ? 'confirmed' as const : 'brand-rejected' as const,
-            // 광고비는 시스템 관리자가 설정한 원본 값을 그대로 유지
-            adFee: inf.adFee
+            // 승인 시에는 기존 광고비 유지, 거절 시에는 0으로 설정
+            adFee: approved ? inf.adFee : 0
           };
           
           console.log('업데이트 후 광고비:', updatedInfluencer.adFee);
