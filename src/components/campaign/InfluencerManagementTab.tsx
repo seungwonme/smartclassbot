@@ -163,7 +163,60 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     }
   };
 
-  const canManageInfluencers = campaign.status === 'creating' || campaign.status === 'recruiting';
+  // 단계별 액션 버튼 렌더링 함수
+  const renderActionButtons = (influencer: CampaignInfluencer) => {
+    const isSubmittedOrRecruiting = campaign.status === 'submitted' || campaign.status === 'recruiting';
+    const isProposing = campaign.status === 'proposing';
+
+    return (
+      <div className="flex items-center justify-end space-x-2">
+        {/* 제출됨/섭외중 단계: 상세보기만 */}
+        {isSubmittedOrRecruiting && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleDetailView(influencer)}
+          >
+            <Eye className="w-3 h-3" />
+          </Button>
+        )}
+
+        {/* 제안 단계: 광고비 표시, 승인/거절 버튼 */}
+        {isProposing && influencer.status === 'accepted' && (
+          <>
+            <div className="text-sm font-medium text-green-600 mr-2">
+              {influencer.adFee?.toLocaleString() || 0}원
+            </div>
+            <Button
+              size="sm"
+              onClick={() => onInfluencerApproval(influencer.id, true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Check className="w-3 h-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onInfluencerApproval(influencer.id, false)}
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </>
+        )}
+
+        {/* 기타 단계에서는 상세보기만 */}
+        {!isSubmittedOrRecruiting && !isProposing && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleDetailView(influencer)}
+          >
+            <Eye className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -225,60 +278,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDetailView(influencer)}
-                        >
-                          <Eye className="w-3 h-3" />
-                        </Button>
-                        
-                        {canManageInfluencers && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(influencer)}
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setInfluencerToDelete(influencer.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleViewSimilar(influencer.id)}
-                            >
-                              <Users className="w-3 h-3" />
-                            </Button>
-                          </>
-                        )}
-
-                        {campaign.status === 'proposing' && influencer.status === 'pending' && (
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              onClick={() => onInfluencerApproval(influencer.id, true)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <Check className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => onInfluencerApproval(influencer.id, false)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      {renderActionButtons(influencer)}
                     </TableCell>
                   </TableRow>
                 ))}
