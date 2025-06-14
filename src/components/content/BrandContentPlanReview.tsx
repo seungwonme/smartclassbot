@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus, Send, X } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
+import ContentRevisionTimeline from './ContentRevisionTimeline';
+import RevisionRequestForm from './RevisionRequestForm';
 
 interface BrandContentPlanReviewProps {
   plans: ContentPlanDetail[];
@@ -34,21 +34,14 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   onRequestRevision
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
-  const [feedback, setFeedback] = useState('');
-  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
   const [fieldFeedback, setFieldFeedback] = useState<FieldFeedback | null>(null);
   const [activeCommentField, setActiveCommentField] = useState<string | null>(null);
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
   const [currentComment, setCurrentComment] = useState('');
   const { toast } = useToast();
 
-  // 디버깅을 위한 로그 추가
   console.log('BrandContentPlanReview received plans:', plans);
-  plans.forEach((plan, index) => {
-    console.log(`Plan ${index}:`, plan);
-    console.log(`Plan ${index} planData:`, plan.planData);
-    console.log(`Plan ${index} status:`, plan.status);
-  });
 
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
@@ -96,10 +89,9 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     });
   };
 
-  const handleRequestRevision = () => {
+  const handleRequestRevision = (feedback: string) => {
     if (!selectedPlan) return;
 
-    // 인라인 코멘트들을 수집하여 피드백으로 구성
     const planComments = inlineComments.filter(comment => comment.planId === selectedPlan.id);
     let finalFeedback = feedback.trim();
 
@@ -122,8 +114,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     }
 
     onRequestRevision(selectedPlan.id, finalFeedback);
-    setFeedback('');
-    setShowFeedbackForm(false);
+    setShowRevisionForm(false);
     setSelectedPlan(null);
     setFieldFeedback(null);
     setInlineComments([]);
@@ -206,7 +197,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         </div>
         {content}
         
-        {/* 기존 코멘트 표시 */}
         {existingComment && !isActiveComment && (
           <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-sm">
             <div className="flex justify-between items-start">
@@ -226,7 +216,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           </div>
         )}
 
-        {/* 인라인 코멘트 입력 필드 */}
         {isActiveComment && (
           <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
             <div className="space-y-2">
@@ -410,9 +399,16 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   )}
                   {plan.influencerName}
                 </CardTitle>
-                <Badge className={getStatusColor(plan.status)}>
-                  {getStatusText(plan.status)}
-                </Badge>
+                <div className="flex flex-col gap-1">
+                  <Badge className={getStatusColor(plan.status)}>
+                    {getStatusText(plan.status)}
+                  </Badge>
+                  {plan.revisions && plan.revisions.length > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {plan.currentRevisionNumber}차 수정
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -456,11 +452,11 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                         e.stopPropagation();
                         setSelectedPlan(plan);
                         setFieldFeedback(null);
-                        setShowFeedbackForm(true);
+                        setShowRevisionForm(true);
                       }}
                     >
                       <MessageSquare className="w-4 h-4 mr-1" />
-                      전체 수정요청
+                      수정요청
                     </Button>
                   </div>
                 )}
@@ -476,8 +472,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         ))}
       </div>
 
-      {/* 상세보기 모달 - A4+ size width */}
-      {selectedPlan && !showFeedbackForm && (
+      {selectedPlan && !showRevisionForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white mx-4">
             <CardHeader>
@@ -497,6 +492,11 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             </CardHeader>
             <CardContent>
               {renderPlanData(selectedPlan)}
+              
+              {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+                <ContentRevisionTimeline revisions={selectedPlan.revisions} />
+              )}
+              
               {canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
                 <div className="flex gap-2 mt-6">
                   <Button
@@ -510,11 +510,11 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                     variant="outline"
                     onClick={() => {
                       setFieldFeedback(null);
-                      setShowFeedbackForm(true);
+                      setShowRevisionForm(true);
                     }}
                   >
                     <MessageSquare className="w-4 h-4 mr-2" />
-                    전체 수정요청
+                    수정요청
                   </Button>
                 </div>
               )}
@@ -523,65 +523,49 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         </div>
       )}
 
-      {/* 피드백 모달 - A4+ size width */}
-      {showFeedbackForm && selectedPlan && (
+      {showRevisionForm && selectedPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white mx-4">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>
-                  전체 수정 요청 - {selectedPlan.influencerName}
+                  수정 요청 - {selectedPlan.influencerName}
                 </CardTitle>
                 <Button variant="outline" onClick={() => {
-                  setShowFeedbackForm(false);
+                  setShowRevisionForm(false);
                   setSelectedPlan(null);
                   setFieldFeedback(null);
-                  setFeedback('');
+                  setInlineComments([]);
                 }}>
                   닫기
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {/* 저장된 인라인 코멘트들 표시 */}
-                {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
-                    {inlineComments
-                      .filter(c => c.planId === selectedPlan.id)
-                      .map((comment, index) => (
-                        <div key={index} className="text-sm text-blue-600 mb-1">
-                          <strong>{comment.fieldName}:</strong> {comment.comment}
-                        </div>
-                      ))}
-                  </div>
-                )}
-                
-                <div>
-                  <Label htmlFor="feedback">전체 수정 요청 사항 (선택사항)</Label>
-                  <Textarea
-                    id="feedback"
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="전체적인 수정 요청 사항이 있다면 입력해주세요..."
-                    rows={6}
-                  />
+              {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
+                <div className="p-3 bg-blue-50 rounded-lg mb-4">
+                  <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
+                  {inlineComments
+                    .filter(c => c.planId === selectedPlan.id)
+                    .map((comment, index) => (
+                      <div key={index} className="text-sm text-blue-600 mb-1">
+                        <strong>{comment.fieldName}:</strong> {comment.comment}
+                      </div>
+                    ))}
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleRequestRevision} className="bg-orange-600 hover:bg-orange-700">
-                    수정 요청 전송
-                  </Button>
-                  <Button variant="outline" onClick={() => {
-                    setShowFeedbackForm(false);
-                    setSelectedPlan(null);
-                    setFieldFeedback(null);
-                    setFeedback('');
-                  }}>
-                    취소
-                  </Button>
-                </div>
-              </div>
+              )}
+              
+              <RevisionRequestForm
+                revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+                onSubmit={handleRequestRevision}
+                onCancel={() => {
+                  setShowRevisionForm(false);
+                  setSelectedPlan(null);
+                  setFieldFeedback(null);
+                  setInlineComments([]);
+                }}
+                requestType="brand-request"
+              />
             </CardContent>
           </Card>
         </div>

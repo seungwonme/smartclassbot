@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, Users, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Users, Edit, MessageSquare } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentPlanList from '@/components/content/ContentPlanList';
+import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
+import RevisionRequestForm from '@/components/content/RevisionRequestForm';
 import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
 import { campaignService } from '@/services/campaign.service';
@@ -30,6 +31,8 @@ const AdminContentPlanning = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [selectedPlanForRevision, setSelectedPlanForRevision] = useState<ContentPlanDetail | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -39,7 +42,6 @@ const AdminContentPlanning = () => {
         const campaignData = await campaignService.getCampaignById(campaignId);
         if (campaignData) {
           setCampaign(campaignData);
-          // Campaign의 contentPlans를 ContentPlanDetail로 변환
           const plans: ContentPlanDetail[] = campaignData.contentPlans?.map(plan => ({
             id: plan.id,
             campaignId: plan.campaignId,
@@ -61,6 +63,7 @@ const AdminContentPlanning = () => {
               hashtags: []
             },
             revisions: plan.revisions || [],
+            currentRevisionNumber: plan.revisions?.length || 0,
             createdAt: plan.createdAt,
             updatedAt: plan.updatedAt
           })) || [];
@@ -107,18 +110,17 @@ const AdminContentPlanning = () => {
         status: 'draft',
         planData: planData.planData!,
         revisions: editingPlan?.revisions || [],
+        currentRevisionNumber: editingPlan?.currentRevisionNumber || 0,
         createdAt: editingPlan?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       console.log('생성된 기획안:', newPlan);
 
-      // Campaign의 contentPlans 배열 업데이트
       const updatedPlans = editingPlan 
         ? contentPlans.map(p => p.id === editingPlan.id ? newPlan : p)
         : [...contentPlans, newPlan];
 
-      // Campaign 데이터 업데이트
       const updatedContentPlans = updatedPlans.map(plan => ({
         id: plan.id,
         campaignId: plan.campaignId,
@@ -126,7 +128,7 @@ const AdminContentPlanning = () => {
         influencerName: plan.influencerName,
         contentType: plan.contentType,
         status: plan.status,
-        planDocument: JSON.stringify(plan.planData), // planData를 문자열로 저장
+        planDocument: JSON.stringify(plan.planData),
         revisions: plan.revisions,
         createdAt: plan.createdAt,
         updatedAt: plan.updatedAt
@@ -136,7 +138,6 @@ const AdminContentPlanning = () => {
         contentPlans: updatedContentPlans
       });
 
-      // 로컬 상태 업데이트
       setContentPlans(updatedPlans);
       setShowForm(false);
       setSelectedInfluencer(null);
@@ -156,9 +157,79 @@ const AdminContentPlanning = () => {
     }
   };
 
+  const handleRevisionFeedback = async (feedback: string) => {
+    if (!selectedPlanForRevision) return;
+
+    try {
+      const newRevision = {
+        id: `revision_${Date.now()}`,
+        revisionNumber: (selectedPlanForRevision.currentRevisionNumber || 0) + 1,
+        feedback,
+        requestedBy: 'admin' as const,
+        requestedByName: '시스템 관리자',
+        requestedAt: new Date().toISOString(),
+        status: 'completed' as const,
+        response: feedback,
+        respondedAt: new Date().toISOString(),
+        respondedBy: '시스템 관리자'
+      };
+
+      const updatedPlans = contentPlans.map(plan => {
+        if (plan.id === selectedPlanForRevision.id) {
+          return {
+            ...plan,
+            revisions: [...plan.revisions, newRevision],
+            currentRevisionNumber: newRevision.revisionNumber,
+            status: 'submitted' as const,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return plan;
+      });
+
+      const updatedContentPlans = updatedPlans.map(plan => ({
+        id: plan.id,
+        campaignId: plan.campaignId,
+        influencerId: plan.influencerId,
+        influencerName: plan.influencerName,
+        contentType: plan.contentType,
+        status: plan.status,
+        planDocument: JSON.stringify(plan.planData),
+        revisions: plan.revisions,
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt
+      }));
+
+      await campaignService.updateCampaign(campaignId!, {
+        contentPlans: updatedContentPlans
+      });
+
+      setContentPlans(updatedPlans);
+      setShowRevisionForm(false);
+      setSelectedPlanForRevision(null);
+
+      toast({
+        title: "수정 피드백 전송 완료",
+        description: "브랜드 관리자에게 수정 피드백이 전송되었습니다."
+      });
+    } catch (error) {
+      console.error('수정 피드백 전송 실패:', error);
+      toast({
+        title: "전송 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleViewPlan = (plan: ContentPlanDetail) => {
-    // 상세보기 로직 - 현재는 편집으로 대체
     handleEditPlan(plan);
+  };
+
+  const getRevisionRequestCount = () => {
+    return contentPlans.filter(plan => 
+      plan.status === 'revision' || 
+      (plan.revisions.length > 0 && plan.revisions[plan.revisions.length - 1].requestedBy === 'brand')
+    ).length;
   };
 
   if (isLoading) {
@@ -184,6 +255,7 @@ const AdminContentPlanning = () => {
   }
 
   const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+  const revisionRequestCount = getRevisionRequestCount();
 
   return (
     <div className="flex min-h-screen w-full">
@@ -201,13 +273,19 @@ const AdminContentPlanning = () => {
             </Button>
             <div>
               <h1 className="text-3xl font-bold">콘텐츠 기획</h1>
-              <p className="text-gray-600 mt-1">{campaign.title}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-gray-600">{campaign.title}</p>
+                {revisionRequestCount > 0 && (
+                  <Badge className="bg-orange-100 text-orange-800">
+                    수정요청 {revisionRequestCount}건
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* 확정된 인플루언서 목록 */}
           <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -219,24 +297,51 @@ const AdminContentPlanning = () => {
               <div className="space-y-3">
                 {confirmedInfluencers.map((influencer) => {
                   const existingPlan = contentPlans.find(p => p.influencerId === influencer.id);
+                  const hasRevisionRequest = existingPlan && (
+                    existingPlan.status === 'revision' || 
+                    (existingPlan.revisions.length > 0 && existingPlan.revisions[existingPlan.revisions.length - 1].requestedBy === 'brand')
+                  );
+                  
                   return (
                     <div key={influencer.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{influencer.name}</p>
                         <p className="text-sm text-gray-500">{influencer.category}</p>
-                        {existingPlan && (
-                          <Badge variant="outline" className="mt-1">
-                            기획완료
-                          </Badge>
+                        <div className="flex gap-1 mt-1">
+                          {existingPlan && (
+                            <Badge variant="outline">
+                              기획완료
+                            </Badge>
+                          )}
+                          {hasRevisionRequest && (
+                            <Badge className="bg-orange-100 text-orange-800 text-xs">
+                              수정요청
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          onClick={() => handleCreatePlan(influencer)}
+                          variant={existingPlan ? "outline" : "default"}
+                        >
+                          {existingPlan ? <Edit className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                        </Button>
+                        {hasRevisionRequest && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedPlanForRevision(existingPlan);
+                              setShowRevisionForm(true);
+                            }}
+                            className="bg-orange-50"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                          </Button>
                         )}
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleCreatePlan(influencer)}
-                        variant={existingPlan ? "outline" : "default"}
-                      >
-                        {existingPlan ? <Edit className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                      </Button>
                     </div>
                   );
                 })}
@@ -244,7 +349,6 @@ const AdminContentPlanning = () => {
             </CardContent>
           </Card>
 
-          {/* 콘텐츠 기획 목록 */}
           <div className="lg:col-span-2">
             <ContentPlanList
               plans={contentPlans}
@@ -254,7 +358,6 @@ const AdminContentPlanning = () => {
           </div>
         </div>
 
-        {/* 콘텐츠 기획 폼 모달 */}
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -268,6 +371,31 @@ const AdminContentPlanning = () => {
                 onSave={handleSavePlan}
                 onCancel={() => setShowForm(false)}
               />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showRevisionForm} onOpenChange={setShowRevisionForm}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>수정 피드백 - {selectedPlanForRevision?.influencerName}</DialogTitle>
+            </DialogHeader>
+            {selectedPlanForRevision && (
+              <div className="space-y-6">
+                {selectedPlanForRevision.revisions.length > 0 && (
+                  <ContentRevisionTimeline revisions={selectedPlanForRevision.revisions} />
+                )}
+                
+                <RevisionRequestForm
+                  revisionNumber={(selectedPlanForRevision.currentRevisionNumber || 0) + 1}
+                  onSubmit={handleRevisionFeedback}
+                  onCancel={() => {
+                    setShowRevisionForm(false);
+                    setSelectedPlanForRevision(null);
+                  }}
+                  requestType="admin-feedback"
+                />
+              </div>
             )}
           </DialogContent>
         </Dialog>

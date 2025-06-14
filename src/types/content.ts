@@ -8,6 +8,7 @@ export interface ContentPlanDetail {
   status: 'draft' | 'submitted' | 'revision' | 'approved';
   planData: ImagePlanData | VideoPlanData;
   revisions: ContentRevision[];
+  currentRevisionNumber: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,8 +31,13 @@ export interface VideoPlanData {
 
 export interface ContentRevision {
   id: string;
+  revisionNumber: number;
   feedback: string;
-  requestedBy: string;
+  requestedBy: 'brand' | 'admin';
+  requestedByName: string;
   requestedAt: string;
-  status: 'pending' | 'completed';
+  status: 'pending' | 'in-progress' | 'completed';
+  response?: string;
+  respondedAt?: string;
+  respondedBy?: string;
 }
