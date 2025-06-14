@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
@@ -65,7 +64,6 @@ export const useCampaignForm = (campaignId?: string) => {
     selectedInfluencers: []
   });
 
-  // Load campaign data for edit mode
   useEffect(() => {
     if (campaignId && isEditMode) {
       const loadCampaignData = async () => {
@@ -105,7 +103,6 @@ export const useCampaignForm = (campaignId?: string) => {
     }
   }, [campaignId, isEditMode, toast]);
 
-  // Load brands and products data
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -126,7 +123,6 @@ export const useCampaignForm = (campaignId?: string) => {
     loadData();
   }, [toast]);
 
-  // Filter products by brand
   useEffect(() => {
     if (formData.brandId) {
       const brandProducts = products.filter(p => p.brandId === formData.brandId);
@@ -208,7 +204,6 @@ export const useCampaignForm = (campaignId?: string) => {
       );
       setRecommendedInfluencers(influencers);
       
-      // AI 추천 시 기존 선택된 인플루언서 초기화
       setFormData(prev => ({
         ...prev,
         selectedInfluencers: []
@@ -242,7 +237,6 @@ export const useCampaignForm = (campaignId?: string) => {
     console.log('=== 캠페인 제출 시작 ===');
     console.log('캠페인 ID:', campaignId);
     console.log('편집 모드:', isEditMode);
-    console.log('현재 폼 데이터:', formData);
     
     setIsLoading(true);
     try {
@@ -261,46 +255,41 @@ export const useCampaignForm = (campaignId?: string) => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
-        status: 'creating', // 명시적으로 creating 상태로 설정
+        status: 'submitted', // 제출됨 상태로 설정
         currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };
 
       console.log('제출할 캠페인 데이터:', campaignData);
-      console.log('🔧 명시적으로 설정한 캠페인 상태:', campaignData.status);
+      console.log('🔧 설정된 캠페인 상태:', campaignData.status);
 
       if (isEditMode && campaignId) {
         console.log('캠페인 수정 모드 - ID:', campaignId);
-        const updatedCampaign = await campaignService.updateCampaign(campaignId, campaignData);
-        console.log('수정된 캠페인 결과:', updatedCampaign);
+        await campaignService.updateCampaign(campaignId, campaignData);
         toast({
           title: "캠페인 수정 완료",
           description: "캠페인이 성공적으로 수정되었습니다."
         });
       } else {
-        console.log('🆕 새 캠페인 생성 모드 - 상태 확인:', campaignData.status);
-        const newCampaign = await campaignService.createCampaign(campaignData);
-        console.log('✅ 생성된 캠페인 결과:', newCampaign);
-        console.log('✅ 최종 생성된 캠페인 상태:', newCampaign.status);
-        console.log('✅ 생성된 캠페인 ID:', newCampaign.id);
+        console.log('🆕 새 캠페인 생성 모드 - 상태:', campaignData.status);
+        await campaignService.createCampaign(campaignData);
         toast({
-          title: "캠페인 생성 완료",
-          description: "캠페인이 성공적으로 생성되었습니다."
+          title: "캠페인 제출 완료",
+          description: "캠페인이 성공적으로 제출되었습니다."
         });
       }
       
-      console.log('=== 캠페인 제출 완료 - 목록 페이지로 이동 시작 ===');
-      console.log('🎯 리다이렉트 경로: /brand/campaigns');
+      console.log('=== 캠페인 제출 완료 - 목록 페이지로 이동 ===');
       
-      // 페이지 리로드를 방지하고 강제 리다이렉트
-      window.location.href = '/brand/campaigns';
+      // React Router를 사용한 navigation
+      navigate('/brand/campaigns', { replace: true });
       
     } catch (error) {
       console.error('=== 캠페인 처리 실패 ===', error);
       toast({
         title: "처리 실패",
-        description: isEditMode ? "캠페인 수정에 실패했습니다." : "캠페인 생성에 실패했습니다.",
+        description: isEditMode ? "캠페인 수정에 실패했습니다." : "캠페인 제출에 실패했습니다.",
         variant: "destructive"
       });
     } finally {

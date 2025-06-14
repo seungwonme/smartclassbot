@@ -43,6 +43,7 @@ const AdminCampaigns = () => {
   const getStatusColor = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return 'bg-yellow-100 text-yellow-800';
+      case 'submitted': return 'bg-orange-100 text-orange-800';
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
@@ -54,6 +55,7 @@ const AdminCampaigns = () => {
   const getStatusText = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return '생성중';
+      case 'submitted': return '제출됨';
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
       case 'confirmed': return '확정됨';
@@ -73,7 +75,7 @@ const AdminCampaigns = () => {
       setCampaigns(prev => 
         prev.map(c => c.id === campaignId ? { ...c, status: 'recruiting' as const } : c)
       );
-      console.log('캠페인 상태 변경 완료: creating → recruiting');
+      console.log('캠페인 상태 변경 완료: submitted → recruiting');
       console.log('=== 캠페인 수령 프로세스 완료 ===');
       toast({
         title: "캠페인 수령 완료",
@@ -137,7 +139,6 @@ const AdminCampaigns = () => {
   };
 
   const handleAddSimilarInfluencer = (rejectedInfluencerId: string) => {
-    // 유사한 신규 인플루언서 추가 로직
     toast({
       title: "유사 인플루언서 추가",
       description: "유사한 인플루언서를 검색하여 추가합니다."
@@ -151,8 +152,8 @@ const AdminCampaigns = () => {
       .filter(inf => inf.status === 'accepted' && inf.adFee)
       .reduce((sum, inf) => sum + (inf.adFee || 0), 0);
     
-    const agencyFee = subtotal * 0.15; // 대행료 15%
-    const vat = (subtotal + agencyFee) * 0.1; // VAT 10%
+    const agencyFee = subtotal * 0.15;
+    const vat = (subtotal + agencyFee) * 0.1;
     const total = subtotal + agencyFee + vat;
     
     return { subtotal, agencyFee, vat, total };
@@ -211,7 +212,7 @@ const AdminCampaigns = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => {
-            const shouldShowReceiveButton = campaign.status === 'creating';
+            const shouldShowReceiveButton = campaign.status === 'submitted';
             const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing';
             
             console.log(`캠페인 "${campaign.title}" - 상태: ${campaign.status}, 수령 버튼 표시: ${shouldShowReceiveButton}, 관리 버튼 표시: ${shouldShowManageButton}`);
@@ -269,7 +270,6 @@ const AdminCampaigns = () => {
                             
                             {selectedCampaign && (
                               <div className="space-y-6">
-                                {/* 기본 캠페인 정보 */}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>기본 정보</CardTitle>
@@ -296,7 +296,6 @@ const AdminCampaigns = () => {
                                   </CardContent>
                                 </Card>
 
-                                {/* 인플루언서 섭외 현황 */}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>인플루언서 섭외 현황</CardTitle>
@@ -375,7 +374,6 @@ const AdminCampaigns = () => {
                                   </CardContent>
                                 </Card>
 
-                                {/* 견적서 */}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>견적서</CardTitle>

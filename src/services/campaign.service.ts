@@ -1,4 +1,3 @@
-
 import { Campaign, CampaignInfluencer, Persona } from "@/types/campaign";
 import { mockCampaigns, mockInfluencers, mockPersonas } from "@/mocks/campaign.mock";
 import { storageService } from "./storage.service";
@@ -54,7 +53,7 @@ export const campaignService = {
         const newCampaign: Campaign = {
           ...campaign,
           id: `c${Date.now()}`,
-          status: 'creating', // 항상 creating 상태로 강제 설정
+          // status는 받은 그대로 사용 (강제 변경하지 않음)
           currentStage: 1,
           contentPlans: [],
           contentProductions: [],
@@ -63,7 +62,7 @@ export const campaignService = {
         };
         
         console.log('🏗️ 생성될 새 캠페인:', newCampaign);
-        console.log('🏗️ 강제 설정된 캠페인 상태:', newCampaign.status);
+        console.log('🏗️ 캠페인 상태:', newCampaign.status);
         console.log('🏗️ 캠페인 ID:', newCampaign.id);
         
         campaigns.push(newCampaign);

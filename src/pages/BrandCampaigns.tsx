@@ -31,6 +31,7 @@ const BrandCampaigns = () => {
   const getStatusColor = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return 'bg-yellow-100 text-yellow-800';
+      case 'submitted': return 'bg-orange-100 text-orange-800';
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
@@ -42,6 +43,7 @@ const BrandCampaigns = () => {
   const getStatusText = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return '생성중';
+      case 'submitted': return '제출됨';
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
       case 'confirmed': return '확정됨';
