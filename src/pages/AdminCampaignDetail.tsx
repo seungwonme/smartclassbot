@@ -97,8 +97,7 @@ const AdminCampaignDetail = () => {
           postTitle: (planData.planData as any)?.postTitle || '',
           scenario: (planData.planData as any)?.scenario || '',
           scenarioFiles: (planData.planData as any)?.scenarioFiles || [],
-          script: (planData.planData as any)?.script || '',
-          hashtags: (planData.planData as any)?.hashtags || []
+          script: (planData.planData as any)?.hashtags || []
         },
         revisions: [],
         currentRevisionNumber: 0,
@@ -200,12 +199,13 @@ const AdminCampaignDetail = () => {
         <CampaignWorkflowSteps campaign={campaign} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="basic">📋 기본정보</TabsTrigger>
             <TabsTrigger value="influencers">👥 인플루언서 관리</TabsTrigger>
             <TabsTrigger value="planning" disabled={campaign.currentStage < 2}>💡 콘텐츠 기획</TabsTrigger>
-            <TabsTrigger value="content" disabled={campaign.currentStage < 3}>🔍 콘텐츠 검수</TabsTrigger>
-            <TabsTrigger value="performance" disabled={campaign.currentStage < 4}>📈 성과 분석</TabsTrigger>
+            <TabsTrigger value="production" disabled={campaign.currentStage < 3}>🎬 콘텐츠 제작</TabsTrigger>
+            <TabsTrigger value="content" disabled={campaign.currentStage < 4}>🔍 콘텐츠 검수</TabsTrigger>
+            <TabsTrigger value="performance" disabled={campaign.currentStage < 5}>📈 성과 분석</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="mt-6">
@@ -388,6 +388,22 @@ const AdminCampaignDetail = () => {
                 </Card>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="production" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Video className="w-5 h-5 mr-2" />
+                  콘텐츠 제작
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-gray-500">
+                  콘텐츠 제작 기능이 곧 추가될 예정입니다.
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="content" className="mt-6">
