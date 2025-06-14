@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -31,6 +30,7 @@ const AdminCampaignDetail = () => {
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
 
   const getStatusColor = (status: any) => {
     switch (status) {
@@ -133,6 +133,46 @@ const AdminCampaignDetail = () => {
       setContentPlans(prev => prev.map(plan => 
         plan.id === planId ? updatedPlan : plan
       ));
+
+      toast({
+        title: "기획안 수정 완료",
+        description: "콘텐츠 기획안이 수정되었습니다."
+      });
+    } catch (error) {
+      console.error('기획안 수정 실패:', error);
+      toast({
+        title: "수정 실패",
+        description: "기획안 수정에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditPlan = (plan: ContentPlanDetail) => {
+    setEditingPlan(plan);
+    setShowCreateForm(false);
+  };
+
+  const handleViewPlan = (plan: ContentPlanDetail) => {
+    setEditingPlan(plan);
+    setShowCreateForm(false);
+  };
+
+  const handleUpdatePlan = async (planData: Partial<ContentPlanDetail>) => {
+    if (!editingPlan) return;
+
+    try {
+      const updatedPlan: ContentPlanDetail = {
+        ...editingPlan,
+        ...planData,
+        updatedAt: new Date().toISOString()
+      };
+
+      setContentPlans(prev => prev.map(plan => 
+        plan.id === editingPlan.id ? updatedPlan : plan
+      ));
+
+      setEditingPlan(null);
 
       toast({
         title: "기획안 수정 완료",
@@ -336,6 +376,7 @@ const AdminCampaignDetail = () => {
                                   onClick={() => {
                                     setSelectedInfluencer(influencer);
                                     setShowCreateForm(true);
+                                    setEditingPlan(null);
                                   }}
                                   className="bg-blue-600 hover:bg-blue-700"
                                 >
@@ -372,18 +413,22 @@ const AdminCampaignDetail = () => {
                           setSelectedInfluencer(null);
                         }}
                       />
-                    ) : contentPlans.length > 0 ? (
+                    ) : editingPlan ? (
+                      <ContentPlanForm
+                        influencer={{ id: editingPlan.influencerId, name: editingPlan.influencerName }}
+                        campaignId={id!}
+                        existingPlan={editingPlan}
+                        onSave={handleUpdatePlan}
+                        onCancel={() => setEditingPlan(null)}
+                      />
+                    ) : (
                       <ContentPlanList
                         plans={contentPlans}
+                        onEdit={handleEditPlan}
+                        onView={handleViewPlan}
                         onPlanUpdate={handlePlanUpdate}
                         userType="admin"
                       />
-                    ) : (
-                      <div className="text-center py-12">
-                        <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">콘텐츠 기획안이 없습니다</h3>
-                        <p className="text-gray-500">인플루언서를 선택하여 기획안을 생성하세요.</p>
-                      </div>
                     )}
                   </CardContent>
                 </Card>
