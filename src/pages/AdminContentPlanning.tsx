@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -70,13 +69,19 @@ const AdminContentPlanning = () => {
               };
             }
             
+            // status를 올바른 타입으로 매핑
+            let status: 'draft' | 'revision' | 'approved' = 'draft';
+            if (plan.status === 'revision' || plan.status === 'approved') {
+              status = plan.status;
+            }
+            
             const detailPlan: ContentPlanDetail = {
               id: plan.id,
               campaignId: plan.campaignId,
               influencerId: plan.influencerId,
               influencerName: plan.influencerName,
               contentType: plan.contentType,
-              status: plan.status,
+              status: status,
               planData: planData,
               revisions: plan.revisions || [],
               currentRevisionNumber: plan.revisions?.length || 0,
