@@ -187,12 +187,19 @@ export const useCampaignDetail = () => {
     if (!campaign) return;
     
     try {
-      await campaignService.updateCampaign(campaign.id, { status: 'completed' });
-      setCampaign(prev => prev ? { ...prev, status: 'completed' } : null);
+      await campaignService.updateCampaign(campaign.id, { 
+        status: 'planning',
+        currentStage: 2
+      });
+      setCampaign(prev => prev ? { 
+        ...prev, 
+        status: 'planning',
+        currentStage: 2
+      } : null);
       
       toast({
         title: "캠페인 확정 완료",
-        description: "캠페인이 최종 확정되었습니다."
+        description: "캠페인이 콘텐츠 기획 단계로 진행됩니다."
       });
     } catch (error) {
       toast({

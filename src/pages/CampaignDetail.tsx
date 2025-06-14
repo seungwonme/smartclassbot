@@ -9,6 +9,7 @@ import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
+import CampaignConfirmationSummary from '@/components/campaign/CampaignConfirmationSummary';
 import { Campaign } from '@/types/campaign';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 
@@ -56,6 +57,35 @@ const CampaignDetail = () => {
       toast({
         title: "제출 실패",
         description: "캠페인 제출에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 캠페인 진행 동의 처리
+  const handleCampaignConfirmation = async () => {
+    if (!campaign) return;
+    
+    try {
+      const { campaignService } = await import('@/services/campaign.service');
+      await campaignService.updateCampaign(campaign.id, { 
+        status: 'planning',
+        currentStage: 2
+      });
+      
+      toast({
+        title: "캠페인 진행 동의 완료",
+        description: "캠페인이 콘텐츠 기획 단계로 진행됩니다. 정산 관리에서 납부 정보를 확인하세요."
+      });
+      
+      // 페이지 새로고침하여 최신 상태 반영
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('캠페인 진행 동의 실패:', error);
+      toast({
+        title: "처리 실패",
+        description: "캠페인 진행 동의 처리에 실패했습니다.",
         variant: "destructive"
       });
     }
@@ -137,6 +167,47 @@ const CampaignDetail = () => {
   const isCreating = campaign.status === 'creating';
   const isConfirmed = campaign.status === 'confirmed';
   const nextAction = getNextAction();
+
+  // confirmed 상태일 때는 확정 요약 페이지만 표시
+  if (isConfirmed) {
+    return (
+      <div className="flex min-h-screen w-full">
+        <BrandSidebar />
+        <div className="flex-1 p-8">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center space-x-4">
+              <Link to="/brand/campaigns">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  캠페인 목록으로
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold">{campaign.title}</h1>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className="bg-green-100 text-green-800">
+                    확정됨
+                  </Badge>
+                  <Badge variant="outline" className="text-blue-600">
+                    캠페인 진행 동의 필요
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <CampaignWorkflowSteps campaign={campaign} />
+
+          <div className="mt-6">
+            <CampaignConfirmationSummary 
+              campaign={campaign}
+              onConfirmCampaign={handleCampaignConfirmation}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full">
