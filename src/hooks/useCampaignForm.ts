@@ -274,12 +274,13 @@ export const useCampaignForm = (campaignId?: string) => {
       } else {
         console.log('🆕 새 캠페인 생성 모드 - 상태:', campaignData.status);
         const newCampaignId = await campaignService.createCampaign(campaignData);
+        console.log('생성된 캠페인 ID:', newCampaignId);
         toast({
           title: "캠페인 생성 완료",
           description: "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
         });
-        // 생성된 캠페인 상세 페이지로 이동
-        navigate(`/brand/campaign/${newCampaignId}`, { replace: true });
+        // 생성된 캠페인 상세 페이지로 이동 - 올바른 경로 사용
+        navigate(`/brand/campaigns/${newCampaignId}`, { replace: true });
         return;
       }
       
