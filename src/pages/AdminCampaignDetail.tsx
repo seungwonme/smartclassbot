@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -110,12 +109,6 @@ const AdminCampaignDetail = () => {
               </div>
             </div>
           </div>
-          {campaign.currentStage >= 2 && (
-            <Button onClick={handleContentPlanningManage} className="bg-blue-600 hover:bg-blue-700">
-              <Edit className="w-4 h-4 mr-2" />
-              콘텐츠 기획 관리
-            </Button>
-          )}
         </div>
 
         <CampaignWorkflowSteps campaign={campaign} />
