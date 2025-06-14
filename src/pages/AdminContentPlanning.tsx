@@ -18,35 +18,40 @@ import { ContentSubmission } from '@/types/contentSubmission';
 import { ContentPlanDetail } from '@/types/content';
 
 const AdminContentPlanning: React.FC = () => {
-  const { id } = useParams();
+  const params = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [selectedContentType, setSelectedContentType] = useState<'image' | 'video'>('image');
 
+  // URL에서 캠페인 ID 추출 - 여러 패턴 지원
+  const campaignId = params.id || params.campaignId || window.location.pathname.split('/')[3];
+
   console.log('=== AdminContentPlanning 렌더링 시작 ===');
-  console.log('캠페인 ID:', id);
+  console.log('URL params:', params);
+  console.log('추출된 캠페인 ID:', campaignId);
+  console.log('현재 URL:', window.location.pathname);
 
   // 캠페인 데이터 로드
   const { data: campaign, isLoading: campaignLoading, error: campaignError } = useQuery({
-    queryKey: ['campaign', id],
-    queryFn: () => campaignService.getCampaignById(id!),
-    enabled: !!id,
+    queryKey: ['campaign', campaignId],
+    queryFn: () => campaignService.getCampaignById(campaignId!),
+    enabled: !!campaignId,
     retry: 3,
     retryDelay: 1000
   });
   
   const { data: contentPlans = [], isLoading: plansLoading } = useQuery({
-    queryKey: ['contentPlans', id],
-    queryFn: () => contentService.getContentPlans(id!),
-    enabled: !!id
+    queryKey: ['contentPlans', campaignId],
+    queryFn: () => contentService.getContentPlans(campaignId!),
+    enabled: !!campaignId
   });
 
   const { data: contentSubmissions = [], isLoading: submissionsLoading } = useQuery({
-    queryKey: ['contentSubmissions', id],
-    queryFn: () => contentSubmissionService.getContentSubmissions(id!),
-    enabled: !!id
+    queryKey: ['contentSubmissions', campaignId],
+    queryFn: () => contentSubmissionService.getContentSubmissions(campaignId!),
+    enabled: !!campaignId
   });
 
   console.log('=== AdminContentPlanning 데이터 상태 ===');
@@ -57,9 +62,9 @@ const AdminContentPlanning: React.FC = () => {
   console.log('캠페인 에러:', campaignError);
 
   const approvePlanMutation = useMutation({
-    mutationFn: (planId: string) => contentService.updateContentPlan(id!, planId, { status: 'approved' }),
+    mutationFn: (planId: string) => contentService.updateContentPlan(campaignId!, planId, { status: 'approved' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentPlans', id] });
+      queryClient.invalidateQueries({ queryKey: ['contentPlans', campaignId] });
       toast({
         title: "기획 승인",
         description: "콘텐츠 기획이 승인되었습니다."
@@ -69,7 +74,7 @@ const AdminContentPlanning: React.FC = () => {
 
   const requestRevisionMutation = useMutation({
     mutationFn: ({ planId, feedback }: { planId: string; feedback: string }) =>
-      contentService.updateContentPlan(id!, planId, {
+      contentService.updateContentPlan(campaignId!, planId, {
         status: 'revision',
         revisions: [
           {
@@ -85,7 +90,7 @@ const AdminContentPlanning: React.FC = () => {
         currentRevisionNumber: 1
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentPlans', id] });
+      queryClient.invalidateQueries({ queryKey: ['contentPlans', campaignId] });
       toast({
         title: "수정 요청 전송",
         description: "콘텐츠 기획 수정 요청이 전송되었습니다."
@@ -95,11 +100,11 @@ const AdminContentPlanning: React.FC = () => {
 
   const createSubmissionMutation = useMutation({
     mutationFn: (submissionData: Partial<ContentSubmission>) =>
-      contentSubmissionService.createContentSubmission(id!, submissionData),
+      contentSubmissionService.createContentSubmission(campaignId!, submissionData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', id] });
+      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', campaignId] });
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      queryClient.invalidateQueries({ queryKey: ['campaign', id] });
+      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
       setShowUploadForm(false);
       setSelectedInfluencer(null);
       toast({
@@ -119,9 +124,9 @@ const AdminContentPlanning: React.FC = () => {
 
   const approveSubmissionMutation = useMutation({
     mutationFn: (submissionId: string) =>
-      contentSubmissionService.updateContentSubmission(id!, submissionId, { status: 'approved' }),
+      contentSubmissionService.updateContentSubmission(campaignId!, submissionId, { status: 'approved' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', id] });
+      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', campaignId] });
       toast({
         title: "콘텐츠 승인",
         description: "콘텐츠가 승인되었습니다."
@@ -131,7 +136,7 @@ const AdminContentPlanning: React.FC = () => {
 
   const requestSubmissionRevisionMutation = useMutation({
     mutationFn: ({ submissionId, feedback }: { submissionId: string; feedback: string }) =>
-      contentSubmissionService.updateContentSubmission(id!, submissionId, {
+      contentSubmissionService.updateContentSubmission(campaignId!, submissionId, {
         status: 'revision',
         revisions: [
           {
@@ -147,7 +152,7 @@ const AdminContentPlanning: React.FC = () => {
         currentRevisionNumber: 1
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', id] });
+      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', campaignId] });
       toast({
         title: "수정 요청 전송",
         description: "콘텐츠 수정 요청이 전송되었습니다."
@@ -205,6 +210,22 @@ const AdminContentPlanning: React.FC = () => {
     }
   };
 
+  // 캠페인 ID가 없는 경우
+  if (!campaignId) {
+    console.log('=== 캠페인 ID 없음 ===');
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-500">캠페인 ID를 찾을 수 없습니다.</p>
+          <p className="text-sm text-gray-500 mt-2">URL: {window.location.pathname}</p>
+          <Button onClick={() => window.history.back()} className="mt-4">
+            이전 페이지로
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // 로딩 상태 처리
   if (campaignLoading) {
     console.log('=== 캠페인 로딩중 ===');
@@ -213,6 +234,7 @@ const AdminContentPlanning: React.FC = () => {
         <div className="text-center">
           <Clock className="w-8 h-8 animate-spin mx-auto mb-4" />
           <p>캠페인 정보를 불러오는 중...</p>
+          <p className="text-sm text-gray-500 mt-2">캠페인 ID: {campaignId}</p>
         </div>
       </div>
     );
@@ -225,6 +247,7 @@ const AdminContentPlanning: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-red-500">캠페인 정보를 불러오는데 실패했습니다.</p>
+          <p className="text-sm text-gray-500 mt-2">캠페인 ID: {campaignId}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
             다시 시도
           </Button>
@@ -238,6 +261,7 @@ const AdminContentPlanning: React.FC = () => {
     return (
       <div className="text-center py-12">
         <p>캠페인을 찾을 수 없습니다.</p>
+        <p className="text-sm text-gray-500 mt-2">캠페인 ID: {campaignId}</p>
       </div>
     );
   }
@@ -287,6 +311,7 @@ const AdminContentPlanning: React.FC = () => {
               <p>콘텐츠 기획안: {contentPlans.length}개</p>
               <p>콘텐츠 제출물: {contentSubmissions.length}개</p>
               <p>인플루언서: {campaign.influencers?.length || 0}명</p>
+              <p>URL 캠페인 ID: {campaignId}</p>
             </div>
           </div>
         </CardContent>
@@ -309,6 +334,9 @@ const AdminContentPlanning: React.FC = () => {
                 <div className="text-center py-8">
                   <p className="text-gray-500 mb-4">등록된 콘텐츠 기획안이 없습니다.</p>
                   <p className="text-sm text-gray-400">인플루언서가 콘텐츠 기획안을 제출하면 여기에 표시됩니다.</p>
+                  <div className="mt-4 p-3 bg-blue-50 rounded text-xs">
+                    <p><strong>참고:</strong> 캠페인이 '기획' 단계에 있을 때 인플루언서들이 기획안을 작성할 수 있습니다.</p>
+                  </div>
                 </div>
               ) : (
                 <BrandContentPlanReview
@@ -410,7 +438,7 @@ const AdminContentPlanning: React.FC = () => {
                 <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-lg mx-4">
                   <ContentUploadForm
                     influencer={selectedInfluencer}
-                    campaignId={id!}
+                    campaignId={campaignId!}
                     contentType={selectedContentType}
                     onSubmit={handleUploadSubmit}
                     onCancel={() => {
@@ -434,6 +462,9 @@ const AdminContentPlanning: React.FC = () => {
                 <div className="text-center py-8">
                   <p className="text-gray-500 mb-4">제출된 콘텐츠가 없습니다.</p>
                   <p className="text-sm text-gray-400">인플루언서가 콘텐츠를 업로드하면 여기에 표시됩니다.</p>
+                  <div className="mt-4 p-3 bg-blue-50 rounded text-xs">
+                    <p><strong>참고:</strong> 콘텐츠 업로드 탭에서 인플루언서별로 콘텐츠를 업로드할 수 있습니다.</p>
+                  </div>
                 </div>
               ) : (
                 <BrandContentReview
