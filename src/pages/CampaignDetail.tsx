@@ -93,6 +93,7 @@ const CampaignDetail = () => {
           status: plan.status,
           planData: planData,
           revisions: plan.revisions || [],
+          currentRevisionNumber: plan.revisions?.length || 0,
           createdAt: plan.createdAt,
           updatedAt: plan.updatedAt
         };
@@ -138,10 +139,15 @@ const CampaignDetail = () => {
     if (!campaign) return;
 
     try {
+      const targetPlan = contentPlans.find(p => p.id === planId);
+      const currentRevisionNumber = targetPlan?.currentRevisionNumber || 0;
+      
       const newRevision = {
         id: `revision_${Date.now()}`,
+        revisionNumber: currentRevisionNumber + 1,
         feedback,
-        requestedBy: 'brand',
+        requestedBy: 'brand' as const,
+        requestedByName: '브랜드 관리자',
         requestedAt: new Date().toISOString(),
         status: 'pending' as const
       };
@@ -172,7 +178,8 @@ const CampaignDetail = () => {
           return {
             ...plan,
             status: 'revision',
-            revisions: [...plan.revisions, newRevision]
+            revisions: [...plan.revisions, newRevision],
+            currentRevisionNumber: newRevision.revisionNumber
           };
         }
         return plan;

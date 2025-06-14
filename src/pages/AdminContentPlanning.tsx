@@ -254,7 +254,7 @@ const AdminContentPlanning = () => {
     );
   }
 
-  const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+  const confirmedInfluencers = campaign?.influencers.filter(inf => inf.status === 'confirmed') || [];
   const revisionRequestCount = getRevisionRequestCount();
 
   return (
