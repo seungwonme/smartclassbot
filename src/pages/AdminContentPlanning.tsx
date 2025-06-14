@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, Users, Edit, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Plus, Users, Edit, MessageSquare, ArrowRight } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentPlanList from '@/components/content/ContentPlanList';
@@ -13,12 +13,8 @@ import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+
+type WorkMode = 'list' | 'create' | 'edit' | 'revision';
 
 const AdminContentPlanning = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -28,11 +24,9 @@ const AdminContentPlanning = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
+  const [workMode, setWorkMode] = useState<WorkMode>('list');
+  const [selectedInfluencerForWork, setSelectedInfluencerForWork] = useState<any>(null);
   const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
-  const [showRevisionForm, setShowRevisionForm] = useState(false);
-  const [selectedPlanForRevision, setSelectedPlanForRevision] = useState<ContentPlanDetail | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -119,9 +113,9 @@ const AdminContentPlanning = () => {
   const handleCreatePlan = (influencer: any) => {
     console.log('=== 새 기획안 작성 시작 ===');
     console.log('선택된 인플루언서:', influencer);
-    setSelectedInfluencer(influencer);
+    setSelectedInfluencerForWork(influencer);
     setEditingPlan(null);
-    setShowForm(true);
+    setWorkMode('create');
   };
 
   const handleEditPlan = (plan: ContentPlanDetail) => {
@@ -132,9 +126,16 @@ const AdminContentPlanning = () => {
     const influencer = campaign?.influencers.find(inf => inf.id === plan.influencerId);
     console.log('연결된 인플루언서:', influencer);
     
-    setSelectedInfluencer(influencer);
+    setSelectedInfluencerForWork(influencer);
     setEditingPlan(plan);
-    setShowForm(true);
+    setWorkMode('edit');
+  };
+
+  const handleViewRevisionRequest = (plan: ContentPlanDetail) => {
+    const influencer = campaign?.influencers.find(inf => inf.id === plan.influencerId);
+    setSelectedInfluencerForWork(influencer);
+    setEditingPlan(plan);
+    setWorkMode('revision');
   };
 
   const handleSavePlan = async (planData: Partial<ContentPlanDetail>) => {
@@ -190,8 +191,9 @@ const AdminContentPlanning = () => {
       });
 
       setContentPlans(updatedPlans);
-      setShowForm(false);
-      setSelectedInfluencer(null);
+      
+      setWorkMode('list');
+      setSelectedInfluencerForWork(null);
       setEditingPlan(null);
       
       console.log('=== 콘텐츠 기획안 저장 완료 ===');
@@ -256,8 +258,10 @@ const AdminContentPlanning = () => {
       });
 
       setContentPlans(updatedPlans);
+      
+      setWorkMode('list');
+      setSelectedInfluencerForWork(null);
       setEditingPlan(null);
-      setShowForm(false);
 
       toast({
         title: "수정 피드백 전송 완료",
@@ -274,6 +278,12 @@ const AdminContentPlanning = () => {
 
   const handleViewPlan = (plan: ContentPlanDetail) => {
     handleEditPlan(plan);
+  };
+
+  const handleBackToList = () => {
+    setWorkMode('list');
+    setSelectedInfluencerForWork(null);
+    setEditingPlan(null);
   };
 
   const getRevisionRequestCount = () => {
@@ -308,6 +318,75 @@ const AdminContentPlanning = () => {
   const confirmedInfluencers = campaign?.influencers.filter(inf => inf.status === 'confirmed') || [];
   const revisionRequestCount = getRevisionRequestCount();
 
+  const renderWorkArea = () => {
+    if (workMode === 'list') {
+      return (
+        <ContentPlanList
+          plans={contentPlans}
+          onEdit={handleEditPlan}
+          onView={handleViewPlan}
+        />
+      );
+    }
+
+    if (!selectedInfluencerForWork) return null;
+
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span>콘텐츠 기획 - {selectedInfluencerForWork.name}</span>
+                <Badge variant="outline">{selectedInfluencerForWork.category}</Badge>
+              </div>
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={handleBackToList}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              목록으로 돌아가기
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* 수정 이력 표시 */}
+            {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && (
+              <div className="border-b pb-6">
+                <ContentRevisionTimeline revisions={editingPlan.revisions} />
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 기획안 폼 */}
+              <div className="lg:col-span-1">
+                <ContentPlanForm
+                  influencer={selectedInfluencerForWork}
+                  campaignId={campaign!.id}
+                  existingPlan={editingPlan || undefined}
+                  onSave={handleSavePlan}
+                  onCancel={handleBackToList}
+                />
+              </div>
+              
+              {/* 수정 피드백 폼 */}
+              {workMode === 'revision' && editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && 
+               editingPlan.revisions.some(rev => rev.requestedBy === 'brand' && rev.status !== 'completed') && (
+                <div className="lg:col-span-1">
+                  <RevisionRequestForm
+                    revisionNumber={(editingPlan.currentRevisionNumber || 0) + 1}
+                    onSubmit={handleRevisionFeedback}
+                    onCancel={handleBackToList}
+                    requestType="admin-feedback"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="flex min-h-screen w-full">
       <AdminSidebar />
@@ -336,8 +415,9 @@ const AdminContentPlanning = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 좌측: 인플루언서 목록 */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -352,10 +432,16 @@ const AdminContentPlanning = () => {
                     existingPlan.status === 'revision' || 
                     (existingPlan.revisions.length > 0 && existingPlan.revisions[existingPlan.revisions.length - 1].requestedBy === 'brand')
                   );
+                  const isSelected = selectedInfluencerForWork?.id === influencer.id;
                   
                   return (
-                    <div key={influencer.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
+                    <div 
+                      key={influencer.id} 
+                      className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex-1">
                         <p className="font-medium">{influencer.name}</p>
                         <p className="text-sm text-gray-500">{influencer.category}</p>
                         <div className="flex gap-1 mt-1">
@@ -383,14 +469,16 @@ const AdminContentPlanning = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => {
-                              setSelectedPlanForRevision(existingPlan);
-                              setShowRevisionForm(true);
-                            }}
+                            onClick={() => handleViewRevisionRequest(existingPlan!)}
                             className="bg-orange-50"
                           >
                             <MessageSquare className="w-3 h-3" />
                           </Button>
+                        )}
+                        {isSelected && workMode !== 'list' && (
+                          <div className="flex items-center ml-2">
+                            <ArrowRight className="w-4 h-4 text-blue-600" />
+                          </div>
                         )}
                       </div>
                     </div>
@@ -400,80 +488,11 @@ const AdminContentPlanning = () => {
             </CardContent>
           </Card>
 
-          <div className="lg:col-span-2">
-            <ContentPlanList
-              plans={contentPlans}
-              onEdit={handleEditPlan}
-              onView={handleViewPlan}
-            />
+          {/* 우측: 작업 영역 */}
+          <div>
+            {renderWorkArea()}
           </div>
         </div>
-
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>콘텐츠 기획 - {selectedInfluencer?.name}</DialogTitle>
-            </DialogHeader>
-            {selectedInfluencer && (
-              <div className="space-y-6">
-                {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && (
-                  <div className="border-b pb-4">
-                    <ContentRevisionTimeline revisions={editingPlan.revisions} />
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="lg:col-span-1">
-                    <ContentPlanForm
-                      influencer={selectedInfluencer}
-                      campaignId={campaign!.id}
-                      existingPlan={editingPlan || undefined}
-                      onSave={handleSavePlan}
-                      onCancel={() => setShowForm(false)}
-                    />
-                  </div>
-                  
-                  {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && 
-                   editingPlan.revisions.some(rev => rev.requestedBy === 'brand' && rev.status !== 'completed') && (
-                    <div className="lg:col-span-1">
-                      <RevisionRequestForm
-                        revisionNumber={(editingPlan.currentRevisionNumber || 0) + 1}
-                        onSubmit={handleRevisionFeedback}
-                        onCancel={() => {}}
-                        requestType="admin-feedback"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showRevisionForm} onOpenChange={setShowRevisionForm}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>수정 피드백 - {selectedPlanForRevision?.influencerName}</DialogTitle>
-            </DialogHeader>
-            {selectedPlanForRevision && (
-              <div className="space-y-6">
-                {selectedPlanForRevision.revisions.length > 0 && (
-                  <ContentRevisionTimeline revisions={selectedPlanForRevision.revisions} />
-                )}
-                
-                <RevisionRequestForm
-                  revisionNumber={(selectedPlanForRevision.currentRevisionNumber || 0) + 1}
-                  onSubmit={handleRevisionFeedback}
-                  onCancel={() => {
-                    setShowRevisionForm(false);
-                    setSelectedPlanForRevision(null);
-                  }}
-                  requestType="admin-feedback"
-                />
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
