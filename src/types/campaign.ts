@@ -1,4 +1,6 @@
 
+import { ContentSubmission } from './contentSubmission';
+
 export interface Campaign {
   id: string;
   title: string;
@@ -11,10 +13,11 @@ export interface Campaign {
   campaignEndDate: string;
   proposalDeadline: string;
   adType: 'branding' | 'live-commerce';
-  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-approved' | 'live' | 'monitoring' | 'completed';
+  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-revision' | 'content-approved' | 'live' | 'monitoring' | 'completed';
   targetContent: TargetContent;
   influencers: CampaignInfluencer[];
   contentPlans?: ContentPlan[];
+  contentSubmissions?: ContentSubmission[];
   currentStage: number;
   quote?: CampaignQuote;
   productionSchedule?: {
