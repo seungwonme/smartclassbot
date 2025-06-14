@@ -192,14 +192,16 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
               onClick={() => onInfluencerApproval(influencer.id, true)}
               className="bg-green-600 hover:bg-green-700"
             >
-              <Check className="w-3 h-3" />
+              <Check className="w-3 h-3 mr-1" />
+              승인
             </Button>
             <Button
               size="sm"
               variant="destructive"
               onClick={() => onInfluencerApproval(influencer.id, false)}
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3 mr-1" />
+              거절
             </Button>
           </>
         )}
