@@ -72,6 +72,15 @@ const AdminCampaigns = () => {
     }
   };
 
+  // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
+  const getActiveInfluencersCount = (influencers: Campaign['influencers']) => {
+    return influencers.filter(inf => 
+      inf.status !== 'brand-rejected' && 
+      inf.status !== 'admin-rejected' && 
+      inf.status !== 'rejected'
+    ).length;
+  };
+
   const handleCampaignDelete = async (campaignId: string, campaignTitle: string) => {
     if (!confirm(`정말로 "${campaignTitle}" 캠페인을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
       return;
@@ -366,7 +375,7 @@ const AdminCampaigns = () => {
                     </div>
                     <div className="flex items-center text-sm">
                       <Users className="w-4 h-4 mr-2 text-purple-600" />
-                      인플루언서: {campaign.influencers.length}명
+                      인플루언서: {getActiveInfluencersCount(campaign.influencers)}명
                     </div>
                     <div className="flex justify-between mt-4">
                       {shouldShowReceiveButton && (
