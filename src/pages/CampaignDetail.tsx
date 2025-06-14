@@ -1,142 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, XCircle, ExternalLink, Eye, FileText, Video } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, FileText, Video } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
-import { Campaign, CampaignInfluencer } from '@/types/campaign';
-import { campaignService } from '@/services/campaign.service';
-import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import InfluencerDetailModal from '@/components/InfluencerDetailModal';
-import XiaohongshuInfluencerDetailModal from '@/components/XiaohongshuInfluencerDetailModal';
+import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
+import { Campaign } from '@/types/campaign';
+import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 
 const CampaignDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
-  const [editingInfluencer, setEditingInfluencer] = useState<CampaignInfluencer | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    adFee: '',
-    region: '',
-    category: ''
-  });
-
-  const handleEditInfluencer = (influencer: CampaignInfluencer) => {
-    setEditingInfluencer(influencer);
-    setEditForm({
-      adFee: influencer.adFee?.toString() || '',
-      region: influencer.region || '',
-      category: influencer.category || ''
-    });
-    setIsEditModalOpen(true);
-  };
-
-  const handleSaveInfluencerEdit = async () => {
-    if (!campaign || !editingInfluencer) return;
-
-    try {
-      const updatedInfluencers = campaign.influencers.map(inf => 
-        inf.id === editingInfluencer.id 
-          ? { 
-              ...inf, 
-              adFee: editForm.adFee ? parseInt(editForm.adFee.replace(/,/g, '')) : undefined,
-              region: editForm.region,
-              category: editForm.category
-            }
-          : inf
-      );
-
-      await campaignService.updateCampaign(campaign.id, {
-        influencers: updatedInfluencers
-      });
-
-      setCampaign(prev => prev ? { ...prev, influencers: updatedInfluencers } : null);
-      setIsEditModalOpen(false);
-      setEditingInfluencer(null);
-      
-      toast({
-        title: "인플루언서 정보 수정 완료",
-        description: "인플루언서 정보가 성공적으로 수정되었습니다."
-      });
-    } catch (error) {
-      toast({
-        title: "수정 실패",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const formatBudget = (value: string) => {
-    const numbers = value.replace(/[^\d]/g, '');
-    return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
-
-  const handleAdFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatBudget(e.target.value);
-    setEditForm(prev => ({ ...prev, adFee: formatted }));
-  };
-
-  useEffect(() => {
-    const loadCampaign = async () => {
-      if (!id) return;
-      
-      try {
-        const data = await campaignService.getCampaignById(id);
-        if (data) {
-          // 기존 캠페인에 새 필드 기본값 설정
-          const updatedCampaign = {
-            ...data,
-            currentStage: data.currentStage || 1,
-            contentPlans: data.contentPlans || [],
-            contentProductions: data.contentProductions || []
-          };
-          setCampaign(updatedCampaign);
-          
-          // 현재 단계에 맞는 탭 자동 선택
-          if (updatedCampaign.currentStage >= 2) setActiveTab('planning');
-          if (updatedCampaign.currentStage >= 3) setActiveTab('content');
-          if (updatedCampaign.currentStage >= 4) setActiveTab('performance');
-        }
-      } catch (error) {
-        console.error('캠페인 로딩 실패:', error);
-        toast({
-          title: "캠페인을 불러올 수 없습니다",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCampaign();
-  }, [id, toast]);
+  const {
+    campaign,
+    isLoading,
+    activeTab,
+    setActiveTab,
+    handleEdit,
+    handleDelete,
+    handleSubmit,
+    handleInfluencerApproval,
+    handleFinalConfirmation,
+    updateCampaignInfluencers,
+    toast
+  } = useCampaignDetail();
 
   const getStatusColor = (status: Campaign['status']) => {
     switch (status) {
@@ -159,110 +48,6 @@ const CampaignDetail = () => {
       case 'confirmed': return '확정됨';
       case 'completed': return '완료됨';
       default: return status;
-    }
-  };
-
-  const handleEdit = () => {
-    navigate(`/brand/campaigns/edit/${id}`);
-  };
-
-  const handleDelete = async () => {
-    if (!campaign || campaign.status !== 'creating') return;
-    
-    if (confirm('정말로 이 캠페인을 삭제하시겠습니까?')) {
-      try {
-        await campaignService.deleteCampaign(campaign.id);
-        toast({
-          title: "캠페인이 삭제되었습니다"
-        });
-        navigate('/brand/campaigns');
-      } catch (error) {
-        toast({
-          title: "삭제 실패",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!campaign || campaign.status !== 'creating') return;
-    
-    try {
-      await campaignService.updateCampaign(campaign.id, { status: 'recruiting' });
-      setCampaign(prev => prev ? { ...prev, status: 'recruiting' } : null);
-      toast({
-        title: "캠페인이 제출되었습니다",
-        description: "시스템 관리자가 검토 후 인플루언서 섭외를 진행합니다."
-      });
-    } catch (error) {
-      toast({
-        title: "제출 실패",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleInfluencerApproval = async (influencerId: string, approved: boolean) => {
-    if (!campaign) return;
-    
-    try {
-      const updatedInfluencers = campaign.influencers.map(inf => 
-        inf.id === influencerId 
-          ? { ...inf, status: approved ? 'confirmed' as const : 'rejected' as const }
-          : inf
-      );
-
-      const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
-      
-      // 모든 인플루언서에 대한 결정이 완료되었는지 확인
-      const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'rejected');
-      const hasRejected = updatedInfluencers.some(inf => inf.status === 'rejected');
-      
-      let newStatus = campaign.status;
-      if (allDecided) {
-        if (hasRejected) {
-          newStatus = 'recruiting'; // 거절된 인플루언서가 있으면 다시 섭외중으로
-        } else {
-          newStatus = 'confirmed'; // 모든 인플루언서가 승인되면 확정완료
-        }
-      }
-
-      await campaignService.updateCampaign(campaign.id, {
-        influencers: updatedInfluencers,
-        status: newStatus
-      });
-
-      setCampaign({ ...updatedCampaign, status: newStatus });
-      
-      toast({
-        title: approved ? "인플루언서 승인" : "인플루언서 거절",
-        description: approved ? "인플루언서가 승인되었습니다." : "인플루언서가 거절되었습니다."
-      });
-    } catch (error) {
-      toast({
-        title: "처리 실패",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleFinalConfirmation = async () => {
-    if (!campaign) return;
-    
-    try {
-      await campaignService.updateCampaign(campaign.id, { status: 'completed' });
-      setCampaign(prev => prev ? { ...prev, status: 'completed' } : null);
-      
-      toast({
-        title: "캠페인 확정 완료",
-        description: "캠페인이 최종 확정되었습니다."
-      });
-    } catch (error) {
-      toast({
-        title: "확정 실패",
-        variant: "destructive"
-      });
     }
   };
 
@@ -289,46 +74,6 @@ const CampaignDetail = () => {
     return null;
   };
 
-  const formatFollowers = (count: number): string => {
-    if (count >= 1000000) {
-      return `${(count / 1000000).toFixed(1)}M`;
-    } else if (count >= 1000) {
-      return `${(count / 1000).toFixed(0)}K`;
-    }
-    return count.toString();
-  };
-
-  const handleViewPlatformPage = (influencer: any) => {
-    // 플랫폼별 URL 생성 로직
-    let platformUrl = '';
-    
-    const platform = influencer.platform || 'douyin'; // 기본값 설정
-    
-    if (platform === 'douyin') {
-      platformUrl = `https://www.douyin.com/user/${influencer.id}`;
-    } else if (platform === 'xiaohongshu') {
-      platformUrl = `https://www.xiaohongshu.com/user/profile/${influencer.id}`;
-    }
-    
-    if (platformUrl) {
-      window.open(platformUrl, '_blank');
-    }
-  };
-
-  const handleViewInfluencerDetail = (influencer: any) => {
-    // 인플루언서 상세 정보에 플랫폼 정보 추가하고 데이터 구조 맞춤
-    const influencerWithPlatform = {
-      ...influencer,
-      nickname: influencer.name || influencer.nickname || 'Unknown', // name을 nickname으로 매핑
-      platform: influencer.platform || 'douyin', // 기본값 설정
-      region: influencer.region || '서울',
-      category: Array.isArray(influencer.category) ? influencer.category : [influencer.category || '뷰티']
-    };
-    
-    setSelectedInfluencer(influencerWithPlatform);
-    setIsDetailModalOpen(true);
-  };
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -352,7 +97,6 @@ const CampaignDetail = () => {
   }
 
   const isCreating = campaign.status === 'creating';
-  const isProposing = campaign.status === 'proposing';
   const isConfirmed = campaign.status === 'confirmed';
   const nextAction = getNextAction();
 
@@ -501,177 +245,12 @@ const CampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="influencers" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  인플루언서 목록 ({campaign.influencers.length}명)
-                  {isProposing && (
-                    <Badge className="ml-2 bg-yellow-100 text-yellow-800">승인 대기</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {campaign.influencers.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-16">프로필</TableHead>
-                          <TableHead>닉네임</TableHead>
-                          <TableHead className="text-center">플랫폼</TableHead>
-                          <TableHead className="text-center">팔로워 수</TableHead>
-                          <TableHead className="text-center">참여율</TableHead>
-                          <TableHead className="text-center">지역</TableHead>
-                          <TableHead className="text-center">카테고리</TableHead>
-                          <TableHead className="text-center">광고비</TableHead>
-                          <TableHead className="text-center">상태</TableHead>
-                          <TableHead className="text-center w-32">관리</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {campaign.influencers.map((influencer) => (
-                          <TableRow key={influencer.id} className="hover:bg-gray-50">
-                            <TableCell>
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage src={influencer.profileImage} />
-                                <AvatarFallback>
-                                  {influencer.name.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-blue-600 font-medium cursor-pointer hover:underline">
-                                {influencer.name}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center">
-                                <img 
-                                  src={influencer.platform === 'xiaohongshu' ? 
-                                    "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
-                                    "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
-                                  } 
-                                  alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
-                                  className="w-6 h-6 rounded"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">{formatFollowers(influencer.followers)}</TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center">
-                                <span className="text-green-600 mr-1">↑</span>
-                                {influencer.engagementRate}%
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">{influencer.region || '서울'}</TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex flex-wrap gap-1 justify-center">
-                                <Badge variant="outline" className="text-xs">
-                                  {influencer.category}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {influencer.adFee ? (
-                                <span className="text-green-600 font-medium">
-                                  {influencer.adFee.toLocaleString()}원
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">미정</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge 
-                                variant={influencer.status === 'confirmed' ? 'default' : 'outline'}
-                                className={
-                                  influencer.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                  influencer.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                  'bg-yellow-100 text-yellow-800'
-                                }
-                              >
-                                {influencer.status === 'confirmed' ? '확정' :
-                                 influencer.status === 'rejected' ? '거절' : '대기'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex gap-1 justify-center">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleViewInfluencerDetail(influencer)}
-                                  className="p-2"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                {influencer.status === 'confirmed' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleEditInfluencer(influencer)}
-                                    className="p-2"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <p className="text-gray-500">선택된 인플루언서가 없습니다.</p>
-                )}
-
-                {isProposing && campaign.influencers.some(inf => inf.status === 'accepted') && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium mb-4">인플루언서 승인 관리</h3>
-                    <div className="space-y-3">
-                      {campaign.influencers
-                        .filter(inf => inf.status === 'accepted')
-                        .map((influencer) => (
-                          <div key={influencer.id} className="flex items-center justify-between p-3 bg-white rounded border">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage src={influencer.profileImage} />
-                                <AvatarFallback>
-                                  {influencer.name.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">{influencer.name}</span>
-                              {influencer.adFee && (
-                                <span className="text-sm text-green-600">
-                                  {influencer.adFee.toLocaleString()}원
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleInfluencerApproval(influencer.id, true)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                승인
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleInfluencerApproval(influencer.id, false)}
-                              >
-                                <XCircle className="w-3 h-3 mr-1" />
-                                거절
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <InfluencerManagementTab
+              campaign={campaign}
+              onInfluencerApproval={handleInfluencerApproval}
+              onUpdateInfluencers={updateCampaignInfluencers}
+              toast={toast}
+            />
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
@@ -722,91 +301,6 @@ const CampaignDetail = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* 인플루언서 상세보기 모달 */}
-        <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                인플루언서 상세보기
-              </DialogTitle>
-            </DialogHeader>
-            {selectedInfluencer && (
-              selectedInfluencer.platform === 'xiaohongshu' ? (
-                <XiaohongshuInfluencerDetailModal influencer={selectedInfluencer} />
-              ) : (
-                <InfluencerDetailModal influencer={selectedInfluencer} />
-              )
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* 인플루언서 수정 모달 */}
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Edit className="w-5 h-5" />
-                인플루언서 정보 수정
-              </DialogTitle>
-            </DialogHeader>
-            {editingInfluencer && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={editingInfluencer.profileImage} />
-                    <AvatarFallback>
-                      {editingInfluencer.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{editingInfluencer.name}</div>
-                    <div className="text-sm text-gray-500">{formatFollowers(editingInfluencer.followers)} 팔로워</div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="adFee">광고비 (원)</Label>
-                  <Input
-                    id="adFee"
-                    value={editForm.adFee}
-                    onChange={handleAdFeeChange}
-                    placeholder="5,000,000"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="region">지역</Label>
-                  <Input
-                    id="region"
-                    value={editForm.region}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, region: e.target.value }))}
-                    placeholder="서울"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category">카테고리</Label>
-                  <Input
-                    id="category"
-                    value={editForm.category}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                    placeholder="뷰티"
-                  />
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-                취소
-              </Button>
-              <Button onClick={handleSaveInfluencerEdit} className="bg-green-600 hover:bg-green-700">
-                저장
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

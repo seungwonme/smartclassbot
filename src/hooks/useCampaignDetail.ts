@@ -1,0 +1,180 @@
+
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Campaign, CampaignInfluencer } from '@/types/campaign';
+import { campaignService } from '@/services/campaign.service';
+import { useToast } from '@/hooks/use-toast';
+
+export const useCampaignDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('basic');
+
+  useEffect(() => {
+    const loadCampaign = async () => {
+      if (!id) return;
+      
+      try {
+        const data = await campaignService.getCampaignById(id);
+        if (data) {
+          const updatedCampaign = {
+            ...data,
+            currentStage: data.currentStage || 1,
+            contentPlans: data.contentPlans || [],
+            contentProductions: data.contentProductions || []
+          };
+          setCampaign(updatedCampaign);
+          
+          if (updatedCampaign.currentStage >= 2) setActiveTab('planning');
+          if (updatedCampaign.currentStage >= 3) setActiveTab('content');
+          if (updatedCampaign.currentStage >= 4) setActiveTab('performance');
+        }
+      } catch (error) {
+        console.error('캠페인 로딩 실패:', error);
+        toast({
+          title: "캠페인을 불러올 수 없습니다",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCampaign();
+  }, [id, toast]);
+
+  const handleEdit = () => {
+    navigate(`/brand/campaigns/edit/${id}`);
+  };
+
+  const handleDelete = async () => {
+    if (!campaign || campaign.status !== 'creating') return;
+    
+    if (confirm('정말로 이 캠페인을 삭제하시겠습니까?')) {
+      try {
+        await campaignService.deleteCampaign(campaign.id);
+        toast({
+          title: "캠페인이 삭제되었습니다"
+        });
+        navigate('/brand/campaigns');
+      } catch (error) {
+        toast({
+          title: "삭제 실패",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!campaign || campaign.status !== 'creating') return;
+    
+    try {
+      await campaignService.updateCampaign(campaign.id, { status: 'recruiting' });
+      setCampaign(prev => prev ? { ...prev, status: 'recruiting' } : null);
+      toast({
+        title: "캠페인이 제출되었습니다",
+        description: "시스템 관리자가 검토 후 인플루언서 섭외를 진행합니다."
+      });
+    } catch (error) {
+      toast({
+        title: "제출 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleInfluencerApproval = async (influencerId: string, approved: boolean) => {
+    if (!campaign) return;
+    
+    try {
+      const updatedInfluencers = campaign.influencers.map(inf => 
+        inf.id === influencerId 
+          ? { ...inf, status: approved ? 'confirmed' as const : 'rejected' as const }
+          : inf
+      );
+
+      const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
+      
+      const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'rejected');
+      const hasRejected = updatedInfluencers.some(inf => inf.status === 'rejected');
+      
+      let newStatus = campaign.status;
+      if (allDecided) {
+        if (hasRejected) {
+          newStatus = 'recruiting';
+        } else {
+          newStatus = 'confirmed';
+        }
+      }
+
+      await campaignService.updateCampaign(campaign.id, {
+        influencers: updatedInfluencers,
+        status: newStatus
+      });
+
+      setCampaign({ ...updatedCampaign, status: newStatus });
+      
+      toast({
+        title: approved ? "인플루언서 승인" : "인플루언서 거절",
+        description: approved ? "인플루언서가 승인되었습니다." : "인플루언서가 거절되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "처리 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFinalConfirmation = async () => {
+    if (!campaign) return;
+    
+    try {
+      await campaignService.updateCampaign(campaign.id, { status: 'completed' });
+      setCampaign(prev => prev ? { ...prev, status: 'completed' } : null);
+      
+      toast({
+        title: "캠페인 확정 완료",
+        description: "캠페인이 최종 확정되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "확정 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateCampaignInfluencers = async (updatedInfluencers: CampaignInfluencer[]) => {
+    if (!campaign) return;
+
+    try {
+      await campaignService.updateCampaign(campaign.id, {
+        influencers: updatedInfluencers
+      });
+
+      setCampaign(prev => prev ? { ...prev, influencers: updatedInfluencers } : null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return {
+    campaign,
+    setCampaign,
+    isLoading,
+    activeTab,
+    setActiveTab,
+    handleEdit,
+    handleDelete,
+    handleSubmit,
+    handleInfluencerApproval,
+    handleFinalConfirmation,
+    updateCampaignInfluencers,
+    toast
+  };
+};
