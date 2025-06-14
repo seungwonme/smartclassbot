@@ -95,9 +95,30 @@ export const campaignService = {
   getInfluencerRecommendations: async (budget: number, categories: string[]): Promise<CampaignInfluencer[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
-        const filtered = mockInfluencers.filter(inf => 
-          categories.includes(inf.category)
-        );
+        console.log('AI 추천 요청 - 예산:', budget, '카테고리:', categories);
+        
+        let filtered = mockInfluencers;
+        
+        // 카테고리가 선택된 경우에만 필터링
+        if (categories && categories.length > 0) {
+          filtered = mockInfluencers.filter(inf => 
+            categories.some(selectedCategory => 
+              inf.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+              selectedCategory.toLowerCase().includes(inf.category.toLowerCase())
+            )
+          );
+        }
+        
+        // 예산에 따른 추가 필터링 (예산이 높을수록 더 많은 인플루언서 추천)
+        if (budget > 0) {
+          const budgetTier = budget >= 50000000 ? 10 : budget >= 10000000 ? 8 : budget >= 5000000 ? 6 : 4;
+          filtered = filtered.slice(0, budgetTier);
+        } else {
+          // 예산 정보가 없어도 기본적으로 5명 정도는 추천
+          filtered = filtered.slice(0, 5);
+        }
+        
+        console.log('AI 추천 결과:', filtered.length, '명의 인플루언서');
         resolve(filtered);
       }, 800);
     }),
@@ -114,7 +135,8 @@ export const campaignService = {
     new Promise((resolve) => {
       setTimeout(() => {
         // 페르소나 기반 인플루언서 추천 로직
-        resolve(mockInfluencers.slice(0, 3));
+        const recommendedCount = budget >= 50000000 ? 8 : budget >= 10000000 ? 6 : 4;
+        resolve(mockInfluencers.slice(0, recommendedCount));
       }, 800);
     })
 };
