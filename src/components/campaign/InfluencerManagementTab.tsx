@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -297,33 +296,36 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
       )}
 
       {/* 인플루언서 상세보기 모달 */}
-      {selectedInfluencer && (
-        selectedInfluencer.platform === 'xiaohongshu' ? (
-          <XiaohongshuInfluencerDetailModal
-            influencer={{
-              ...selectedInfluencer,
-              nickname: selectedInfluencer.name,
-              platform: selectedInfluencer.platform || 'xiaohongshu',
-              region: selectedInfluencer.region || '서울',
-              category: [selectedInfluencer.category]
-            }}
-            isOpen={isDetailModalOpen}
-            onClose={handleCloseDetailModal}
-          />
-        ) : (
-          <InfluencerDetailModal
-            influencer={{
-              ...selectedInfluencer,
-              nickname: selectedInfluencer.name,
-              platform: selectedInfluencer.platform || 'douyin',
-              region: selectedInfluencer.region || '서울',
-              category: [selectedInfluencer.category]
-            }}
-            isOpen={isDetailModalOpen}
-            onClose={handleCloseDetailModal}
-          />
-        )
-      )}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>인플루언서 상세정보</DialogTitle>
+          </DialogHeader>
+          {selectedInfluencer && (
+            selectedInfluencer.platform === 'xiaohongshu' ? (
+              <XiaohongshuInfluencerDetailModal
+                influencer={{
+                  ...selectedInfluencer,
+                  nickname: selectedInfluencer.name,
+                  platform: selectedInfluencer.platform || 'xiaohongshu',
+                  region: selectedInfluencer.region || '서울',
+                  category: [selectedInfluencer.category]
+                }}
+              />
+            ) : (
+              <InfluencerDetailModal
+                influencer={{
+                  ...selectedInfluencer,
+                  nickname: selectedInfluencer.name,
+                  platform: selectedInfluencer.platform || 'douyin',
+                  region: selectedInfluencer.region || '서울',
+                  category: [selectedInfluencer.category]
+                }}
+              />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* 인플루언서 수정 모달 */}
       {editingInfluencer && (
