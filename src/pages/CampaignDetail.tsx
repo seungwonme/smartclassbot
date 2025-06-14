@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -86,11 +85,14 @@ const CampaignDetail = () => {
         
         // status를 올바른 타입으로 매핑
         let status: 'draft' | 'revision-requested' | 'revision-feedback' | 'approved' = 'draft';
-        if (plan.status === 'revision-requested' || plan.status === 'revision-feedback' || plan.status === 'approved' || plan.status === 'draft') {
-          status = plan.status as 'draft' | 'revision-requested' | 'revision-feedback' | 'approved';
+        if (plan.status === 'draft' || plan.status === 'approved') {
+          status = plan.status;
         } else if (plan.status === 'revision') {
           // 이전 'revision' 상태를 'revision-requested'로 매핑
           status = 'revision-requested';
+        } else {
+          // 기본값으로 draft 사용
+          status = 'draft';
         }
         
         return {
@@ -167,7 +169,7 @@ const CampaignDetail = () => {
             
             return {
               ...plan,
-              status: 'revision-requested' as const,
+              status: 'revision' as const,
               revisions: updatedRevisions
             };
           }
@@ -191,7 +193,7 @@ const CampaignDetail = () => {
           if (plan.id === planId) {
             return {
               ...plan,
-              status: 'revision-requested' as const,
+              status: 'revision' as const,
               revisions: [...(plan.revisions || []), newRevision]
             };
           }
