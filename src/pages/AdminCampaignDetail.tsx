@@ -109,8 +109,13 @@ const AdminCampaignDetail = () => {
         updatedAt: new Date().toISOString()
       };
 
+      // 콘텐츠 기획 목록에 추가
       setContentPlans(prev => [...prev, newPlan]);
+      
+      // 선택된 기획으로 설정하여 우측에 표시
       setSelectedPlan(newPlan);
+      
+      // 폼 닫기 및 선택된 인플루언서 초기화
       setShowCreateForm(false);
       setSelectedInfluencer(null);
 
@@ -138,10 +143,12 @@ const AdminCampaignDetail = () => {
         updatedAt: new Date().toISOString()
       };
 
+      // 콘텐츠 기획 목록 업데이트
       setContentPlans(prev => prev.map(plan => 
         plan.id === selectedPlan.id ? updatedPlan : plan
       ));
 
+      // 선택된 기획 업데이트
       setSelectedPlan(updatedPlan);
 
       toast({
