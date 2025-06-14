@@ -56,6 +56,7 @@ const AdminContentPlanning = () => {
             } : {
               postTitle: '',
               scenario: '',
+              scenarioFiles: [],
               script: '',
               hashtags: []
             },
