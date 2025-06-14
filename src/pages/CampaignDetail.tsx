@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -198,9 +197,11 @@ const CampaignDetail = () => {
     // 플랫폼별 URL 생성 로직
     let platformUrl = '';
     
-    if (influencer.platform === 'douyin') {
+    const platform = influencer.platform || 'douyin'; // 기본값 설정
+    
+    if (platform === 'douyin') {
       platformUrl = `https://www.douyin.com/user/${influencer.id}`;
-    } else if (influencer.platform === 'xiaohongshu') {
+    } else if (platform === 'xiaohongshu') {
       platformUrl = `https://www.xiaohongshu.com/user/profile/${influencer.id}`;
     }
     

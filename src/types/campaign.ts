@@ -1,5 +1,4 @@
 
-
 export interface Campaign {
   id: string;
   title: string;
@@ -43,6 +42,8 @@ export interface CampaignInfluencer {
   isSelected: boolean;
   status: 'pending' | 'accepted' | 'rejected' | 'replaced' | 'approved';
   adFee?: number;
+  platform?: 'douyin' | 'xiaohongshu';
+  region?: string;
 }
 
 export interface Persona {
@@ -53,4 +54,3 @@ export interface Persona {
   interests: string[];
   characteristics: string[];
 }
-
