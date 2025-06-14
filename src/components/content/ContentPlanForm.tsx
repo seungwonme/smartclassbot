@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ImageIcon, VideoIcon, X, Plus } from 'lucide-react';
+import { ImageIcon, VideoIcon, X, Plus, Upload } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { CampaignInfluencer } from '@/types/campaign';
 
@@ -87,13 +87,20 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     }
   };
 
-  const addReferenceImage = () => {
-    const imageUrl = prompt('Reference 이미지 URL을 입력하세요:');
-    if (imageUrl) {
-      setImageData(prev => ({
-        ...prev,
-        referenceImages: [...prev.referenceImages, imageUrl]
-      }));
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setImageData(prev => ({
+            ...prev,
+            referenceImages: [...prev.referenceImages, result]
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
@@ -167,10 +174,25 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
           <div>
             <Label>Reference 이미지</Label>
             <div className="mt-2">
-              <Button type="button" onClick={addReferenceImage} variant="outline" className="w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                Reference 이미지 URL 추가
-              </Button>
+              <div className="flex items-center justify-center w-full">
+                <label htmlFor="reference-images" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">클릭하여 업로드</span> 또는 드래그 앤 드롭
+                    </p>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF (최대 10MB)</p>
+                  </div>
+                  <input
+                    id="reference-images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
               {imageData.referenceImages.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   {imageData.referenceImages.map((image, index) => (
