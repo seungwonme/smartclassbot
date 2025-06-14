@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,6 +80,10 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
 
   const handleApprove = (planId: string) => {
     onApprove(planId);
+    // Close modal after approval
+    setSelectedPlan(null);
+    setShowRevisionForm(false);
+    resetComments();
     toast({
       title: "콘텐츠 기획 승인",
       description: "콘텐츠 기획이 승인되었습니다."
