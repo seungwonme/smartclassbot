@@ -2,12 +2,33 @@ import { Campaign, CampaignInfluencer, Persona } from "@/types/campaign";
 import { mockCampaigns, mockInfluencers, mockPersonas } from "@/mocks/campaign.mock";
 import { storageService } from "./storage.service";
 
-// 초기 데이터 시드 함수
+// 초기 데이터 시드 함수 (개선된 버전)
 const initializeCampaignData = () => {
+  console.log('=== 캠페인 데이터 초기화 시작 ===');
+  
   if (!storageService.isInitialized()) {
-    storageService.setCampaigns(mockCampaigns);
-    storageService.setInitialized();
+    console.log('초기 데이터 설정 중...');
+    const success = storageService.setCampaigns(mockCampaigns);
+    
+    if (success) {
+      storageService.setInitialized();
+      console.log('초기 데이터 설정 완료');
+    } else {
+      console.error('초기 데이터 설정 실패');
+    }
+  } else {
+    console.log('이미 초기화됨 - 데이터 무결성 검사');
+    const isValid = storageService.validateAllData();
+    
+    if (!isValid) {
+      console.log('데이터 무결성 검사 실패 - 재초기화');
+      storageService.clearAllData();
+      storageService.setCampaigns(mockCampaigns);
+      storageService.setInitialized();
+    }
   }
+  
+  console.log('=== 캠페인 데이터 초기화 완료 ===');
 };
 
 // 앱 시작 시 초기화
@@ -17,16 +38,33 @@ export const campaignService = {
   getCampaigns: async (): Promise<Campaign[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
+        console.log('=== campaignService.getCampaigns 시작 ===');
+        
         const campaigns = storageService.getCampaigns();
-        resolve(campaigns);
+        
+        // 필수 필드 보장
+        const normalizedCampaigns = campaigns.map(campaign => ({
+          ...campaign,
+          currentStage: campaign.currentStage || 1,
+          contentPlans: campaign.contentPlans || []
+        }));
+        
+        console.log('정규화된 캠페인 데이터:', normalizedCampaigns.length, '개');
+        console.log('=== campaignService.getCampaigns 완료 ===');
+        
+        resolve(normalizedCampaigns);
       }, 300);
     }),
 
   getCampaignById: async (id: string): Promise<Campaign | null> =>
     new Promise((resolve) => 
       setTimeout(() => {
+        console.log('=== campaignService.getCampaignById 시작 ===');
+        console.log('요청된 캠페인 ID:', id);
+        
         const campaigns = storageService.getCampaigns();
         const campaign = campaigns.find(c => c.id === id);
+        
         if (campaign) {
           // 기존 캠페인에 새 필드 기본값 추가
           const updatedCampaign = {
@@ -34,111 +72,125 @@ export const campaignService = {
             currentStage: campaign.currentStage || 1,
             contentPlans: campaign.contentPlans || []
           };
+          
+          console.log('찾은 캠페인:', updatedCampaign.title);
+          console.log('=== campaignService.getCampaignById 완료 ===');
           resolve(updatedCampaign);
         } else {
+          console.log('캠페인을 찾을 수 없음');
+          console.log('=== campaignService.getCampaignById 완료 ===');
           resolve(null);
         }
       }, 300)
     ),
 
   createCampaign: async (campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<Campaign> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       setTimeout(() => {
         console.log('=== campaignService.createCampaign 시작 ===');
         console.log('📨 받은 캠페인 데이터:', campaign);
-        console.log('📨 받은 캠페인 상태:', campaign.status);
         
-        const campaigns = storageService.getCampaigns();
-        const newCampaign: Campaign = {
-          ...campaign,
-          id: `c${Date.now()}`,
-          currentStage: 1,
-          contentPlans: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        console.log('🏗️ 생성될 새 캠페인:', newCampaign);
-        console.log('🏗️ 캠페인 상태:', newCampaign.status);
-        console.log('🏗️ 캠페인 ID:', newCampaign.id);
-        
-        campaigns.push(newCampaign);
-        storageService.setCampaigns(campaigns);
-        
-        console.log('💾 저장 완료 - 전체 캠페인 목록:', campaigns.length);
-        console.log('💾 저장된 캠페인들의 상태:', campaigns.map(c => ({ id: c.id, title: c.title, status: c.status })));
-        console.log('=== campaignService.createCampaign 완료 ===');
-        
-        resolve(newCampaign);
+        try {
+          const campaigns = storageService.getCampaigns();
+          const newCampaign: Campaign = {
+            ...campaign,
+            id: `c${Date.now()}`,
+            currentStage: 1,
+            contentPlans: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          console.log('🏗️ 생성될 새 캠페인:', newCampaign);
+          
+          campaigns.push(newCampaign);
+          const success = storageService.setCampaigns(campaigns);
+          
+          if (success) {
+            console.log('💾 저장 완료 - 전체 캠페인 목록:', campaigns.length);
+            console.log('=== campaignService.createCampaign 완료 ===');
+            resolve(newCampaign);
+          } else {
+            throw new Error('캠페인 저장 실패');
+          }
+        } catch (error) {
+          console.error('=== campaignService.createCampaign 실패 ===', error);
+          reject(error);
+        }
       }, 500);
     }),
 
   updateCampaign: async (id: string, updates: Partial<Campaign>): Promise<Campaign> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       setTimeout(() => {
         console.log('=== campaignService.updateCampaign 시작 ===');
         console.log('업데이트할 캠페인 ID:', id);
         console.log('업데이트 데이터:', updates);
         
-        if (updates.influencers) {
-          console.log('=== 인플루언서 광고비 정보 업데이트 ===');
-          updates.influencers.forEach(inf => {
-            console.log(`- ${inf.name}: 상태=${inf.status}, 광고비=${inf.adFee}원 (타입: ${typeof inf.adFee})`);
-          });
-        }
-        
-        const campaigns = storageService.getCampaigns();
-        const index = campaigns.findIndex(c => c.id === id);
-        if (index !== -1) {
-          const originalCampaign = campaigns[index];
-          console.log('원본 캠페인:', originalCampaign);
+        try {
+          const campaigns = storageService.getCampaigns();
+          const index = campaigns.findIndex(c => c.id === id);
           
-          if (updates.influencers && originalCampaign.influencers) {
-            console.log('=== 광고비 보존 확인 ===');
-            updates.influencers.forEach(updatedInf => {
-              const originalInf = originalCampaign.influencers.find(orig => orig.id === updatedInf.id);
-              if (originalInf) {
-                console.log(`인플루언서 ${updatedInf.name}:`);
-                console.log(`  - 원본 광고비: ${originalInf.adFee}원`);
-                console.log(`  - 업데이트된 광고비: ${updatedInf.adFee}원`);
-                console.log(`  - 광고비 보존됨: ${originalInf.adFee === updatedInf.adFee}`);
-              }
-            });
+          if (index !== -1) {
+            const originalCampaign = campaigns[index];
+            console.log('원본 캠페인:', originalCampaign.title);
+            
+            campaigns[index] = { 
+              ...campaigns[index], 
+              ...updates, 
+              updatedAt: new Date().toISOString() 
+            };
+            
+            console.log('업데이트된 캠페인:', campaigns[index].title);
+            
+            const success = storageService.setCampaigns(campaigns);
+            
+            if (success) {
+              console.log('=== campaignService.updateCampaign 완료 ===');
+              resolve(campaigns[index]);
+            } else {
+              throw new Error('캠페인 업데이트 저장 실패');
+            }
+          } else {
+            throw new Error('캠페인을 찾을 수 없음');
           }
-          
-          campaigns[index] = { 
-            ...campaigns[index], 
-            ...updates, 
-            updatedAt: new Date().toISOString() 
-          };
-          
-          console.log('업데이트된 캠페인:', campaigns[index]);
-          console.log('업데이트된 캠페인 상태:', campaigns[index].status);
-          
-          if (campaigns[index].influencers) {
-            console.log('=== 최종 저장된 인플루언서 광고비 ===');
-            campaigns[index].influencers.forEach(inf => {
-              console.log(`- ${inf.name}: ${inf.adFee}원 (상태: ${inf.status})`);
-            });
-          }
-          
-          storageService.setCampaigns(campaigns);
-          console.log('=== campaignService.updateCampaign 완료 ===');
-          resolve(campaigns[index]);
+        } catch (error) {
+          console.error('=== campaignService.updateCampaign 실패 ===', error);
+          reject(error);
         }
       }, 300);
     }),
 
   deleteCampaign: async (id: string): Promise<void> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       setTimeout(() => {
-        const campaigns = storageService.getCampaigns();
-        const index = campaigns.findIndex(c => c.id === id);
-        if (index !== -1) {
-          campaigns.splice(index, 1);
-          storageService.setCampaigns(campaigns);
+        console.log('=== campaignService.deleteCampaign 시작 ===');
+        console.log('삭제할 캠페인 ID:', id);
+        
+        try {
+          const campaigns = storageService.getCampaigns();
+          const index = campaigns.findIndex(c => c.id === id);
+          
+          if (index !== -1) {
+            const deletedCampaign = campaigns[index];
+            campaigns.splice(index, 1);
+            
+            const success = storageService.setCampaigns(campaigns);
+            
+            if (success) {
+              console.log('삭제된 캠페인:', deletedCampaign.title);
+              console.log('=== campaignService.deleteCampaign 완료 ===');
+              resolve();
+            } else {
+              throw new Error('캠페인 삭제 저장 실패');
+            }
+          } else {
+            throw new Error('삭제할 캠페인을 찾을 수 없음');
+          }
+        } catch (error) {
+          console.error('=== campaignService.deleteCampaign 실패 ===', error);
+          reject(error);
         }
-        resolve();
       }, 300);
     }),
 
