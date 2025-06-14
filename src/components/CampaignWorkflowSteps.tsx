@@ -12,8 +12,9 @@ const CampaignWorkflowSteps = ({ campaign }: CampaignWorkflowStepsProps) => {
   const steps = [
     { id: 1, title: '캠페인 생성', icon: CheckCircle },
     { id: 2, title: '콘텐츠 기획', icon: Clock },
-    { id: 3, title: '콘텐츠 검수', icon: Clock },
-    { id: 4, title: '성과 모니터링', icon: Clock },
+    { id: 3, title: '콘텐츠 제작', icon: Clock },
+    { id: 4, title: '콘텐츠 검수', icon: Clock },
+    { id: 5, title: '성과 모니터링', icon: Clock },
   ];
 
   const getStepStatus = (stepId: number) => {
