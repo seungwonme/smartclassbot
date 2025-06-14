@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
@@ -9,7 +10,8 @@ import CampaignInfluencerStep from '@/components/campaign/CampaignInfluencerStep
 import { useCampaignForm } from '@/hooks/useCampaignForm';
 import { CAMPAIGN_STEPS } from '@/constants/campaign';
 
-const CreateCampaign = () => {
+const CampaignEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const {
     currentStep,
@@ -21,6 +23,7 @@ const CreateCampaign = () => {
     filteredProducts,
     recommendedInfluencers,
     personas,
+    isEditMode,
     handleBudgetChange,
     handleBrandChange,
     handleProductChange,
@@ -28,7 +31,7 @@ const CreateCampaign = () => {
     handleAIRecommendation,
     handleInfluencerToggle,
     handleSubmit
-  } = useCampaignForm();
+  } = useCampaignForm(id);
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -81,7 +84,7 @@ const CreateCampaign = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             돌아가기
           </Button>
-          <h1 className="text-3xl font-bold">캠페인 생성</h1>
+          <h1 className="text-3xl font-bold">캠페인 수정</h1>
         </div>
 
         <div className="flex items-center justify-center mb-8">
@@ -132,7 +135,7 @@ const CreateCampaign = () => {
                 disabled={isLoading || formData.selectedInfluencers.length === 0}
                 className="bg-green-600 hover:bg-green-700"
               >
-                {isLoading ? '생성 중...' : '캠페인 생성'}
+                {isLoading ? '수정 중...' : '캠페인 수정'}
               </Button>
             )}
           </div>
@@ -142,4 +145,4 @@ const CreateCampaign = () => {
   );
 };
 
-export default CreateCampaign;
+export default CampaignEdit;

@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Campaign, CampaignInfluencer, Persona } from '@/types/campaign';
 import { Brand, Product } from '@/types/brand';
 import { campaignService } from '@/services/campaign.service';
@@ -29,7 +30,7 @@ export interface CampaignFormData {
   selectedInfluencers: string[];
 }
 
-export const useCampaignForm = () => {
+export const useCampaignForm = (campaignId?: string) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -40,6 +41,7 @@ export const useCampaignForm = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [isEditMode, setIsEditMode] = useState(!!campaignId);
   
   const [formData, setFormData] = useState<CampaignFormData>({
     title: '',
@@ -62,6 +64,46 @@ export const useCampaignForm = () => {
     },
     selectedInfluencers: []
   });
+
+  // Load campaign data for edit mode
+  useEffect(() => {
+    if (campaignId && isEditMode) {
+      const loadCampaignData = async () => {
+        setIsLoading(true);
+        try {
+          const campaign = await campaignService.getCampaignById(campaignId);
+          if (campaign) {
+            console.log('로드된 캠페인 데이터:', campaign);
+            setFormData({
+              title: campaign.title,
+              brandId: campaign.brandId,
+              brandName: campaign.brandName,
+              productId: campaign.productId,
+              productName: campaign.productName,
+              budget: campaign.budget.toLocaleString(),
+              proposalDeadline: campaign.proposalDeadline ? parseISO(campaign.proposalDeadline) : undefined,
+              campaignStartDate: campaign.campaignStartDate ? parseISO(campaign.campaignStartDate) : undefined,
+              campaignEndDate: campaign.campaignEndDate ? parseISO(campaign.campaignEndDate) : undefined,
+              adType: campaign.adType,
+              targetContent: campaign.targetContent,
+              selectedInfluencers: campaign.influencers.map(inf => inf.id)
+            });
+            setRecommendedInfluencers(campaign.influencers);
+          }
+        } catch (error) {
+          console.error('캠페인 데이터 로드 실패:', error);
+          toast({
+            title: "데이터 로드 실패",
+            description: "캠페인 데이터를 불러오는데 실패했습니다.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadCampaignData();
+    }
+  }, [campaignId, isEditMode, toast]);
 
   // Load brands and products data
   useEffect(() => {
@@ -208,28 +250,32 @@ export const useCampaignForm = () => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
-        status: 'creating', // 확실히 'creating' 상태로 설정
+        status: 'creating',
         currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };
 
-      console.log('캠페인 생성 데이터:', campaignData); // 디버깅용 로그 추가
-
-      await campaignService.createCampaign(campaignData);
+      if (isEditMode && campaignId) {
+        await campaignService.updateCampaign(campaignId, campaignData);
+        toast({
+          title: "캠페인 수정 완료",
+          description: "캠페인이 성공적으로 수정되었습니다."
+        });
+      } else {
+        await campaignService.createCampaign(campaignData);
+        toast({
+          title: "캠페인 생성 완료",
+          description: "캠페인이 성공적으로 생성되었습니다."
+        });
+      }
       
-      toast({
-        title: "캠페인 생성 완료",
-        description: "캠페인이 성공적으로 생성되었습니다."
-      });
-      
-      // Navigate to campaigns list page after successful creation
       navigate('/brand/campaigns');
     } catch (error) {
-      console.error('캠페인 생성 실패:', error); // 에러 로그 추가
+      console.error('캠페인 처리 실패:', error);
       toast({
-        title: "생성 실패",
-        description: "캠페인 생성에 실패했습니다.",
+        title: "처리 실패",
+        description: isEditMode ? "캠페인 수정에 실패했습니다." : "캠페인 생성에 실패했습니다.",
         variant: "destructive"
       });
     } finally {
@@ -247,6 +293,7 @@ export const useCampaignForm = () => {
     filteredProducts,
     recommendedInfluencers,
     personas,
+    isEditMode,
     handleBudgetChange,
     handleBrandChange,
     handleProductChange,

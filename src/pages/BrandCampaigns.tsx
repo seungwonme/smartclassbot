@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, Users, DollarSign } from 'lucide-react';
+import { Plus, Calendar, Users, DollarSign, Edit } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Campaign } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
@@ -54,6 +55,11 @@ const BrandCampaigns = () => {
     navigate(`/brand/campaigns/${campaignId}`);
   };
 
+  const handleEditClick = (e: React.MouseEvent, campaignId: string) => {
+    e.stopPropagation();
+    navigate(`/brand/campaigns/${campaignId}/edit`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -83,15 +89,27 @@ const BrandCampaigns = () => {
           {campaigns.map((campaign) => (
             <Card 
               key={campaign.id} 
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:shadow-lg transition-shadow cursor-pointer relative"
               onClick={() => handleCampaignClick(campaign.id)}
             >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                  <Badge className={getStatusColor(campaign.status)}>
-                    {getStatusText(campaign.status)}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getStatusColor(campaign.status)}>
+                      {getStatusText(campaign.status)}
+                    </Badge>
+                    {campaign.status === 'creating' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => handleEditClick(e, campaign.id)}
+                        className="p-1 h-6 w-6"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
               </CardHeader>
