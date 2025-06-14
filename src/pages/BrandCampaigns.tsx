@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,7 @@ const BrandCampaigns = () => {
 
   const handleEditClick = (e: React.MouseEvent, campaignId: string) => {
     e.stopPropagation();
-    navigate(`/brand/campaigns/${campaignId}/edit`);
+    navigate(`/brand/campaigns/edit/${campaignId}`);
   };
 
   if (isLoading) {
