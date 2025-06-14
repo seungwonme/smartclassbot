@@ -208,6 +208,12 @@ export const useCampaignForm = (campaignId?: string) => {
       );
       setRecommendedInfluencers(influencers);
       
+      // AI 추천 시 기존 선택된 인플루언서 초기화
+      setFormData(prev => ({
+        ...prev,
+        selectedInfluencers: []
+      }));
+      
       toast({
         title: "AI 추천 완료",
         description: `${influencers.length}명의 인플루언서를 추천했습니다.`
