@@ -353,6 +353,7 @@ const AdminCampaigns = () => {
                             
                             {selectedCampaign && (
                               <div className="space-y-6">
+                                
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>기본 정보</CardTitle>
@@ -433,7 +434,9 @@ const AdminCampaigns = () => {
                                               {influencer.status === 'accepted' && (
                                                 <div className="flex items-center space-x-2">
                                                   <Badge className="bg-green-100 text-green-800">승인됨</Badge>
-                                                  <span className="text-sm font-medium">{influencer.adFee?.toLocaleString()}원</span>
+                                                  <span className="text-sm font-medium text-green-600">
+                                                    {influencer.adFee?.toLocaleString()}원
+                                                  </span>
                                                   <Button
                                                     size="sm"
                                                     variant="outline"
@@ -473,21 +476,48 @@ const AdminCampaigns = () => {
                                     <div className="space-y-3">
                                       <div className="flex justify-between">
                                         <span>인플루언서 광고비 소계</span>
-                                        <span>{quote.subtotal.toLocaleString()}원</span>
+                                        <span className="font-medium">
+                                          {calculateQuote().subtotal.toLocaleString()}원
+                                        </span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span>대행료 (15%)</span>
-                                        <span>{quote.agencyFee.toLocaleString()}원</span>
+                                        <span className="font-medium">
+                                          {calculateQuote().agencyFee.toLocaleString()}원
+                                        </span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span>VAT (10%)</span>
-                                        <span>{quote.vat.toLocaleString()}원</span>
+                                        <span className="font-medium">
+                                          {calculateQuote().vat.toLocaleString()}원
+                                        </span>
                                       </div>
                                       <hr />
                                       <div className="flex justify-between font-bold text-lg">
                                         <span>총 합계</span>
-                                        <span>{quote.total.toLocaleString()}원</span>
+                                        <span className="text-green-600">
+                                          {calculateQuote().total.toLocaleString()}원
+                                        </span>
                                       </div>
+                                      
+                                      {/* 승인된 인플루언서 목록 표시 */}
+                                      {selectedCampaign.influencers.filter(inf => inf.status === 'accepted').length > 0 && (
+                                        <div className="mt-4 pt-4 border-t">
+                                          <h4 className="text-sm font-medium mb-2">승인된 인플루언서:</h4>
+                                          <div className="space-y-1">
+                                            {selectedCampaign.influencers
+                                              .filter(inf => inf.status === 'accepted')
+                                              .map((influencer) => (
+                                                <div key={influencer.id} className="flex justify-between text-sm">
+                                                  <span>{influencer.name}</span>
+                                                  <span className="text-green-600">
+                                                    {influencer.adFee?.toLocaleString()}원
+                                                  </span>
+                                                </div>
+                                              ))}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   </CardContent>
                                 </Card>
