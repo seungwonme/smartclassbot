@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -356,10 +355,10 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         ))}
       </div>
 
-      {/* 상세보기 모달 - A4 size width */}
+      {/* 상세보기 모달 - A4+ size width */}
       {selectedPlan && !showFeedbackForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white mx-4">
+          <Card className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white mx-4">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="flex items-center gap-2">
@@ -403,10 +402,10 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         </div>
       )}
 
-      {/* 피드백 모달 - A4 size width */}
+      {/* 피드백 모달 - A4+ size width */}
       {showFeedbackForm && selectedPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white mx-4">
+          <Card className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white mx-4">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>
