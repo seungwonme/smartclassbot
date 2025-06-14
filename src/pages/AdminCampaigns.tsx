@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Users, DollarSign, Eye, CheckCircle, XCircle, Plus, Edit } from 'lucide-react';
+import { Calendar, Users, DollarSign, Eye, CheckCircle, XCircle, Plus, Edit, Trash2 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
@@ -69,6 +69,37 @@ const AdminCampaigns = () => {
       case 'confirmed': return '확정됨';
       case 'completed': return '완료됨';
       default: return status;
+    }
+  };
+
+  const handleCampaignDelete = async (campaignId: string, campaignTitle: string) => {
+    if (!confirm(`정말로 "${campaignTitle}" 캠페인을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      console.log('=== 시스템 관리자 캠페인 삭제 시작 ===');
+      console.log('삭제할 캠페인 ID:', campaignId);
+      console.log('삭제할 캠페인 제목:', campaignTitle);
+      
+      await campaignService.deleteCampaign(campaignId);
+      
+      // 로컬 상태에서 캠페인 제거
+      setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+      
+      console.log('=== 시스템 관리자 캠페인 삭제 완료 ===');
+      
+      toast({
+        title: "캠페인 삭제 완료",
+        description: `"${campaignTitle}" 캠페인이 성공적으로 삭제되었습니다.`
+      });
+    } catch (error) {
+      console.error('=== 캠페인 삭제 실패 ===', error);
+      toast({
+        title: "삭제 실패",
+        description: "캠페인 삭제에 실패했습니다.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -307,9 +338,19 @@ const AdminCampaigns = () => {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                    <Badge className={getStatusColor(campaign.status)}>
-                      {getStatusText(campaign.status)}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={getStatusColor(campaign.status)}>
+                        {getStatusText(campaign.status)}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleCampaignDelete(campaign.id, campaign.title)}
+                        className="p-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
                 </CardHeader>
