@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Users, Edit } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentPlanList from '@/components/content/ContentPlanList';
@@ -39,8 +38,24 @@ const AdminContentPlanning = () => {
         const campaignData = await campaignService.getCampaignById(campaignId);
         if (campaignData) {
           setCampaign(campaignData);
-          // 실제 구현에서는 콘텐츠 기획 데이터를 별도 API로 로드
-          setContentPlans(campaignData.contentPlans || []);
+          // ContentPlan을 ContentPlanDetail로 변환하거나 빈 배열로 초기화
+          const plans: ContentPlanDetail[] = campaignData.contentPlans?.map(plan => ({
+            id: plan.id,
+            campaignId: plan.campaignId,
+            influencerId: plan.influencerId,
+            influencerName: plan.influencerName,
+            contentType: plan.contentType,
+            status: plan.status,
+            planData: {
+              postTitle: '',
+              script: '',
+              hashtags: []
+            },
+            revisions: plan.revisions,
+            createdAt: plan.createdAt,
+            updatedAt: plan.updatedAt
+          })) || [];
+          setContentPlans(plans);
         }
       } catch (error) {
         console.error('데이터 로딩 실패:', error);
