@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus, Send, X } from 'lucide-react';
+import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus, Send, X, Download } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
+import { downloadFile } from '@/utils/fileUtils';
 import ContentRevisionTimeline from './ContentRevisionTimeline';
 import RevisionRequestForm from './RevisionRequestForm';
 
@@ -253,6 +254,39 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     );
   };
 
+  const handleDownloadImage = async (imageData: string, index: number) => {
+    try {
+      const fileName = `reference_image_${index + 1}.png`;
+      downloadFile(imageData, fileName, 'image/png');
+      toast({
+        title: "이미지 다운로드 완료",
+        description: `${fileName} 파일이 다운로드되었습니다.`
+      });
+    } catch (error) {
+      toast({
+        title: "다운로드 실패",
+        description: "이미지를 다운로드할 수 없습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownloadScenarioFile = async (file: { name: string; data: string; type: string }) => {
+    try {
+      downloadFile(file.data, file.name, file.type);
+      toast({
+        title: "파일 다운로드 완료",
+        description: `${file.name} 파일이 다운로드되었습니다.`
+      });
+    } catch (error) {
+      toast({
+        title: "다운로드 실패",
+        description: "파일을 다운로드할 수 없습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const renderPlanData = (plan: ContentPlanDetail) => {
     console.log('Rendering plan data for:', plan.influencerName, plan.planData);
     
@@ -281,7 +315,17 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             imageData.referenceImages && imageData.referenceImages.length > 0 ? (
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {imageData.referenceImages.map((image, index) => (
-                  <img key={index} src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded border" />
+                  <div key={index} className="relative border rounded p-2">
+                    <img src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded mb-2" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="absolute bottom-1 right-1 text-xs px-2 py-1 h-6"
+                      onClick={() => handleDownloadImage(image, index)}
+                    >
+                      <Download className="w-3 h-3" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -337,8 +381,16 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             videoData.scenarioFiles && videoData.scenarioFiles.length > 0 ? (
               <div className="space-y-2 mt-2">
                 {videoData.scenarioFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                     <span className="text-sm">{file.name}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs px-2 py-1 h-6"
+                      onClick={() => handleDownloadScenarioFile(file)}
+                    >
+                      <Download className="w-3 h-3" />
+                    </Button>
                   </div>
                 ))}
               </div>

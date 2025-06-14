@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,9 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ImageIcon, VideoIcon, X, Plus, Upload, FileText } from 'lucide-react';
+import { ImageIcon, VideoIcon, X, Plus, Upload, FileText, Download } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { CampaignInfluencer } from '@/types/campaign';
+import { downloadFile, getFileIcon } from '@/utils/fileUtils';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContentPlanFormProps {
   influencer: CampaignInfluencer;
@@ -44,6 +45,7 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     hashtags: []
   });
   const [hashtagInput, setHashtagInput] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     console.log('=== ContentPlanForm 데이터 로딩 ===');
@@ -184,6 +186,39 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     }));
   };
 
+  const handleDownloadScenarioFile = async (file: { name: string; data: string; type: string }) => {
+    try {
+      downloadFile(file.data, file.name, file.type);
+      toast({
+        title: "파일 다운로드 완료",
+        description: `${file.name} 파일이 다운로드되었습니다.`
+      });
+    } catch (error) {
+      toast({
+        title: "다운로드 실패",
+        description: "파일을 다운로드할 수 없습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownloadImage = async (imageData: string, index: number) => {
+    try {
+      const fileName = `reference_image_${index + 1}.png`;
+      downloadFile(imageData, fileName, 'image/png');
+      toast({
+        title: "이미지 다운로드 완료",
+        description: `${fileName} 파일이 다운로드되었습니다.`
+      });
+    } catch (error) {
+      toast({
+        title: "다운로드 실패",
+        description: "이미지를 다운로드할 수 없습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSave = () => {
     console.log('=== 기획안 저장 시작 ===');
     console.log('contentType:', contentType);
@@ -287,14 +322,24 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
                   {imageData.referenceImages.map((image, index) => (
                     <div key={index} className="relative border rounded p-2">
                       <img src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded mb-2" />
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-1 right-1 w-6 h-6 p-0"
-                        onClick={() => removeImage(index)}
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
+                      <div className="flex justify-between items-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs px-2 py-1 h-6"
+                          onClick={() => handleDownloadImage(image, index)}
+                        >
+                          <Download className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="w-6 h-6 p-0"
+                          onClick={() => removeImage(index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -371,14 +416,24 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
                           <FileText className="w-4 h-4 text-gray-500" />
                           <span className="text-sm">{file.name}</span>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="w-6 h-6 p-0"
-                          onClick={() => removeScenarioFile(index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs px-2 py-1 h-6"
+                            onClick={() => handleDownloadScenarioFile(file)}
+                          >
+                            <Download className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="w-6 h-6 p-0"
+                            onClick={() => removeScenarioFile(index)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
