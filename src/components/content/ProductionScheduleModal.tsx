@@ -2,11 +2,15 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, Clock, FileText } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon, Clock, FileText } from 'lucide-react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface ProductionScheduleModalProps {
   isOpen: boolean;
@@ -25,41 +29,34 @@ const ProductionScheduleModal: React.FC<ProductionScheduleModalProps> = ({
   onSubmit,
   campaignTitle
 }) => {
-  const [formData, setFormData] = useState({
-    startDate: '',
-    endDate: '',
-    notes: ''
-  });
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [notes, setNotes] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.startDate || !formData.endDate) {
-      alert('제작 시작일과 마감일을 모두 입력해주세요.');
+    if (!startDate || !endDate) {
+      alert('제작 시작일과 마감일을 모두 선택해주세요.');
       return;
     }
 
-    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
+    if (startDate >= endDate) {
       alert('마감일은 시작일보다 늦어야 합니다.');
       return;
     }
 
-    onSubmit(formData);
+    onSubmit({
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      notes
+    });
     onClose();
     
     // 폼 리셋
-    setFormData({
-      startDate: '',
-      endDate: '',
-      notes: ''
-    });
-  };
-
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setNotes('');
   };
 
   return (
@@ -83,33 +80,65 @@ const ProductionScheduleModal: React.FC<ProductionScheduleModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startDate" className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                  <Label className="flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4" />
                     제작 시작일
                   </Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleChange('startDate', e.target.value)}
-                    className="mt-1"
-                    required
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal mt-1",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "yyyy년 MM월 dd일", { locale: ko }) : "시작일 선택"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 
                 <div>
-                  <Label htmlFor="endDate" className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                  <Label className="flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4" />
                     제작 마감일
                   </Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleChange('endDate', e.target.value)}
-                    className="mt-1"
-                    required
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal mt-1",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "yyyy년 MM월 dd일", { locale: ko }) : "마감일 선택"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        disabled={(date) => date < new Date() || (startDate && date <= startDate)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               
@@ -120,8 +149,8 @@ const ProductionScheduleModal: React.FC<ProductionScheduleModalProps> = ({
                 </Label>
                 <Textarea
                   id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleChange('notes', e.target.value)}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   placeholder="제작 시 주의사항이나 가이드라인을 입력하세요..."
                   className="mt-1"
                   rows={3}
