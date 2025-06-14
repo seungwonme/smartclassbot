@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -135,11 +136,30 @@ const AdminContentPlanning = () => {
     setWorkMode('revision');
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return '기획초안';
+      case 'revision':
+        return '기획수정중';
+      case 'approved':
+        return '기획완료';
+      default:
+        return status;
+    }
+  };
+
   const handleSavePlan = async (planData: Partial<ContentPlanDetail>) => {
     try {
       console.log('=== 콘텐츠 기획안 저장 시작 ===');
       console.log('저장할 기획안 데이터:', planData);
       console.log('편집 중인 기획안:', editingPlan);
+      
+      // 기획안 상태 결정: 새 기획안은 기획초안, 수정중인 기획안은 기획수정중
+      let planStatus: 'draft' | 'revision' | 'approved' = 'draft';
+      if (editingPlan && editingPlan.status === 'revision') {
+        planStatus = 'revision';
+      }
       
       const newPlan: ContentPlanDetail = {
         id: editingPlan?.id || `plan_${Date.now()}`,
@@ -147,7 +167,7 @@ const AdminContentPlanning = () => {
         influencerId: planData.influencerId!,
         influencerName: planData.influencerName!,
         contentType: planData.contentType!,
-        status: 'draft',
+        status: planStatus,
         planData: planData.planData!,
         revisions: editingPlan?.revisions || [],
         currentRevisionNumber: editingPlan?.currentRevisionNumber || 0,
@@ -189,14 +209,11 @@ const AdminContentPlanning = () => {
 
       setContentPlans(updatedPlans);
       
-      setWorkMode('idle');
-      setSelectedInfluencerForWork(null);
-      setEditingPlan(null);
-      
       console.log('=== 콘텐츠 기획안 저장 완료 ===');
       
       toast({
-        title: "콘텐츠 기획이 저장되었습니다"
+        title: "콘텐츠 기획이 저장되었습니다",
+        description: `상태: ${getStatusText(planStatus)}`
       });
     } catch (error) {
       console.error('기획안 저장 실패:', error);
@@ -224,13 +241,14 @@ const AdminContentPlanning = () => {
         respondedBy: '시스템 관리자'
       };
 
+      // 피드백 전송 시 상태를 기획수정중으로 변경
       const updatedPlans = contentPlans.map(plan => {
         if (plan.id === editingPlan.id) {
           return {
             ...plan,
             revisions: [...plan.revisions, newRevision],
             currentRevisionNumber: newRevision.revisionNumber,
-            status: 'submitted' as const,
+            status: 'revision' as const,
             updatedAt: new Date().toISOString()
           };
         }
@@ -255,14 +273,10 @@ const AdminContentPlanning = () => {
       });
 
       setContentPlans(updatedPlans);
-      
-      setWorkMode('idle');
-      setSelectedInfluencerForWork(null);
-      setEditingPlan(null);
 
       toast({
         title: "수정 피드백 전송 완료",
-        description: "브랜드 관리자에게 수정 피드백이 전송되었습니다."
+        description: "브랜드 관리자에게 수정된 기획안과 피드백이 전송되었습니다. 상태: 기획수정중"
       });
     } catch (error) {
       console.error('수정 피드백 전송 실패:', error);
@@ -306,6 +320,16 @@ const AdminContentPlanning = () => {
               <div className="flex items-center gap-2">
                 <span>콘텐츠 기획 - {selectedInfluencerForWork.name}</span>
                 <Badge variant="outline">{selectedInfluencerForWork.category}</Badge>
+                {editingPlan && (
+                  <Badge className={
+                    editingPlan.status === 'draft' ? 'bg-blue-100 text-blue-800' :
+                    editingPlan.status === 'revision' ? 'bg-orange-100 text-orange-800' :
+                    editingPlan.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    'bg-gray-100 text-gray-800'
+                  }>
+                    {getStatusText(editingPlan.status)}
+                  </Badge>
+                )}
               </div>
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleBackToIdle}>
@@ -316,38 +340,35 @@ const AdminContentPlanning = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {/* 수정 이력 표시 */}
+            {/* 상단: 수정 이력 */}
             {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && (
-              <div className="border-b pb-6">
+              <div>
                 <ContentRevisionTimeline revisions={editingPlan.revisions} />
               </div>
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 기획안 폼 */}
-              <div className="lg:col-span-1">
-                <ContentPlanForm
-                  influencer={selectedInfluencerForWork}
-                  campaignId={campaign!.id}
-                  existingPlan={editingPlan || undefined}
-                  onSave={handleSavePlan}
+            {/* 중단: 기획 내용 */}
+            <div>
+              <ContentPlanForm
+                influencer={selectedInfluencerForWork}
+                campaignId={campaign!.id}
+                existingPlan={editingPlan || undefined}
+                onSave={handleSavePlan}
+                onCancel={handleBackToIdle}
+              />
+            </div>
+            
+            {/* 하단: 수정 피드백 섹션 */}
+            {editingPlan && (
+              <div className="border-t pt-6">
+                <RevisionRequestForm
+                  revisionNumber={(editingPlan.currentRevisionNumber || 0) + 1}
+                  onSubmit={handleRevisionFeedback}
                   onCancel={handleBackToIdle}
+                  requestType="admin-feedback"
                 />
               </div>
-              
-              {/* 수정 피드백 폼 */}
-              {workMode === 'revision' && editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && 
-               editingPlan.revisions.some(rev => rev.requestedBy === 'brand' && rev.status !== 'completed') && (
-                <div className="lg:col-span-1">
-                  <RevisionRequestForm
-                    revisionNumber={(editingPlan.currentRevisionNumber || 0) + 1}
-                    onSubmit={handleRevisionFeedback}
-                    onCancel={handleBackToIdle}
-                    requestType="admin-feedback"
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -408,7 +429,7 @@ const AdminContentPlanning = () => {
         </div>
 
         <div className="grid grid-cols-12 gap-6">
-          {/* 좌측: 인플루언서 목록 - 폭 축소 */}
+          {/* 좌측: 인플루언서 목록 */}
           <div className="col-span-4">
             <Card>
               <CardHeader>
@@ -439,8 +460,13 @@ const AdminContentPlanning = () => {
                           <p className="text-sm text-gray-500 truncate">{influencer.category}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {existingPlan && (
-                              <Badge variant="outline" className="text-xs">
-                                기획완료
+                              <Badge variant="outline" className={`text-xs ${
+                                existingPlan.status === 'draft' ? 'bg-blue-50 text-blue-700' :
+                                existingPlan.status === 'revision' ? 'bg-orange-50 text-orange-700' :
+                                existingPlan.status === 'approved' ? 'bg-green-50 text-green-700' :
+                                'bg-gray-50 text-gray-700'
+                              }`}>
+                                {getStatusText(existingPlan.status)}
                               </Badge>
                             )}
                             {hasRevisionRequest && (
@@ -482,7 +508,7 @@ const AdminContentPlanning = () => {
             </Card>
           </div>
 
-          {/* 우측: 작업 영역 - 폭 확대 */}
+          {/* 우측: 작업 영역 */}
           <div className="col-span-8">
             {renderWorkArea()}
           </div>
