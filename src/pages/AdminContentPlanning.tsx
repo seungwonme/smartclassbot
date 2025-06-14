@@ -25,6 +25,9 @@ const AdminContentPlanning: React.FC = () => {
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [selectedContentType, setSelectedContentType] = useState<'image' | 'video'>('image');
 
+  console.log('=== AdminContentPlanning 렌더링 시작 ===');
+  console.log('캠페인 ID:', id);
+
   // 캠페인 데이터 로드
   const { data: campaign, isLoading: campaignLoading, error: campaignError } = useQuery({
     queryKey: ['campaign', id],
@@ -45,6 +48,13 @@ const AdminContentPlanning: React.FC = () => {
     queryFn: () => contentSubmissionService.getContentSubmissions(id!),
     enabled: !!id
   });
+
+  console.log('=== AdminContentPlanning 데이터 상태 ===');
+  console.log('캠페인 로딩중:', campaignLoading);
+  console.log('캠페인 데이터:', campaign);
+  console.log('콘텐츠 기획안 개수:', contentPlans.length);
+  console.log('콘텐츠 제출물 개수:', contentSubmissions.length);
+  console.log('캠페인 에러:', campaignError);
 
   const approvePlanMutation = useMutation({
     mutationFn: (planId: string) => contentService.updateContentPlan(id!, planId, { status: 'approved' }),
@@ -158,6 +168,9 @@ const AdminContentPlanning: React.FC = () => {
   const getStageInfo = () => {
     if (!campaign) return { stage: 0, title: '', description: '' };
 
+    console.log('=== getStageInfo 호출 ===');
+    console.log('캠페인 상태:', campaign.status);
+
     switch (campaign.status) {
       case 'producing':
         return {
@@ -194,6 +207,7 @@ const AdminContentPlanning: React.FC = () => {
 
   // 로딩 상태 처리
   if (campaignLoading) {
+    console.log('=== 캠페인 로딩중 ===');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -220,6 +234,7 @@ const AdminContentPlanning: React.FC = () => {
   }
 
   if (!campaign) {
+    console.log('=== 캠페인 데이터 없음 ===');
     return (
       <div className="text-center py-12">
         <p>캠페인을 찾을 수 없습니다.</p>
@@ -228,6 +243,10 @@ const AdminContentPlanning: React.FC = () => {
   }
 
   const stageInfo = getStageInfo();
+  console.log('=== 최종 렌더링 정보 ===');
+  console.log('스테이지 정보:', stageInfo);
+  console.log('캠페인 제목:', campaign.title);
+  console.log('인플루언서 수:', campaign.influencers?.length || 0);
 
   return (
     <div className="space-y-6">
@@ -259,6 +278,16 @@ const AdminContentPlanning: React.FC = () => {
                 <p className="text-sm text-gray-600">{stageInfo.description}</p>
               </div>
             </div>
+            
+            {/* 디버그 정보 추가 */}
+            <div className="mt-4 p-3 bg-gray-50 rounded text-xs">
+              <p><strong>디버그 정보:</strong></p>
+              <p>캠페인 ID: {campaign.id}</p>
+              <p>캠페인 상태: {campaign.status}</p>
+              <p>콘텐츠 기획안: {contentPlans.length}개</p>
+              <p>콘텐츠 제출물: {contentSubmissions.length}개</p>
+              <p>인플루언서: {campaign.influencers?.length || 0}명</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -271,13 +300,27 @@ const AdminContentPlanning: React.FC = () => {
         </TabsList>
 
         <TabsContent value="content-plans">
-          <BrandContentPlanReview
-            plans={contentPlans}
-            onApprove={(planId) => approvePlanMutation.mutate(planId)}
-            onRequestRevision={(planId, feedback) => 
-              requestRevisionMutation.mutate({ planId, feedback })
-            }
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>콘텐츠 기획안 관리</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {contentPlans.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">등록된 콘텐츠 기획안이 없습니다.</p>
+                  <p className="text-sm text-gray-400">인플루언서가 콘텐츠 기획안을 제출하면 여기에 표시됩니다.</p>
+                </div>
+              ) : (
+                <BrandContentPlanReview
+                  plans={contentPlans}
+                  onApprove={(planId) => approvePlanMutation.mutate(planId)}
+                  onRequestRevision={(planId, feedback) => 
+                    requestRevisionMutation.mutate({ planId, feedback })
+                  }
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="content-upload">
@@ -290,69 +333,75 @@ const AdminContentPlanning: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {campaign.influencers?.map((influencer) => (
-                    <Card key={influencer.id}>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Users className="w-5 h-5" />
-                          {influencer.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <p className="text-sm text-gray-600">
-                            카테고리: {influencer.category}
-                          </p>
-                          
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleShowUploadForm(influencer, 'image')}
-                              className="flex items-center gap-2"
-                            >
-                              <ImageIcon className="w-4 h-4" />
-                              이미지 업로드
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleShowUploadForm(influencer, 'video')}
-                              className="flex items-center gap-2"
-                            >
-                              <VideoIcon className="w-4 h-4" />
-                              영상 업로드
-                            </Button>
-                          </div>
-
-                          {contentSubmissions.filter(s => s.influencerId === influencer.id).length > 0 && (
-                            <div className="mt-4">
-                              <p className="text-sm font-medium mb-2">제출된 콘텐츠:</p>
-                              <div className="space-y-1">
-                                {contentSubmissions
-                                  .filter(s => s.influencerId === influencer.id)
-                                  .map(submission => (
-                                    <div key={submission.id} className="text-xs text-gray-600 flex items-center gap-2">
-                                      {submission.contentType === 'image' ? (
-                                        <ImageIcon className="w-3 h-3" />
-                                      ) : (
-                                        <VideoIcon className="w-3 h-3" />
-                                      )}
-                                      {submission.contentType === 'image' ? '이미지' : '영상'} - {submission.contentFiles.length}개 파일
-                                      <Badge variant="outline" className="text-xs">
-                                        {submission.status === 'draft' ? '검수대기' : 
-                                         submission.status === 'revision' ? '수정중' : '승인완료'}
-                                      </Badge>
-                                    </div>
-                                  ))}
-                              </div>
+                {!campaign.influencers || campaign.influencers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">확정된 인플루언서가 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {campaign.influencers?.map((influencer) => (
+                      <Card key={influencer.id}>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5" />
+                            {influencer.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <p className="text-sm text-gray-600">
+                              카테고리: {influencer.category}
+                            </p>
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleShowUploadForm(influencer, 'image')}
+                                className="flex items-center gap-2"
+                              >
+                                <ImageIcon className="w-4 h-4" />
+                                이미지 업로드
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleShowUploadForm(influencer, 'video')}
+                                className="flex items-center gap-2"
+                              >
+                                <VideoIcon className="w-4 h-4" />
+                                영상 업로드
+                              </Button>
                             </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+
+                            {contentSubmissions.filter(s => s.influencerId === influencer.id).length > 0 && (
+                              <div className="mt-4">
+                                <p className="text-sm font-medium mb-2">제출된 콘텐츠:</p>
+                                <div className="space-y-1">
+                                  {contentSubmissions
+                                    .filter(s => s.influencerId === influencer.id)
+                                    .map(submission => (
+                                      <div key={submission.id} className="text-xs text-gray-600 flex items-center gap-2">
+                                        {submission.contentType === 'image' ? (
+                                          <ImageIcon className="w-3 h-3" />
+                                        ) : (
+                                          <VideoIcon className="w-3 h-3" />
+                                        )}
+                                        {submission.contentType === 'image' ? '이미지' : '영상'} - {submission.contentFiles.length}개 파일
+                                        <Badge variant="outline" className="text-xs">
+                                          {submission.status === 'draft' ? '검수대기' : 
+                                           submission.status === 'revision' ? '수정중' : '승인완료'}
+                                        </Badge>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -376,13 +425,27 @@ const AdminContentPlanning: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="content-review">
-          <BrandContentReview
-            submissions={contentSubmissions}
-            onApprove={(submissionId) => approveSubmissionMutation.mutate(submissionId)}
-            onRequestRevision={(submissionId, feedback) => 
-              requestSubmissionRevisionMutation.mutate({ submissionId, feedback })
-            }
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>콘텐츠 검수</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {contentSubmissions.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">제출된 콘텐츠가 없습니다.</p>
+                  <p className="text-sm text-gray-400">인플루언서가 콘텐츠를 업로드하면 여기에 표시됩니다.</p>
+                </div>
+              ) : (
+                <BrandContentReview
+                  submissions={contentSubmissions}
+                  onApprove={(submissionId) => approveSubmissionMutation.mutate(submissionId)}
+                  onRequestRevision={(submissionId, feedback) => 
+                    requestSubmissionRevisionMutation.mutate({ submissionId, feedback })
+                  }
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
