@@ -196,9 +196,9 @@ const AdminContentPlanning = () => {
   };
 
   const handleContentUpdated = () => {
-    console.log('=== 콘텐츠 수정됨 - 조건부 피드백 섹션 활성화 ===');
-    // 저장 후에만 피드백 섹션을 보여주도록 변경 - 이 함수에서는 상태 변경하지 않음
-    // 저장 버튼 클릭 후 handleSavePlan에서 처리하도록 함
+    console.log('=== 콘텐츠 수정됨 - 콘텐츠 업데이트만 처리 ===');
+    // 콘텐츠가 수정되었다는 것만 로깅하고, 피드백 섹션은 표시하지 않음
+    // 저장 후에만 피드백 섹션을 보여주도록 함
   };
 
   // 상태 표시 텍스트 통일
@@ -275,11 +275,14 @@ const AdminContentPlanning = () => {
 
       setContentPlans(updatedPlans);
       
-      // 저장 후 피드백 섹션 표시 여부 결정
+      // 저장 후에만 피드백 섹션 표시 여부 결정
       const savedPlan = updatedPlans.find(p => p.id === newPlan.id);
       if (savedPlan && savedPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand')) {
         console.log('저장 후 대기중인 브랜드 수정요청이 있어 피드백 섹션 활성화');
         setShowRevisionFeedback(true);
+      } else {
+        // 저장 후 대기중인 수정요청이 없으면 피드백 섹션 숨김
+        setShowRevisionFeedback(false);
       }
       
       console.log('=== 콘텐츠 기획안 저장 완료 ===');
@@ -491,7 +494,7 @@ const AdminContentPlanning = () => {
               />
             </div>
             
-            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback 상태에 따라 표시 */}
+            {/* 하단: 수정 피드백 섹션 - 저장 후에만 표시 */}
             {showRevisionFeedback && hasPendingRevision && (
               <div className="border-t pt-6">
                 {(() => {
