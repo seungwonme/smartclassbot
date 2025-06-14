@@ -123,10 +123,10 @@ export const storageService = {
   // 데이터 검증
   validateAllData: (): boolean => {
     try {
-      const campaigns = this.getCampaigns();
-      const brands = this.getBrands();
-      const products = this.getProducts();
-      const contentPlans = this.getContentPlans();
+      const campaigns = storageService.getCampaigns();
+      const brands = storageService.getBrands();
+      const products = storageService.getProducts();
+      const contentPlans = storageService.getContentPlans();
       
       console.log('데이터 무결성 검사 결과:', {
         campaigns: campaigns?.length || 0,
