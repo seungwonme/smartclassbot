@@ -184,7 +184,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('edit');
-    setShowRevisionFeedback(false); // 수정 시작 시에는 항상 false
+    setShowRevisionFeedback(false); // 편집 시작 시에는 항상 false로 설정
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
@@ -445,6 +445,7 @@ const AdminContentPlanning = () => {
       );
     }
 
+    // pending revision 체크는 showRevisionFeedback 상태와 함께 사용
     const hasPendingRevision = editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand');
 
     return (
@@ -494,7 +495,7 @@ const AdminContentPlanning = () => {
               />
             </div>
             
-            {/* 하단: 수정 피드백 섹션 - 저장 후에만 표시 */}
+            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback이 true이고 pending revision이 있을 때만 표시 */}
             {showRevisionFeedback && hasPendingRevision && (
               <div className="border-t pt-6">
                 {(() => {
