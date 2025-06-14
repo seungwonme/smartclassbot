@@ -25,6 +25,7 @@ import AdminBrandDetail from "./pages/AdminBrandDetail";
 import AdminProductDetail from "./pages/AdminProductDetail";
 import BrandCampaigns from "./pages/BrandCampaigns";
 import CreateCampaign from "./pages/CreateCampaign";
+import CampaignEdit from "./pages/CampaignEdit";
 import CampaignDetail from "./pages/CampaignDetail";
 import AdminCampaigns from "./pages/AdminCampaigns";
 import BrandInfluencers from "./pages/BrandInfluencers";
@@ -51,7 +52,7 @@ const App = () => (
           <Route path="/brand/campaigns" element={<BrandCampaigns />} />
           <Route path="/brand/campaigns/create" element={<CreateCampaign />} />
           <Route path="/brand/campaigns/:id" element={<CampaignDetail />} />
-          <Route path="/brand/campaigns/edit/:id" element={<CreateCampaign />} />
+          <Route path="/brand/campaigns/:id/edit" element={<CampaignEdit />} />
           <Route path="/brand/influencers" element={<BrandInfluencers />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/brands" element={<AdminBrandManagement />} />
