@@ -188,11 +188,21 @@ const AdminContentPlanning = () => {
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
+    console.log('=== 수정요청 보기 클릭 ===');
     const existingPlan = contentPlans.find(p => p.influencerId === influencer.id);
+    
+    // pending 브랜드 수정요청이 실제로 있는지 확인
+    const hasPendingBrandRevision = existingPlan?.revisions?.some(r => 
+      r.requestedBy === 'brand' && r.status === 'pending'
+    );
+    
+    console.log('pending 브랜드 수정요청 존재:', hasPendingBrandRevision);
+    
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('revision');
-    setShowRevisionFeedback(true); // 수정요청 보기에서만 true
+    // 실제 pending 수정요청이 있을 때만 피드백 섹션 표시
+    setShowRevisionFeedback(hasPendingBrandRevision || false);
   };
 
   const handleContentUpdated = () => {
@@ -274,15 +284,8 @@ const AdminContentPlanning = () => {
 
       setContentPlans(updatedPlans);
       
-      // 저장 후에만 피드백 섹션 표시 여부 결정
-      const savedPlan = updatedPlans.find(p => p.id === newPlan.id);
-      if (savedPlan && savedPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand')) {
-        console.log('저장 후 대기중인 브랜드 수정요청이 있어 피드백 섹션 활성화');
-        setShowRevisionFeedback(true);
-      } else {
-        // 저장 후 대기중인 수정요청이 없으면 피드백 섹션 숨김
-        setShowRevisionFeedback(false);
-      }
+      // 저장 후에는 피드백 섹션을 표시하지 않음 (수정요청 보기를 명시적으로 클릭했을 때만 표시)
+      console.log('저장 완료 - 피드백 섹션 숨김 유지');
       
       console.log('=== 콘텐츠 기획안 저장 완료 ===');
       
@@ -491,8 +494,8 @@ const AdminContentPlanning = () => {
               />
             </div>
             
-            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback이 명시적으로 true일 때만 표시 */}
-            {showRevisionFeedback && editingPlan && (
+            {/* 하단: 수정 피드백 섹션 - 명시적으로 수정요청 보기를 클릭했을 때만 표시 */}
+            {showRevisionFeedback && editingPlan && workMode === 'revision' && (
               <div className="border-t pt-6">
                 {(() => {
                   // 가장 최근 pending revision의 번호를 찾아서 사용
@@ -500,11 +503,13 @@ const AdminContentPlanning = () => {
                     .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
                     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
                   
-                  // revision number가 없으면 피드백 섹션을 표시하지 않음
+                  // revision number가 없거나 pending revision이 없으면 피드백 섹션을 표시하지 않음
                   if (!pendingRevision || !pendingRevision.revisionNumber) {
-                    console.log('revision number가 없어 피드백 섹션 숨김');
+                    console.log('pending revision이 없어 피드백 섹션 숨김');
                     return null;
                   }
+                  
+                  console.log('피드백 섹션 표시:', pendingRevision.revisionNumber, '차 수정요청');
                   
                   return (
                     <RevisionRequestForm
