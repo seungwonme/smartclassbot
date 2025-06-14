@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,31 +41,34 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
       case 'completed':
         return '완료';
       case 'pending':
-        return '피드백 대기중';
+        return revision.requestedBy === 'brand' ? '수정피드백 대기중' : '수정반영 대기중';
       default:
         return '대기';
     }
   };
 
-  const getRevisionDisplayNumber = (revision: ContentRevision, index: number) => {
-    // 브랜드 수정요청은 순차적으로 1, 2, 3... 번호를 부여
-    // 시스템 피드백은 해당 수정요청과 동일한 번호를 사용
+  // 수정요청 번호를 브랜드 요청 기준으로 계산
+  const getRevisionDisplayNumber = (revision: ContentRevision) => {
+    const brandRevisions = sortedRevisions.filter(r => r.requestedBy === 'brand');
+    
     if (revision.requestedBy === 'brand') {
-      const brandRevisions = sortedRevisions.filter(r => r.requestedBy === 'brand');
       const brandIndex = brandRevisions.findIndex(r => r.id === revision.id);
       return brandIndex + 1;
     } else {
-      // 시스템 피드백의 경우, 바로 앞의 브랜드 수정요청과 동일한 번호 사용
-      const brandRevisions = sortedRevisions.filter(r => r.requestedBy === 'brand');
-      const currentBrandRevisionIndex = brandRevisions.findIndex(r => 
-        new Date(r.requestedAt).getTime() <= new Date(revision.requestedAt).getTime()
+      // 시스템 피드백의 경우, 해당하는 브랜드 수정요청과 동일한 번호 사용
+      const relatedBrandRevision = brandRevisions.find(br => 
+        br.revisionNumber === revision.revisionNumber
       );
-      return currentBrandRevisionIndex >= 0 ? currentBrandRevisionIndex + 1 : 1;
+      if (relatedBrandRevision) {
+        const brandIndex = brandRevisions.findIndex(r => r.id === relatedBrandRevision.id);
+        return brandIndex + 1;
+      }
+      return revision.revisionNumber;
     }
   };
 
   const getRevisionTypeText = (revision: ContentRevision) => {
-    return revision.requestedBy === 'brand' ? '수정요청' : '수정 피드백';
+    return revision.requestedBy === 'brand' ? '수정요청' : '수정피드백';
   };
 
   if (sortedRevisions.length === 0) {
@@ -86,7 +88,7 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
       <CardContent>
         <div className="space-y-4">
           {sortedRevisions.map((revision, index) => {
-            const displayNumber = getRevisionDisplayNumber(revision, index);
+            const displayNumber = getRevisionDisplayNumber(revision);
             
             return (
               <div key={revision.id} className="relative">
@@ -101,7 +103,11 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-blue-100 text-blue-800">
+                      <Badge className={
+                        revision.requestedBy === 'brand' 
+                          ? 'bg-orange-100 text-orange-800'
+                          : 'bg-purple-100 text-purple-800'
+                      }>
                         {displayNumber}차 {getRevisionTypeText(revision)}
                       </Badge>
                       <Badge variant="outline" className={getStatusColor(revision)}>
@@ -112,9 +118,13 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
                       </span>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                    <div className={`rounded-lg p-3 mb-2 ${
+                      revision.requestedBy === 'brand' 
+                        ? 'bg-orange-50' 
+                        : 'bg-purple-50'
+                    }`}>
                       <div className="text-sm font-medium text-gray-700 mb-1">
-                        {revision.requestedBy === 'brand' ? '수정요청' : '시스템 피드백'}: {revision.requestedByName}
+                        {revision.requestedBy === 'brand' ? '브랜드 수정요청' : '시스템 수정피드백'}: {revision.requestedByName}
                       </div>
                       <div className="text-sm text-gray-600 whitespace-pre-wrap">
                         {revision.feedback}
@@ -122,15 +132,15 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
                     </div>
 
                     {revision.response && revision.status === 'completed' && (
-                      <div className="bg-purple-50 rounded-lg p-3 ml-4">
-                        <div className="text-sm font-medium text-purple-700 mb-1">
-                          시스템 피드백: {revision.respondedBy}
+                      <div className="bg-green-50 rounded-lg p-3 ml-4">
+                        <div className="text-sm font-medium text-green-700 mb-1">
+                          수정 완료: {revision.respondedBy}
                         </div>
-                        <div className="text-sm text-purple-600 whitespace-pre-wrap mb-1">
+                        <div className="text-sm text-green-600 whitespace-pre-wrap mb-1">
                           {revision.response}
                         </div>
                         {revision.respondedAt && (
-                          <div className="text-xs text-purple-500">
+                          <div className="text-xs text-green-500">
                             {new Date(revision.respondedAt).toLocaleDateString()} {new Date(revision.respondedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
@@ -148,4 +158,3 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
 };
 
 export default ContentRevisionTimeline;
-

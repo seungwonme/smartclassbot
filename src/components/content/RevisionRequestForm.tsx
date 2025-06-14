@@ -31,8 +31,8 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
 
   const getTitle = () => {
     return requestType === 'brand-request' 
-      ? `${revisionNumber}차 수정 요청`
-      : `${revisionNumber}차 수정 피드백`;
+      ? `${revisionNumber}차 수정요청`
+      : `${revisionNumber}차 수정피드백`;
   };
 
   const getPlaceholder = () => {
@@ -42,7 +42,7 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
   };
 
   const getButtonText = () => {
-    return requestType === 'brand-request' ? '수정 요청 전송' : '피드백 전송';
+    return requestType === 'brand-request' ? '수정요청 전송' : '수정피드백 전송';
   };
 
   return (
@@ -54,7 +54,7 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
         <div className="space-y-4">
           <div>
             <Label htmlFor="revision-feedback">
-              {requestType === 'brand-request' ? '수정 요청 사항' : '피드백 내용'}
+              {requestType === 'brand-request' ? '수정 요청 사항' : '수정 피드백 내용'}
             </Label>
             <Textarea
               id="revision-feedback"

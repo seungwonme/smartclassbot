@@ -5,7 +5,7 @@ export interface ContentPlanDetail {
   influencerId: string;
   influencerName: string;
   contentType: 'image' | 'video';
-  status: 'draft' | 'revision' | 'approved';
+  status: 'draft' | 'revision-requested' | 'revision-feedback' | 'approved';
   planData: ImagePlanData | VideoPlanData;
   revisions: ContentRevision[];
   currentRevisionNumber: number;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,24 +43,26 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return 'bg-blue-100 text-blue-800';
-      case 'revision': return 'bg-orange-100 text-orange-800';
+      case 'revision-requested': return 'bg-orange-100 text-orange-800';
+      case 'revision-feedback': return 'bg-purple-100 text-purple-800';
       case 'approved': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // 상태 표시 텍스트 통일
+  // 상태 표시 텍스트를 수정요청/피드백으로 구분
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return '기획초안';
-      case 'revision': return '기획수정중';
+      case 'revision-requested': return '기획수정중';
+      case 'revision-feedback': return '기획수정중';
       case 'approved': return '기획완료';
       default: return status;
     }
   };
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
-    return plan.status === 'draft' || plan.status === 'revision';
+    return plan.status === 'draft' || plan.status === 'revision-requested' || plan.status === 'revision-feedback';
   };
 
   const hasPlanContent = (plan: ContentPlanDetail) => {
@@ -195,7 +196,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     );
   };
 
-  // 현재 진행중인 수정 차수 표시 개선
+  // 현재 진행중인 수정 차수와 상태를 더 정확하게 표시
   const getCurrentRevisionInfo = (plan: ContentPlanDetail) => {
     const pendingRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
@@ -205,8 +206,25 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       return `${pendingRevisions[0].revisionNumber}차 수정요청`;
     }
     
-    const completedRevisions = plan.revisions.filter(r => r.status === 'completed').length;
-    return completedRevisions > 0 ? `${completedRevisions}차 완료` : null;
+    const completedBrandRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'brand' && r.status === 'completed'
+    ).length;
+    
+    const pendingAdminFeedback = plan.revisions.filter(r =>
+      r.requestedBy === 'admin' && r.status === 'pending'
+    );
+    
+    if (pendingAdminFeedback.length > 0) {
+      return `${pendingAdminFeedback[0].revisionNumber}차 수정피드백`;
+    }
+    
+    if (plan.status === 'revision-requested') {
+      return `${completedBrandRevisions + 1}차 수정요청`;
+    } else if (plan.status === 'revision-feedback') {
+      return `${completedBrandRevisions}차 수정피드백`;
+    }
+    
+    return completedBrandRevisions > 0 ? `${completedBrandRevisions}차 완료` : null;
   };
 
   if (plans.length === 0) {
