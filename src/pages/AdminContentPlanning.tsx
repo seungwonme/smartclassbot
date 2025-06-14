@@ -619,26 +619,23 @@ const AdminContentPlanning = () => {
               />
             </div>
             
-            {/* 하단: 수정 피드백 섹션 - 명시적으로 수정요청 보기를 클릭했을 때만 표시 */}
+            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback이 true일 때만 표시 */}
             {showRevisionFeedback && editingPlan && workMode === 'revision' && (
               <div className="border-t pt-6">
                 {(() => {
-                  // 가장 최근 pending revision의 번호를 찾아서 사용
+                  // 가장 최근 pending revision 찾기
                   const pendingRevision = editingPlan.revisions
                     .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
                     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
                   
-                  // revision number가 없거나 pending revision이 없으면 피드백 섹션을 표시하지 않음
-                  if (!pendingRevision || !pendingRevision.revisionNumber) {
-                    console.log('pending revision이 없어 피드백 섹션 숨김');
-                    return null;
-                  }
+                  // pending revision이 있으면 해당 번호 사용, 없으면 다음 번호 사용
+                  const revisionNumber = pendingRevision?.revisionNumber || (editingPlan.revisions.length + 1);
                   
-                  console.log('피드백 섹션 표시:', pendingRevision.revisionNumber, '차 수정요청');
+                  console.log('피드백 섹션 표시:', revisionNumber, '차 수정 피드백');
                   
                   return (
                     <RevisionRequestForm
-                      revisionNumber={pendingRevision.revisionNumber}
+                      revisionNumber={revisionNumber}
                       onSubmit={handleRevisionFeedback}
                       onCancel={handleBackToIdle}
                       requestType="admin-feedback"
