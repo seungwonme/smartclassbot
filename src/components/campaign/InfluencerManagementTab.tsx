@@ -181,6 +181,22 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     onInfluencerApproval(influencerId, approved);
   };
 
+  // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
+  const getActiveInfluencersCount = () => {
+    return campaign.influencers.filter(inf => 
+      inf.status !== 'brand-rejected' && 
+      inf.status !== 'admin-rejected' && 
+      inf.status !== 'rejected'
+    ).length;
+  };
+
+  // 표시할 인플루언서 목록 (거절된 인플루언서 제외)
+  const displayInfluencers = campaign.influencers.filter(inf => 
+    inf.status !== 'brand-rejected' && 
+    inf.status !== 'admin-rejected' && 
+    inf.status !== 'rejected'
+  );
+
   // 단계별 액션 버튼 렌더링 함수
   const renderActionButtons = (influencer: CampaignInfluencer) => {
     const isSubmittedOrRecruiting = campaign.status === 'submitted' || campaign.status === 'recruiting';
@@ -241,10 +257,10 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">선택된 인플루언서 ({campaign.influencers.length}명)</h3>
+        <h3 className="text-lg font-semibold">선택된 인플루언서 ({getActiveInfluencersCount()}명)</h3>
       </div>
 
-      {campaign.influencers.length === 0 ? (
+      {displayInfluencers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           선택된 인플루언서가 없습니다.
         </div>
@@ -266,7 +282,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campaign.influencers.map((influencer) => (
+                {displayInfluencers.map((influencer) => (
                   <TableRow key={influencer.id}>
                     <TableCell>
                       <img
