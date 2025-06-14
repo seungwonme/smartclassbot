@@ -57,8 +57,29 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({ plan, renderFieldWi
 
   console.log('Rendering plan data for:', plan.influencerName, plan.planData);
   
+  // Check if planData exists and provide fallback
+  if (!plan.planData) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center py-8 text-gray-500">
+          <p>콘텐츠 기획 데이터가 없습니다.</p>
+          <p className="text-sm mt-2">인플루언서가 아직 기획안을 작성하지 않았거나 데이터 로딩 중입니다.</p>
+        </div>
+      </div>
+    );
+  }
+  
   if (plan.contentType === 'image') {
-    const imageData = plan.planData as ImagePlanData;
+    // Provide default values for image data
+    const imageData: ImagePlanData = {
+      postTitle: '',
+      thumbnailTitle: '',
+      referenceImages: [],
+      script: '',
+      hashtags: [],
+      ...(plan.planData as ImagePlanData || {})
+    };
+
     return (
       <div className="space-y-4">
         {renderFieldWithFeedback(
@@ -124,7 +145,16 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({ plan, renderFieldWi
       </div>
     );
   } else {
-    const videoData = plan.planData as VideoPlanData;
+    // Provide default values for video data
+    const videoData: VideoPlanData = {
+      postTitle: '',
+      scenario: '',
+      scenarioFiles: [],
+      script: '',
+      hashtags: [],
+      ...(plan.planData as VideoPlanData || {})
+    };
+
     return (
       <div className="space-y-4">
         {renderFieldWithFeedback(
