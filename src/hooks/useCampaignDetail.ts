@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
@@ -91,35 +90,56 @@ export const useCampaignDetail = () => {
     if (!campaign) return;
     
     try {
-      console.log('=== 인플루언서 승인/거절 처리 시작 ===');
+      console.log('=== 브랜드 관리자 인플루언서 승인/거절 처리 시작 ===');
       console.log('인플루언서 ID:', influencerId);
       console.log('승인 여부:', approved);
       console.log('현재 캠페인 상태:', campaign.status);
+      console.log('현재 인플루언서 목록:');
+      campaign.influencers.forEach(inf => {
+        console.log(`- ${inf.name} (ID: ${inf.id}): 상태=${inf.status}, 광고비=${inf.adFee}원`);
+      });
       
+      // 원본 인플루언서 정보 조회
+      const originalInfluencer = campaign.influencers.find(inf => inf.id === influencerId);
+      if (!originalInfluencer) {
+        console.error('인플루언서를 찾을 수 없음:', influencerId);
+        return;
+      }
+      
+      console.log('=== 처리할 인플루언서 상세 정보 ===');
+      console.log('인플루언서 이름:', originalInfluencer.name);
+      console.log('현재 상태:', originalInfluencer.status);
+      console.log('시스템 관리자가 설정한 광고비:', originalInfluencer.adFee);
+      console.log('광고비 타입:', typeof originalInfluencer.adFee);
+      
+      // 인플루언서 상태 업데이트 - 광고비는 절대 변경하지 않음
       const updatedInfluencers = campaign.influencers.map(inf => {
         if (inf.id === influencerId) {
-          console.log('처리할 인플루언서:', inf);
-          console.log('기존 광고비:', inf.adFee);
+          console.log('=== 인플루언서 상태 업데이트 ===');
+          console.log('업데이트 전 광고비:', inf.adFee);
           
-          // 광고비 정보를 반드시 유지 - 기존 값이 있으면 그대로 유지
           const updatedInfluencer = { 
             ...inf, 
             status: approved ? 'confirmed' as const : 'brand-rejected' as const,
-            // 기존 광고비 정보를 반드시 유지 (undefined나 null이어도 그대로 유지)
+            // 광고비는 시스템 관리자가 설정한 원본 값을 그대로 유지
             adFee: inf.adFee
           };
           
-          console.log('업데이트된 인플루언서:', updatedInfluencer);
-          console.log('유지된 광고비:', updatedInfluencer.adFee);
+          console.log('업데이트 후 광고비:', updatedInfluencer.adFee);
+          console.log('업데이트 후 상태:', updatedInfluencer.status);
+          console.log('전체 업데이트된 인플루언서 객체:', updatedInfluencer);
           
           return updatedInfluencer;
         }
         return inf;
       });
 
-      const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
-      
-      // 브랜드 관리자가 거절한 인플루언서가 있는 경우 상태를 'revising'으로 변경
+      console.log('=== 최종 업데이트될 인플루언서 목록 ===');
+      updatedInfluencers.forEach(inf => {
+        console.log(`- ${inf.name}: 상태=${inf.status}, 광고비=${inf.adFee}원`);
+      });
+
+      // 캠페인 상태 결정
       const hasBrandRejected = updatedInfluencers.some(inf => inf.status === 'brand-rejected');
       let newStatus = campaign.status;
       
@@ -134,20 +154,22 @@ export const useCampaignDetail = () => {
         }
       }
 
-      console.log('최종 업데이트할 인플루언서 목록:', updatedInfluencers);
-      console.log('각 인플루언서의 광고비 정보:');
-      updatedInfluencers.forEach(inf => {
-        console.log(`- ${inf.name}: ${inf.adFee}원 (상태: ${inf.status})`);
-      });
-
+      // 데이터베이스 업데이트
+      console.log('=== 데이터베이스 업데이트 시작 ===');
       await campaignService.updateCampaign(campaign.id, {
         influencers: updatedInfluencers,
         status: newStatus
       });
 
-      setCampaign({ ...updatedCampaign, status: newStatus });
+      // 로컬 상태 업데이트
+      setCampaign(prev => prev ? { 
+        ...prev, 
+        influencers: updatedInfluencers, 
+        status: newStatus 
+      } : null);
       
-      console.log('=== 인플루언서 승인/거절 처리 완료 ===');
+      console.log('=== 브랜드 관리자 승인/거절 처리 완료 ===');
+      console.log('최종 저장된 상태:', newStatus);
       
       toast({
         title: approved ? "인플루언서 승인" : "인플루언서 거절",

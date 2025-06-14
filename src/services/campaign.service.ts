@@ -83,11 +83,33 @@ export const campaignService = {
         console.log('업데이트할 캠페인 ID:', id);
         console.log('업데이트 데이터:', updates);
         
+        // 인플루언서 광고비 정보 상세 로그
+        if (updates.influencers) {
+          console.log('=== 인플루언서 광고비 정보 업데이트 ===');
+          updates.influencers.forEach(inf => {
+            console.log(`- ${inf.name}: 상태=${inf.status}, 광고비=${inf.adFee}원 (타입: ${typeof inf.adFee})`);
+          });
+        }
+        
         const campaigns = storageService.getCampaigns();
         const index = campaigns.findIndex(c => c.id === id);
         if (index !== -1) {
           const originalCampaign = campaigns[index];
           console.log('원본 캠페인:', originalCampaign);
+          
+          // 인플루언서 정보 업데이트 시 광고비 보존 확인
+          if (updates.influencers && originalCampaign.influencers) {
+            console.log('=== 광고비 보존 확인 ===');
+            updates.influencers.forEach(updatedInf => {
+              const originalInf = originalCampaign.influencers.find(orig => orig.id === updatedInf.id);
+              if (originalInf) {
+                console.log(`인플루언서 ${updatedInf.name}:`);
+                console.log(`  - 원본 광고비: ${originalInf.adFee}원`);
+                console.log(`  - 업데이트된 광고비: ${updatedInf.adFee}원`);
+                console.log(`  - 광고비 보존됨: ${originalInf.adFee === updatedInf.adFee}`);
+              }
+            });
+          }
           
           campaigns[index] = { 
             ...campaigns[index], 
@@ -97,6 +119,14 @@ export const campaignService = {
           
           console.log('업데이트된 캠페인:', campaigns[index]);
           console.log('업데이트된 캠페인 상태:', campaigns[index].status);
+          
+          // 최종 저장된 인플루언서 광고비 확인
+          if (campaigns[index].influencers) {
+            console.log('=== 최종 저장된 인플루언서 광고비 ===');
+            campaigns[index].influencers.forEach(inf => {
+              console.log(`- ${inf.name}: ${inf.adFee}원 (상태: ${inf.status})`);
+            });
+          }
           
           storageService.setCampaigns(campaigns);
           console.log('=== campaignService.updateCampaign 완료 ===');
