@@ -1,3 +1,4 @@
+
 export interface Campaign {
   id: string;
   title: string;
@@ -42,7 +43,7 @@ export interface CampaignInfluencer {
   profileImage: string;
   socialChannels: string[];
   isSelected: boolean;
-  status: 'pending' | 'accepted' | 'rejected' | 'replaced' | 'confirmed';
+  status: 'pending' | 'accepted' | 'rejected' | 'admin-rejected' | 'brand-rejected' | 'replaced' | 'confirmed';
   adFee?: number;
   platform?: 'douyin' | 'xiaohongshu';
   region?: string;

@@ -134,7 +134,7 @@ const AdminCampaigns = () => {
 
     const updatedInfluencers = selectedCampaign.influencers.map(inf => 
       inf.id === influencerId 
-        ? { ...inf, status: 'rejected' as const }
+        ? { ...inf, status: 'admin-rejected' as const }
         : inf
     );
 
@@ -449,9 +449,22 @@ const AdminCampaigns = () => {
                                                   </Button>
                                                 </div>
                                               )}
-                                              {influencer.status === 'rejected' && (
+                                              {influencer.status === 'admin-rejected' && (
                                                 <div className="flex items-center space-x-2">
-                                                  <Badge className="bg-red-100 text-red-800">거절됨</Badge>
+                                                  <Badge className="bg-red-100 text-red-800">시스템 거절</Badge>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleAddSimilarInfluencer(influencer.id)}
+                                                  >
+                                                    <Plus className="w-4 h-4 mr-1" />
+                                                    유사 인플루언서 추가
+                                                  </Button>
+                                                </div>
+                                              )}
+                                              {influencer.status === 'brand-rejected' && (
+                                                <div className="flex items-center space-x-2">
+                                                  <Badge className="bg-orange-100 text-orange-800">브랜드 거절</Badge>
                                                   <Button
                                                     size="sm"
                                                     variant="outline"

@@ -101,10 +101,10 @@ export const useCampaignDetail = () => {
           console.log('처리할 인플루언서:', inf);
           console.log('기존 광고비:', inf.adFee);
           
-          // 광고비 정보를 유지하면서 상태만 변경
+          // 광고비 정보를 유지하면서 상태만 변경 - 브랜드 관리자의 거절은 'brand-rejected'
           const updatedInfluencer = { 
             ...inf, 
-            status: approved ? 'confirmed' as const : 'rejected' as const,
+            status: approved ? 'confirmed' as const : 'brand-rejected' as const,
             // 광고비 정보 유지 - adFee를 명시적으로 포함
             adFee: inf.adFee
           };
@@ -119,15 +119,15 @@ export const useCampaignDetail = () => {
 
       const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
       
-      // 거절된 인플루언서가 있는 경우 상태를 'revising'으로 변경
-      const hasRejected = updatedInfluencers.some(inf => inf.status === 'rejected');
+      // 브랜드 관리자가 거절한 인플루언서가 있는 경우 상태를 'revising'으로 변경
+      const hasBrandRejected = updatedInfluencers.some(inf => inf.status === 'brand-rejected');
       let newStatus = campaign.status;
       
-      if (hasRejected) {
+      if (hasBrandRejected) {
         newStatus = 'revising';
-        console.log('거절된 인플루언서가 있어 상태를 revising으로 변경');
+        console.log('브랜드 관리자가 거절한 인플루언서가 있어 상태를 revising으로 변경');
       } else {
-        const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'rejected');
+        const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'brand-rejected');
         if (allDecided) {
           newStatus = 'confirmed';
           console.log('모든 인플루언서가 결정되어 상태를 confirmed로 변경');

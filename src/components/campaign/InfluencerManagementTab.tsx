@@ -149,6 +149,8 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
       case 'accepted': return 'bg-green-100 text-green-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
+      case 'admin-rejected': return 'bg-red-100 text-red-800';
+      case 'brand-rejected': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -159,6 +161,8 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
       case 'accepted': return '수락됨';
       case 'confirmed': return '승인됨';
       case 'rejected': return '거절됨';
+      case 'admin-rejected': return '시스템 거절';
+      case 'brand-rejected': return '브랜드 거절';
       default: return status;
     }
   };
