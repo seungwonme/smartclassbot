@@ -11,6 +11,7 @@ import { Campaign, CampaignInfluencer } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
 import InfluencerEditModal from '@/components/campaign/InfluencerEditModal';
+import SimilarInfluencerModal from '@/components/campaign/SimilarInfluencerModal';
 
 const AdminCampaigns = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -20,6 +21,8 @@ const AdminCampaigns = () => {
   const [influencerFees, setInfluencerFees] = useState<{ [key: string]: number }>({});
   const [editingInfluencer, setEditingInfluencer] = useState<CampaignInfluencer | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSimilarModalOpen, setIsSimilarModalOpen] = useState(false);
+  const [rejectedInfluencerForSimilar, setRejectedInfluencerForSimilar] = useState<CampaignInfluencer | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -142,10 +145,43 @@ const AdminCampaigns = () => {
   };
 
   const handleAddSimilarInfluencer = (rejectedInfluencerId: string) => {
-    toast({
-      title: "유사 인플루언서 추가",
-      description: "유사한 인플루언서를 검색하여 추가합니다."
-    });
+    if (!selectedCampaign) return;
+    
+    const rejectedInfluencer = selectedCampaign.influencers.find(inf => inf.id === rejectedInfluencerId);
+    if (rejectedInfluencer) {
+      setRejectedInfluencerForSimilar(rejectedInfluencer);
+      setIsSimilarModalOpen(true);
+    }
+  };
+
+  const handleAddSimilarInfluencers = async (newInfluencers: CampaignInfluencer[]) => {
+    if (!selectedCampaign) return;
+
+    try {
+      const updatedInfluencers = [...selectedCampaign.influencers, ...newInfluencers];
+      
+      await campaignService.updateCampaign(selectedCampaign.id, {
+        influencers: updatedInfluencers
+      });
+
+      setSelectedCampaign(prev => prev ? { ...prev, influencers: updatedInfluencers } : null);
+      
+      // Also update the main campaigns list
+      setCampaigns(prev => 
+        prev.map(c => c.id === selectedCampaign.id ? { ...c, influencers: updatedInfluencers } : c)
+      );
+      
+      toast({
+        title: "유사 인플루언서 추가 완료",
+        description: `${newInfluencers.length}명의 인플루언서가 추가되었습니다.`
+      });
+    } catch (error) {
+      toast({
+        title: "추가 실패",
+        description: "유사 인플루언서 추가에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   const calculateQuote = () => {
@@ -491,6 +527,14 @@ const AdminCampaigns = () => {
         onClose={() => setIsEditModalOpen(false)}
         influencer={editingInfluencer}
         onSave={handleSaveInfluencerEdit}
+      />
+
+      {/* 유사 인플루언서 추천 모달 */}
+      <SimilarInfluencerModal
+        isOpen={isSimilarModalOpen}
+        onClose={() => setIsSimilarModalOpen(false)}
+        rejectedInfluencer={rejectedInfluencerForSimilar}
+        onAddInfluencers={handleAddSimilarInfluencers}
       />
     </div>
   );
