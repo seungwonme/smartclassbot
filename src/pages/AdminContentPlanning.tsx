@@ -233,26 +233,39 @@ const AdminContentPlanning = () => {
     if (!editingPlan) return;
 
     try {
-      const newRevision = {
-        id: `revision_${Date.now()}`,
-        revisionNumber: (editingPlan.currentRevisionNumber || 0) + 1,
-        feedback,
-        requestedBy: 'admin' as const,
-        requestedByName: '시스템 관리자',
-        requestedAt: new Date().toISOString(),
-        status: 'completed' as const,
-        response: feedback,
-        respondedAt: new Date().toISOString(),
-        respondedBy: '시스템 관리자'
-      };
+      // pending 상태의 가장 최근 revision 찾기
+      const pendingRevision = editingPlan.revisions
+        .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
+        .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
 
-      // 피드백 전송 시 상태를 기획수정중으로 변경
+      if (!pendingRevision) {
+        toast({
+          title: "처리할 수정 요청이 없습니다",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // pending revision을 completed로 업데이트
       const updatedPlans = contentPlans.map(plan => {
         if (plan.id === editingPlan.id) {
+          const updatedRevisions = plan.revisions.map(revision => {
+            if (revision.id === pendingRevision.id) {
+              return {
+                ...revision,
+                status: 'completed' as const,
+                response: feedback,
+                respondedAt: new Date().toISOString(),
+                respondedBy: '시스템 관리자'
+              };
+            }
+            return revision;
+          });
+
           return {
             ...plan,
-            revisions: [...plan.revisions, newRevision],
-            currentRevisionNumber: newRevision.revisionNumber,
+            revisions: updatedRevisions,
+            currentRevisionNumber: updatedRevisions.filter(r => r.status === 'completed').length,
             status: 'revision' as const,
             updatedAt: new Date().toISOString()
           };
@@ -280,8 +293,8 @@ const AdminContentPlanning = () => {
       setContentPlans(updatedPlans);
 
       toast({
-        title: "수정 피드백 전송 완료",
-        description: "브랜드 관리자에게 수정된 기획안과 피드백이 전송되었습니다. 상태: 기획수정중"
+        title: "수정 피드백 완료",
+        description: `${pendingRevision.revisionNumber}차 수정에 대한 피드백이 완료되었습니다.`
       });
     } catch (error) {
       console.error('수정 피드백 전송 실패:', error);

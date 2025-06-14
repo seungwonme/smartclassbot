@@ -145,28 +145,55 @@ const CampaignDetail = () => {
 
     try {
       const targetPlan = contentPlans.find(p => p.id === planId);
-      const currentRevisionNumber = targetPlan?.currentRevisionNumber || 0;
       
-      const newRevision = {
-        id: `revision_${Date.now()}`,
-        revisionNumber: currentRevisionNumber + 1,
-        feedback,
-        requestedBy: 'brand' as const,
-        requestedByName: '브랜드 관리자',
-        requestedAt: new Date().toISOString(),
-        status: 'pending' as const
-      };
+      // 기존 pending 상태의 revision이 있는지 확인
+      const existingPendingRevision = targetPlan?.revisions.find(r => r.status === 'pending');
+      
+      let updatedContentPlans;
+      
+      if (existingPendingRevision) {
+        // 기존 pending revision 업데이트 (재수정 요청)
+        updatedContentPlans = campaign.contentPlans?.map(plan => {
+          if (plan.id === planId) {
+            const updatedRevisions = plan.revisions?.map(revision => 
+              revision.id === existingPendingRevision.id 
+                ? { ...revision, feedback, requestedAt: new Date().toISOString() }
+                : revision
+            ) || [];
+            
+            return {
+              ...plan,
+              status: 'revision' as const,
+              revisions: updatedRevisions
+            };
+          }
+          return plan;
+        }) || [];
+      } else {
+        // 새로운 revision 생성
+        const currentRevisionNumber = (targetPlan?.revisions.filter(r => r.status === 'completed').length || 0) + 1;
+        
+        const newRevision = {
+          id: `revision_${Date.now()}`,
+          revisionNumber: currentRevisionNumber,
+          feedback,
+          requestedBy: 'brand' as const,
+          requestedByName: '브랜드 관리자',
+          requestedAt: new Date().toISOString(),
+          status: 'pending' as const
+        };
 
-      const updatedContentPlans = campaign.contentPlans?.map(plan => {
-        if (plan.id === planId) {
-          return {
-            ...plan,
-            status: 'revision' as const,
-            revisions: [...(plan.revisions || []), newRevision]
-          };
-        }
-        return plan;
-      }) || [];
+        updatedContentPlans = campaign.contentPlans?.map(plan => {
+          if (plan.id === planId) {
+            return {
+              ...plan,
+              status: 'revision' as const,
+              revisions: [...(plan.revisions || []), newRevision]
+            };
+          }
+          return plan;
+        }) || [];
+      }
 
       await campaignService.updateCampaign(campaign.id, {
         contentPlans: updatedContentPlans
@@ -180,12 +207,15 @@ const CampaignDetail = () => {
       // Update local state
       setContentPlans(prev => prev.map(plan => {
         if (plan.id === planId) {
-          return {
-            ...plan,
-            status: 'revision',
-            revisions: [...plan.revisions, newRevision],
-            currentRevisionNumber: newRevision.revisionNumber
-          };
+          const updatedPlan = updatedContentPlans.find(p => p.id === planId);
+          if (updatedPlan) {
+            return {
+              ...plan,
+              status: 'revision',
+              revisions: updatedPlan.revisions || [],
+              currentRevisionNumber: updatedPlan.revisions?.filter(r => r.status === 'completed').length || 0
+            };
+          }
         }
         return plan;
       }));
@@ -274,6 +304,11 @@ const CampaignDetail = () => {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'planning': return 'bg-blue-100 text-blue-800';
       case 'plan-review': return 'bg-indigo-100 text-indigo-800';
+      case 'plan-approved': return 'bg-lime-100 text-lime-800';
+      case 'producing': return 'bg-teal-100 text-teal-800';
+      case 'content-review': return 'bg-fuchsia-100 text-fuchsia-800';
+      case 'live': return 'bg-rose-100 text-rose-800';
+      case 'monitoring': return 'bg-cyan-100 text-cyan-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -290,6 +325,11 @@ const CampaignDetail = () => {
       case 'confirmed': return '확정됨';
       case 'planning': return '기획중';
       case 'plan-review': return '기획검토';
+      case 'plan-approved': return '기획승인';
+      case 'producing': return '제작중';
+      case 'content-review': return '콘텐츠검토';
+      case 'live': return '라이브';
+      case 'monitoring': return '모니터링';
       case 'completed': return '완료됨';
       default: return status;
     }
