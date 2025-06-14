@@ -1,4 +1,3 @@
-
 import React from 'react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Users, Megaphone, DollarSign } from 'lucide-react';
 
 const BrandDashboard = () => {
+  console.log('BrandDashboard component rendering...');
+
   const stats = [
     {
       title: '진행 중인 캠페인',
@@ -37,6 +38,8 @@ const BrandDashboard = () => {
     }
   ];
 
+  console.log('BrandDashboard stats:', stats);
+
   return (
     <div className="flex h-screen bg-gray-50">
       <BrandSidebar />
@@ -51,23 +54,28 @@ const BrandDashboard = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <Card key={index}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-4 w-4 text-gray-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                  <p className="text-xs text-gray-600 flex items-center mt-1">
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-                    {stat.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            {stats.map((stat, index) => {
+              console.log('Rendering brand stat card:', stat.title);
+              const IconComponent = stat.icon;
+              
+              return (
+                <Card key={index}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">
+                      {stat.title}
+                    </CardTitle>
+                    <IconComponent className="h-4 w-4 text-gray-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                    <p className="text-xs text-gray-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                      {stat.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Recent Activities */}
@@ -121,6 +129,16 @@ const BrandDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Debug info */}
+          <div className="mt-8 p-4 bg-green-50 rounded-lg">
+            <p className="text-sm text-green-700">
+              디버그: 브랜드 대시보드가 정상적으로 렌더링되었습니다.
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              현재 시간: {new Date().toLocaleTimeString()}
+            </p>
           </div>
         </div>
       </div>
