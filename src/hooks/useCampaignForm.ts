@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
@@ -255,14 +256,13 @@ export const useCampaignForm = (campaignId?: string) => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
-        status: isEditMode ? 'creating' : 'creating', // 항상 생성중 상태로 설정
+        status: 'creating',
         currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };
 
       console.log('생성할 캠페인 데이터:', campaignData);
-      console.log('🔧 설정된 캠페인 상태:', campaignData.status);
 
       if (isEditMode && campaignId) {
         console.log('캠페인 수정 모드 - ID:', campaignId);
@@ -271,23 +271,25 @@ export const useCampaignForm = (campaignId?: string) => {
           title: "캠페인 수정 완료",
           description: "캠페인이 성공적으로 수정되었습니다."
         });
+        navigate('/brand/campaigns');
       } else {
-        console.log('🆕 새 캠페인 생성 모드 - 상태:', campaignData.status);
-        const newCampaignId = await campaignService.createCampaign(campaignData);
-        console.log('생성된 캠페인 ID:', newCampaignId);
+        console.log('🆕 새 캠페인 생성 모드');
+        const createdCampaign = await campaignService.createCampaign(campaignData);
+        console.log('생성된 캠페인:', createdCampaign);
+        
+        // 캠페인 객체에서 ID 추출
+        const newCampaignId = createdCampaign.id || createdCampaign;
+        console.log('추출된 캠페인 ID:', newCampaignId);
+        
         toast({
           title: "캠페인 생성 완료",
           description: "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
         });
-        // 생성된 캠페인 상세 페이지로 이동 - 올바른 경로 사용
-        navigate(`/brand/campaigns/${newCampaignId}`, { replace: true });
+        
+        // 생성된 캠페인 상세 페이지로 이동
+        navigate(`/brand/campaigns/${newCampaignId}`);
         return;
       }
-      
-      console.log('=== 캠페인 처리 완료 - 목록 페이지로 이동 ===');
-      
-      // React Router를 사용한 navigation
-      navigate('/brand/campaigns', { replace: true });
       
     } catch (error) {
       console.error('=== 캠페인 처리 실패 ===', error);
