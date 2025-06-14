@@ -33,6 +33,11 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
   handleBrandChange,
   handleProductChange
 }) => {
+  // 디버깅을 위한 로그 추가
+  console.log('CampaignBasicInfoStep - brands 데이터:', brands);
+  console.log('CampaignBasicInfoStep - filteredProducts 데이터:', filteredProducts);
+  console.log('CampaignBasicInfoStep - formData.brandId:', formData.brandId);
+
   return (
     <Card>
       <CardHeader>
@@ -53,15 +58,21 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
           <div>
             <Label htmlFor="brand">브랜드</Label>
             <Select value={formData.brandId} onValueChange={handleBrandChange}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="브랜드를 선택하세요" />
               </SelectTrigger>
               <SelectContent>
-                {brands.map((brand) => (
-                  <SelectItem key={brand.id} value={brand.id}>
-                    {brand.name}
+                {brands.length > 0 ? (
+                  brands.map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-brands" disabled>
+                    브랜드 데이터를 로드 중...
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -72,15 +83,21 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
               onValueChange={handleProductChange}
               disabled={!formData.brandId}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="제품을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
-                {filteredProducts.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.name}
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-products" disabled>
+                    {!formData.brandId ? "먼저 브랜드를 선택하세요" : "제품 데이터를 로드 중..."}
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -200,7 +217,7 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
               setFormData(prev => ({ ...prev, adType: value }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
