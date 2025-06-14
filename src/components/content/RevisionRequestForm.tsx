@@ -10,7 +10,7 @@ interface RevisionRequestFormProps {
   revisionNumber: number;
   onSubmit: (feedback: string) => void;
   onCancel: () => void;
-  requestType: 'brand-request' | 'admin-feedback';
+  requestType: 'brand-request' | 'admin-feedback' | 'brand-revision';
   isSubmitting?: boolean;
 }
 
@@ -30,19 +30,40 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
   };
 
   const getTitle = () => {
-    return requestType === 'brand-request' 
-      ? `${revisionNumber}차 수정요청`
-      : `${revisionNumber}차 수정피드백`;
+    switch (requestType) {
+      case 'brand-request':
+        return `${revisionNumber}차 수정요청`;
+      case 'brand-revision':
+        return `${revisionNumber}차 수정요청`;
+      case 'admin-feedback':
+        return `${revisionNumber}차 수정피드백`;
+      default:
+        return `${revisionNumber}차 수정요청`;
+    }
   };
 
   const getPlaceholder = () => {
-    return requestType === 'brand-request'
-      ? '수정이 필요한 사항을 구체적으로 작성해주세요...'
-      : '수정 요청에 대한 피드백을 작성해주세요...';
+    switch (requestType) {
+      case 'brand-request':
+      case 'brand-revision':
+        return '수정이 필요한 사항을 구체적으로 작성해주세요...';
+      case 'admin-feedback':
+        return '수정 요청에 대한 피드백을 작성해주세요...';
+      default:
+        return '수정이 필요한 사항을 구체적으로 작성해주세요...';
+    }
   };
 
   const getButtonText = () => {
-    return requestType === 'brand-request' ? '수정요청 전송' : '수정피드백 전송';
+    switch (requestType) {
+      case 'brand-request':
+      case 'brand-revision':
+        return '수정요청 전송';
+      case 'admin-feedback':
+        return '수정피드백 전송';
+      default:
+        return '수정요청 전송';
+    }
   };
 
   return (
@@ -54,7 +75,7 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
         <div className="space-y-4">
           <div>
             <Label htmlFor="revision-feedback">
-              {requestType === 'brand-request' ? '수정 요청 사항' : '수정 피드백 내용'}
+              {requestType === 'admin-feedback' ? '수정 피드백 내용' : '수정 요청 사항'}
             </Label>
             <Textarea
               id="revision-feedback"
@@ -70,7 +91,7 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
             <Button 
               onClick={handleSubmit}
               disabled={!feedback.trim() || isSubmitting}
-              className={requestType === 'brand-request' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-purple-600 hover:bg-purple-700'}
+              className={requestType === 'admin-feedback' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-orange-600 hover:bg-orange-700'}
             >
               <Send className="w-4 h-4 mr-2" />
               {isSubmitting ? '전송 중...' : getButtonText()}
