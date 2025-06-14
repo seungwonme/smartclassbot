@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
@@ -276,6 +275,7 @@ export const useCampaignForm = (campaignId?: string) => {
         });
       }
       
+      // 캠페인 목록 페이지로 리다이렉트
       navigate('/brand/campaigns');
     } catch (error) {
       console.error('캠페인 처리 실패:', error);
