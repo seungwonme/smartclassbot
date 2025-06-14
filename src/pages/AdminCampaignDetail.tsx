@@ -323,11 +323,11 @@ const AdminCampaignDetail = () => {
                               {existingPlan ? (
                                 <Badge className={
                                   existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                  existingPlan.status === 'revision' ? 'bg-orange-100 text-orange-800' :
+                                  (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
                                   'bg-green-100 text-green-800'
                                 }>
                                   {existingPlan.status === 'draft' ? '기획초안' :
-                                   existingPlan.status === 'revision' ? '기획수정중' : '기획완료'}
+                                   (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
                                 </Badge>
                               ) : (
                                 <Button

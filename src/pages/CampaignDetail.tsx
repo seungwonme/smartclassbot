@@ -84,9 +84,12 @@ const CampaignDetail = () => {
         console.log('Processed plan data:', planData);
         
         // status를 올바른 타입으로 매핑
-        let status: 'draft' | 'revision' | 'approved' = 'draft';
-        if (plan.status === 'revision' || plan.status === 'approved') {
+        let status: 'draft' | 'revision-requested' | 'revision-feedback' | 'approved' = 'draft';
+        if (plan.status === 'revision-requested' || plan.status === 'revision-feedback' || plan.status === 'approved') {
           status = plan.status;
+        } else if (plan.status === 'revision') {
+          // 이전 'revision' 상태를 'revision-requested'로 매핑
+          status = 'revision-requested';
         }
         
         return {
@@ -163,7 +166,7 @@ const CampaignDetail = () => {
             
             return {
               ...plan,
-              status: 'revision' as const,
+              status: 'revision-requested' as const,
               revisions: updatedRevisions
             };
           }
@@ -187,7 +190,7 @@ const CampaignDetail = () => {
           if (plan.id === planId) {
             return {
               ...plan,
-              status: 'revision' as const,
+              status: 'revision-requested' as const,
               revisions: [...(plan.revisions || []), newRevision]
             };
           }
@@ -211,7 +214,7 @@ const CampaignDetail = () => {
           if (updatedPlan) {
             return {
               ...plan,
-              status: 'revision',
+              status: 'revision-requested',
               revisions: updatedPlan.revisions || [],
               currentRevisionNumber: updatedPlan.revisions?.filter(r => r.status === 'completed').length || 0
             };

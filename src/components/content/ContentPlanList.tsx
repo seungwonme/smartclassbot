@@ -26,7 +26,8 @@ const ContentPlanList: React.FC<ContentPlanListProps> = ({
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-800';
-      case 'revision': return 'bg-orange-100 text-orange-800';
+      case 'revision-requested': return 'bg-orange-100 text-orange-800';
+      case 'revision-feedback': return 'bg-purple-100 text-purple-800';
       case 'approved': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -35,7 +36,8 @@ const ContentPlanList: React.FC<ContentPlanListProps> = ({
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return '기획초안';
-      case 'revision': return '기획수정중';
+      case 'revision-requested': return '기획수정중';
+      case 'revision-feedback': return '기획수정중';
       case 'approved': return '기획완료';
       default: return status;
     }
