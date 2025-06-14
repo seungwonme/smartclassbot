@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -79,6 +78,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
         <CardTitle>인플루언서 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        
         <div className="flex gap-4">
           <Dialog open={isPersonaDialogOpen} onOpenChange={setIsPersonaDialogOpen}>
             <DialogTrigger asChild>
@@ -166,6 +166,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
           </Button>
         </div>
 
+        
         {personas.length > 0 && (
           <div>
             <Label>발견된 페르소나</Label>
@@ -185,6 +186,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
           </div>
         )}
 
+        
         {recommendedInfluencers.length > 0 && (
           <div>
             <Label>추천 인플루언서</Label>
@@ -245,6 +247,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
           </div>
         )}
 
+        
         {selectedInfluencers.length > 0 && (
           <div>
             <Label>선택된 인플루언서 ({selectedInfluencers.length}명)</Label>
@@ -253,17 +256,27 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">선택</TableHead>
                       <TableHead>프로필</TableHead>
                       <TableHead>인플루언서명</TableHead>
                       <TableHead>팔로워 수</TableHead>
                       <TableHead>참여율</TableHead>
                       <TableHead>카테고리</TableHead>
-                      <TableHead className="w-12">제거</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {selectedInfluencers.map((influencer) => (
-                      <TableRow key={influencer.id}>
+                      <TableRow 
+                        key={influencer.id}
+                        className="cursor-pointer transition-colors hover:bg-gray-50"
+                        onClick={() => handleInfluencerToggle(influencer.id)}
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={true}
+                            onChange={() => {}} // onClick으로 처리
+                          />
+                        </TableCell>
                         <TableCell>
                           <Avatar>
                             <AvatarImage src={influencer.profileImage} />
@@ -282,12 +295,6 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
                             {influencer.category}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Checkbox
-                            checked={true}
-                            onChange={() => handleInfluencerToggle(influencer.id)}
-                          />
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -297,6 +304,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
           </div>
         )}
 
+        
         {formData.selectedInfluencers.length > 0 && (
           <div className="p-4 bg-green-50 rounded-lg">
             <p className="text-sm text-green-700">
