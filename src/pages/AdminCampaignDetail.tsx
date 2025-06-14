@@ -8,8 +8,9 @@ import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit, Plus } f
 import AdminSidebar from '@/components/AdminSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
-import ContentPlanList from '@/components/content/ContentPlanList';
 import ContentPlanForm from '@/components/content/ContentPlanForm';
+import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
+import RevisionRequestForm from '@/components/content/RevisionRequestForm';
 import { ContentPlanDetail } from '@/types/content';
 import { contentService } from '@/services/content.service';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
@@ -29,8 +30,9 @@ const AdminCampaignDetail = () => {
 
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
 
   const getStatusColor = (status: any) => {
     switch (status) {
@@ -108,6 +110,7 @@ const AdminCampaignDetail = () => {
       };
 
       setContentPlans(prev => [...prev, newPlan]);
+      setSelectedPlan(newPlan);
       setShowCreateForm(false);
       setSelectedInfluencer(null);
 
@@ -125,54 +128,21 @@ const AdminCampaignDetail = () => {
     }
   };
 
-  const handlePlanUpdate = async (planId: string, updates: any) => {
-    if (!id) return;
-
-    try {
-      const updatedPlan = await contentService.updateContentPlan(id, planId, updates);
-      setContentPlans(prev => prev.map(plan => 
-        plan.id === planId ? updatedPlan : plan
-      ));
-
-      toast({
-        title: "기획안 수정 완료",
-        description: "콘텐츠 기획안이 수정되었습니다."
-      });
-    } catch (error) {
-      console.error('기획안 수정 실패:', error);
-      toast({
-        title: "수정 실패",
-        description: "기획안 수정에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEditPlan = (plan: ContentPlanDetail) => {
-    setEditingPlan(plan);
-    setShowCreateForm(false);
-  };
-
-  const handleViewPlan = (plan: ContentPlanDetail) => {
-    setEditingPlan(plan);
-    setShowCreateForm(false);
-  };
-
   const handleUpdatePlan = async (planData: Partial<ContentPlanDetail>) => {
-    if (!editingPlan) return;
+    if (!selectedPlan) return;
 
     try {
       const updatedPlan: ContentPlanDetail = {
-        ...editingPlan,
+        ...selectedPlan,
         ...planData,
         updatedAt: new Date().toISOString()
       };
 
       setContentPlans(prev => prev.map(plan => 
-        plan.id === editingPlan.id ? updatedPlan : plan
+        plan.id === selectedPlan.id ? updatedPlan : plan
       ));
 
-      setEditingPlan(null);
+      setSelectedPlan(updatedPlan);
 
       toast({
         title: "기획안 수정 완료",
@@ -186,6 +156,66 @@ const AdminCampaignDetail = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleRevisionFeedback = async (feedback: string) => {
+    if (!selectedPlan) return;
+
+    try {
+      const revisionNumber = (selectedPlan.currentRevisionNumber || 0) + 1;
+      const newRevision = {
+        id: `revision_${Date.now()}`,
+        revisionNumber,
+        feedback,
+        requestedBy: 'admin' as const,
+        requestedByName: '시스템 관리자',
+        requestedAt: new Date().toISOString(),
+        status: 'pending' as const
+      };
+
+      const updatedPlan: ContentPlanDetail = {
+        ...selectedPlan,
+        status: 'revision-feedback',
+        revisions: [...(selectedPlan.revisions || []), newRevision],
+        currentRevisionNumber: revisionNumber,
+        updatedAt: new Date().toISOString()
+      };
+
+      setContentPlans(prev => prev.map(plan => 
+        plan.id === selectedPlan.id ? updatedPlan : plan
+      ));
+
+      setSelectedPlan(updatedPlan);
+      setShowRevisionForm(false);
+
+      toast({
+        title: "수정피드백 전송 완료",
+        description: "브랜드 관리자에게 수정피드백이 전송되었습니다."
+      });
+    } catch (error) {
+      console.error('수정피드백 전송 실패:', error);
+      toast({
+        title: "전송 실패",
+        description: "수정피드백 전송에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditPlan = (influencerId: string) => {
+    const plan = contentPlans.find(p => p.influencerId === influencerId);
+    if (plan) {
+      setSelectedPlan(plan);
+      setShowCreateForm(false);
+      setShowRevisionForm(false);
+    }
+  };
+
+  const handleCreatePlan = (influencer: any) => {
+    setSelectedInfluencer(influencer);
+    setSelectedPlan(null);
+    setShowCreateForm(true);
+    setShowRevisionForm(false);
   };
 
   if (isLoading) {
@@ -339,7 +369,7 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
               {/* 좌측: 인플루언서 목록 */}
               <div className="lg:col-span-1">
                 <Card className="h-full">
@@ -360,24 +390,31 @@ const AdminCampaignDetail = () => {
                               <div>
                                 <h4 className="font-medium">{influencer.name}</h4>
                                 <p className="text-sm text-gray-500">{influencer.platform}</p>
+                                {existingPlan && (
+                                  <Badge className={
+                                    existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                    (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
+                                    'bg-green-100 text-green-800'
+                                  }>
+                                    {existingPlan.status === 'draft' ? '기획초안' :
+                                     (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
+                                  </Badge>
+                                )}
                               </div>
                               {existingPlan ? (
-                                <Badge className={
-                                  existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                  (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
-                                  'bg-green-100 text-green-800'
-                                }>
-                                  {existingPlan.status === 'draft' ? '기획초안' :
-                                   (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
-                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditPlan(influencer.id)}
+                                  className="bg-blue-50 hover:bg-blue-100"
+                                >
+                                  <Edit className="w-4 h-4 mr-1" />
+                                  편집
+                                </Button>
                               ) : (
                                 <Button
                                   size="sm"
-                                  onClick={() => {
-                                    setSelectedInfluencer(influencer);
-                                    setShowCreateForm(true);
-                                    setEditingPlan(null);
-                                  }}
+                                  onClick={() => handleCreatePlan(influencer)}
                                   className="bg-blue-600 hover:bg-blue-700"
                                 >
                                   <Plus className="w-4 h-4 mr-1" />
@@ -397,9 +434,20 @@ const AdminCampaignDetail = () => {
               <div className="lg:col-span-2">
                 <Card className="h-full">
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <FileText className="w-5 h-5 mr-2" />
-                      콘텐츠 기획 상세
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <FileText className="w-5 h-5 mr-2" />
+                        콘텐츠 기획 상세
+                      </div>
+                      {selectedPlan && !showCreateForm && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShowRevisionForm(true)}
+                        >
+                          수정피드백 전송
+                        </Button>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="h-full overflow-auto">
@@ -413,22 +461,44 @@ const AdminCampaignDetail = () => {
                           setSelectedInfluencer(null);
                         }}
                       />
-                    ) : editingPlan ? (
-                      <ContentPlanForm
-                        influencer={confirmedInfluencers.find(inf => inf.id === editingPlan.influencerId) || selectedInfluencer}
-                        campaignId={id!}
-                        existingPlan={editingPlan}
-                        onSave={handleUpdatePlan}
-                        onCancel={() => setEditingPlan(null)}
-                      />
+                    ) : selectedPlan ? (
+                      <div className="space-y-6">
+                        {/* 상단: 수정요청 히스토리 */}
+                        {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+                          <div className="border-b pb-4">
+                            <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
+                            <ContentRevisionTimeline revisions={selectedPlan.revisions} />
+                          </div>
+                        )}
+
+                        {/* 수정피드백 폼 */}
+                        {showRevisionForm && (
+                          <RevisionRequestForm
+                            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+                            onSubmit={handleRevisionFeedback}
+                            onCancel={() => setShowRevisionForm(false)}
+                            requestType="admin-feedback"
+                          />
+                        )}
+
+                        {/* 하단: 기획안 편집 폼 */}
+                        {!showRevisionForm && (
+                          <div>
+                            <h3 className="text-lg font-medium mb-3">기획안 편집</h3>
+                            <ContentPlanForm
+                              influencer={confirmedInfluencers.find(inf => inf.id === selectedPlan.influencerId)!}
+                              campaignId={id!}
+                              existingPlan={selectedPlan}
+                              onSave={handleUpdatePlan}
+                              onCancel={() => setSelectedPlan(null)}
+                            />
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <ContentPlanList
-                        plans={contentPlans}
-                        onEdit={handleEditPlan}
-                        onView={handleViewPlan}
-                        onPlanUpdate={handlePlanUpdate}
-                        userType="admin"
-                      />
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        좌측에서 인플루언서를 선택하여 기획안을 생성하거나 편집하세요.
+                      </div>
                     )}
                   </CardContent>
                 </Card>
