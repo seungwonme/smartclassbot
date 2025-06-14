@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -97,7 +98,8 @@ const AdminCampaignDetail = () => {
           postTitle: (planData.planData as any)?.postTitle || '',
           scenario: (planData.planData as any)?.scenario || '',
           scenarioFiles: (planData.planData as any)?.scenarioFiles || [],
-          script: (planData.planData as any)?.hashtags || []
+          script: (planData.planData as any)?.script || '',
+          hashtags: (planData.planData as any)?.hashtags || []
         },
         revisions: [],
         currentRevisionNumber: 0,

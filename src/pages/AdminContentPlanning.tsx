@@ -137,13 +137,26 @@ const AdminContentPlanning = () => {
 
       const updatedContentPlans = [...existingPlans, newPlan];
       
+      // Campaign의 contentPlans 배열 형식으로 변환
+      const campaignContentPlans = updatedContentPlans.map(plan => ({
+        id: plan.id,
+        campaignId: plan.campaignId,
+        influencerId: plan.influencerId,
+        influencerName: plan.influencerName,
+        contentType: plan.contentType,
+        status: plan.status === 'revision-requested' ? 'revision' as const : 
+                plan.status === 'revision-feedback' ? 'revision' as const :
+                plan.status as 'draft' | 'submitted' | 'approved' | 'revision',
+        planDocument: plan.contentType === 'image' ? 
+          (plan.planData as any).postTitle : 
+          (plan.planData as any).postTitle,
+        revisions: plan.revisions,
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt
+      }));
+      
       await campaignService.updateCampaign(campaignId, {
-        contentPlans: updatedContentPlans.map(plan => ({
-          ...plan,
-          planDocument: plan.contentType === 'image' ? 
-            (plan.planData as any).postTitle : 
-            (plan.planData as any).postTitle
-        }))
+        contentPlans: campaignContentPlans
       });
 
       setContentPlans(prev => [...prev, newPlan]);
