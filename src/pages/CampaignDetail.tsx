@@ -4,16 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, FileText, Video } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, FileText, Video, Plus } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
 import CampaignConfirmationSummary from '@/components/campaign/CampaignConfirmationSummary';
-import BrandContentPlanReview from '@/components/content/BrandContentPlanReview';
+import ContentPlanForm from '@/components/content/ContentPlanForm';
+import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
+import RevisionRequestForm from '@/components/content/RevisionRequestForm';
 import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { campaignService } from '@/services/campaign.service';
+import { contentService } from '@/services/content.service';
 
 const CampaignDetail = () => {
   const {
@@ -31,116 +34,52 @@ const CampaignDetail = () => {
   } = useCampaignDetail();
 
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
 
   // Load content plans when campaign is loaded
   React.useEffect(() => {
-    if (campaign?.contentPlans) {
-      console.log('Processing content plans:', campaign.contentPlans);
-      
-      const plans: ContentPlanDetail[] = campaign.contentPlans.map(plan => {
-        console.log('Processing plan:', plan);
-        
-        let planData;
+    const loadContentPlans = async () => {
+      if (campaign?.id) {
         try {
-          // planDocument가 이미 객체인 경우와 문자열인 경우 모두 처리
-          if (typeof plan.planDocument === 'string') {
-            planData = JSON.parse(plan.planDocument);
-          } else if (plan.planDocument && typeof plan.planDocument === 'object') {
-            planData = plan.planDocument;
-          } else {
-            // 기본값 설정
-            planData = plan.contentType === 'image' ? {
-              postTitle: '',
-              thumbnailTitle: '',
-              referenceImages: [],
-              script: '',
-              hashtags: []
-            } : {
-              postTitle: '',
-              scenario: '',
-              scenarioFiles: [],
-              script: '',
-              hashtags: []
-            };
-          }
+          console.log('브랜드 관리자 - 콘텐츠 기획 로딩 시작');
+          const plans = await contentService.getContentPlans(campaign.id);
+          console.log('로딩된 콘텐츠 기획:', plans);
+          setContentPlans(plans);
         } catch (error) {
-          console.error('Error parsing plan document:', error, plan.planDocument);
-          // 파싱 실패시 기본값 사용
-          planData = plan.contentType === 'image' ? {
-            postTitle: '',
-            thumbnailTitle: '',
-            referenceImages: [],
-            script: '',
-            hashtags: []
-          } : {
-            postTitle: '',
-            scenario: '',
-            scenarioFiles: [],
-            script: '',
-            hashtags: []
-          };
+          console.error('콘텐츠 기획 로딩 실패:', error);
         }
-        
-        console.log('Processed plan data:', planData);
-        
-        // status를 올바른 타입으로 매핑
-        let status: 'draft' | 'revision-requested' | 'revision-feedback' | 'approved' = 'draft';
-        if (plan.status === 'draft' || plan.status === 'approved') {
-          status = plan.status;
-        } else if (plan.status === 'revision') {
-          // 이전 'revision' 상태를 'revision-requested'로 매핑
-          status = 'revision-requested';
-        } else {
-          // 기본값으로 draft 사용
-          status = 'draft';
-        }
-        
-        return {
-          id: plan.id,
-          campaignId: plan.campaignId,
-          influencerId: plan.influencerId,
-          influencerName: plan.influencerName,
-          contentType: plan.contentType,
-          status: status,
-          planData: planData,
-          revisions: plan.revisions || [],
-          currentRevisionNumber: plan.revisions?.length || 0,
-          createdAt: plan.createdAt,
-          updatedAt: plan.updatedAt
-        };
-      });
-      
-      console.log('Final processed plans:', plans);
-      setContentPlans(plans);
-    }
-  }, [campaign]);
+      }
+    };
+
+    loadContentPlans();
+  }, [campaign?.id]);
 
   const handleContentPlanApprove = async (planId: string) => {
     if (!campaign) return;
 
     try {
-      const updatedContentPlans = campaign.contentPlans?.map(plan => 
-        plan.id === planId ? { ...plan, status: 'approved' as const } : plan
-      ) || [];
-
-      await campaignService.updateCampaign(campaign.id, {
-        contentPlans: updatedContentPlans
-      });
-
-      setCampaign(prev => prev ? {
-        ...prev,
-        contentPlans: updatedContentPlans
-      } : null);
+      await contentService.updateContentPlan(campaign.id, planId, { status: 'approved' });
 
       // Update local state
       setContentPlans(prev => prev.map(plan =>
         plan.id === planId ? { ...plan, status: 'approved' } : plan
       ));
 
+      if (selectedPlan?.id === planId) {
+        setSelectedPlan(prev => prev ? { ...prev, status: 'approved' } : null);
+      }
+
+      toast({
+        title: "콘텐츠 기획 승인 완료",
+        description: "콘텐츠 기획안이 승인되었습니다."
+      });
+
     } catch (error) {
       console.error('콘텐츠 기획 승인 실패:', error);
       toast({
         title: "승인 실패",
+        description: "콘텐츠 기획 승인에 실패했습니다.",
         variant: "destructive"
       });
     }
@@ -152,84 +91,50 @@ const CampaignDetail = () => {
     try {
       const targetPlan = contentPlans.find(p => p.id === planId);
       
-      // 기존 pending 상태의 revision이 있는지 확인
-      const existingPendingRevision = targetPlan?.revisions.find(r => r.status === 'pending');
+      // 새로운 revision 생성
+      const revisionNumber = (targetPlan?.currentRevisionNumber || 0) + 1;
       
-      let updatedContentPlans;
-      
-      if (existingPendingRevision) {
-        // 기존 pending revision 업데이트 (재수정 요청)
-        updatedContentPlans = campaign.contentPlans?.map(plan => {
-          if (plan.id === planId) {
-            const updatedRevisions = plan.revisions?.map(revision => 
-              revision.id === existingPendingRevision.id 
-                ? { ...revision, feedback, requestedAt: new Date().toISOString() }
-                : revision
-            ) || [];
-            
-            return {
-              ...plan,
-              status: 'revision' as const,
-              revisions: updatedRevisions
-            };
-          }
-          return plan;
-        }) || [];
-      } else {
-        // 새로운 revision 생성
-        const currentRevisionNumber = (targetPlan?.revisions.filter(r => r.status === 'completed').length || 0) + 1;
-        
-        const newRevision = {
-          id: `revision_${Date.now()}`,
-          revisionNumber: currentRevisionNumber,
-          feedback,
-          requestedBy: 'brand' as const,
-          requestedByName: '브랜드 관리자',
-          requestedAt: new Date().toISOString(),
-          status: 'pending' as const
-        };
+      const newRevision = {
+        id: `revision_${Date.now()}`,
+        revisionNumber,
+        feedback,
+        requestedBy: 'brand' as const,
+        requestedByName: '브랜드 관리자',
+        requestedAt: new Date().toISOString(),
+        status: 'pending' as const
+      };
 
-        updatedContentPlans = campaign.contentPlans?.map(plan => {
-          if (plan.id === planId) {
-            return {
-              ...plan,
-              status: 'revision' as const,
-              revisions: [...(plan.revisions || []), newRevision]
-            };
-          }
-          return plan;
-        }) || [];
-      }
+      const updatedPlan = {
+        ...targetPlan!,
+        status: 'revision-requested' as const,
+        revisions: [...(targetPlan?.revisions || []), newRevision],
+        currentRevisionNumber: revisionNumber,
+        updatedAt: new Date().toISOString()
+      };
 
-      await campaignService.updateCampaign(campaign.id, {
-        contentPlans: updatedContentPlans
-      });
-
-      setCampaign(prev => prev ? {
-        ...prev,
-        contentPlans: updatedContentPlans
-      } : null);
+      await contentService.updateContentPlan(campaign.id, planId, updatedPlan);
 
       // Update local state
-      setContentPlans(prev => prev.map(plan => {
-        if (plan.id === planId) {
-          const updatedPlan = updatedContentPlans.find(p => p.id === planId);
-          if (updatedPlan) {
-            return {
-              ...plan,
-              status: 'revision-requested',
-              revisions: updatedPlan.revisions || [],
-              currentRevisionNumber: updatedPlan.revisions?.filter(r => r.status === 'completed').length || 0
-            };
-          }
-        }
-        return plan;
-      }));
+      setContentPlans(prev => prev.map(plan =>
+        plan.id === planId ? updatedPlan : plan
+      ));
+
+      if (selectedPlan?.id === planId) {
+        setSelectedPlan(updatedPlan);
+      }
+
+      setShowRevisionForm(false);
+
+      toast({
+        title: "수정 요청 완료",
+        description: "콘텐츠 기획 수정 요청이 전송되었습니다."
+      });
 
     } catch (error) {
       console.error('콘텐츠 기획 수정 요청 실패:', error);
       toast({
         title: "수정 요청 실패",
+        description: "콘텐츠 기획 수정 요청에 실패했습니다.",
         variant: "destructive"
       });
     }
@@ -431,6 +336,8 @@ const CampaignDetail = () => {
     );
   }
 
+  const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+
   return (
     <div className="flex min-h-screen w-full">
       <BrandSidebar />
@@ -495,6 +402,7 @@ const CampaignDetail = () => {
             <TabsTrigger value="content" disabled={campaign.currentStage < 4}>🔍 콘텐츠 검수</TabsTrigger>
           </TabsList>
 
+          
           <TabsContent value="basic" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
@@ -585,21 +493,180 @@ const CampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
-                  콘텐츠 기획 검토
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BrandContentPlanReview
-                  plans={contentPlans}
-                  onApprove={handleContentPlanApprove}
-                  onRequestRevision={handleContentPlanRevision}
-                />
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
+              {/* 좌측: 인플루언서 목록 */}
+              <div className="lg:col-span-1">
+                <Card className="h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      확정된 인플루언서
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {confirmedInfluencers.map((influencer) => {
+                        const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
+                        
+                        return (
+                          <div 
+                            key={influencer.id} 
+                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                              selectedPlan?.influencerId === influencer.id 
+                                ? 'bg-blue-50 border-blue-200' 
+                                : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => existingPlan && setSelectedPlan(existingPlan)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium">{influencer.name}</h4>
+                                <p className="text-sm text-gray-500">{influencer.platform}</p>
+                                {existingPlan && (
+                                  <Badge className={
+                                    existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                    (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
+                                    'bg-green-100 text-green-800'
+                                  }>
+                                    {existingPlan.status === 'draft' ? '기획초안' :
+                                     (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
+                                  </Badge>
+                                )}
+                              </div>
+                              {!existingPlan && (
+                                <span className="text-sm text-gray-400">기획안 없음</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* 우측: 콘텐츠 기획 상세 */}
+              <div className="lg:col-span-2">
+                <Card className="h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <FileText className="w-5 h-5 mr-2" />
+                        콘텐츠 기획 검토
+                      </div>
+                      {selectedPlan && (
+                        <div className="flex space-x-2">
+                          {selectedPlan.status !== 'approved' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowRevisionForm(true)}
+                                className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                              >
+                                수정 요청
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleContentPlanApprove(selectedPlan.id)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                승인
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-full overflow-auto">
+                    {selectedPlan ? (
+                      <div className="space-y-6">
+                        {/* 상단: 수정요청 히스토리 */}
+                        {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+                          <div className="border-b pb-4">
+                            <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
+                            <ContentRevisionTimeline revisions={selectedPlan.revisions} />
+                          </div>
+                        )}
+
+                        {/* 수정요청 폼 */}
+                        {showRevisionForm && (
+                          <RevisionRequestForm
+                            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+                            onSubmit={(feedback) => handleContentPlanRevision(selectedPlan.id, feedback)}
+                            onCancel={() => setShowRevisionForm(false)}
+                            requestType="brand-revision"
+                          />
+                        )}
+
+                        {/* 기획안 내용 표시 */}
+                        {!showRevisionForm && (
+                          <div>
+                            <h3 className="text-lg font-medium mb-3">
+                              {selectedPlan.influencerName}의 {selectedPlan.contentType === 'image' ? '이미지' : '동영상'} 기획안
+                            </h3>
+                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                              <div>
+                                <label className="text-sm font-medium text-gray-700">포스트 제목</label>
+                                <p className="mt-1 text-sm">{selectedPlan.planData.postTitle}</p>
+                              </div>
+
+                              {selectedPlan.contentType === 'image' && (
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700">썸네일 제목</label>
+                                  <p className="mt-1 text-sm">{(selectedPlan.planData as any).thumbnailTitle}</p>
+                                </div>
+                              )}
+
+                              {selectedPlan.contentType === 'video' && (
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700">시나리오</label>
+                                  <p className="mt-1 text-sm whitespace-pre-wrap">{(selectedPlan.planData as any).scenario}</p>
+                                </div>
+                              )}
+
+                              <div>
+                                <label className="text-sm font-medium text-gray-700">스크립트</label>
+                                <p className="mt-1 text-sm whitespace-pre-wrap">{selectedPlan.planData.script}</p>
+                              </div>
+
+                              <div>
+                                <label className="text-sm font-medium text-gray-700">해시태그</label>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {selectedPlan.planData.hashtags.map((hashtag, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs">
+                                      #{hashtag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="pt-2 border-t">
+                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                  <span>생성일: {new Date(selectedPlan.createdAt).toLocaleString()}</span>
+                                  <span>수정일: {new Date(selectedPlan.updatedAt).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        <div className="text-center">
+                          <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p>좌측에서 인플루언서를 선택하여 기획안을 확인하세요.</p>
+                          {contentPlans.length === 0 && (
+                            <p className="mt-2 text-sm">아직 콘텐츠 기획안이 전달되지 않았습니다.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="production" className="mt-6">
