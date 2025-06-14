@@ -99,14 +99,15 @@ export const useCampaignDetail = () => {
 
       const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
       
-      const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'rejected');
+      // 거절된 인플루언서가 있는 경우 상태를 'revising'으로 변경
       const hasRejected = updatedInfluencers.some(inf => inf.status === 'rejected');
-      
       let newStatus = campaign.status;
-      if (allDecided) {
-        if (hasRejected) {
-          newStatus = 'recruiting';
-        } else {
+      
+      if (hasRejected) {
+        newStatus = 'revising';
+      } else {
+        const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'rejected');
+        if (allDecided) {
           newStatus = 'confirmed';
         }
       }
@@ -120,7 +121,7 @@ export const useCampaignDetail = () => {
       
       toast({
         title: approved ? "인플루언서 승인" : "인플루언서 거절",
-        description: approved ? "인플루언서가 승인되었습니다." : "인플루언서가 거절되었습니다."
+        description: approved ? "인플루언서가 승인되었습니다." : "제안 수정 요청이 전송되었습니다."
       });
     } catch (error) {
       toast({
