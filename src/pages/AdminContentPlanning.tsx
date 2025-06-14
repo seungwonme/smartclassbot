@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ const AdminContentPlanning = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('plans');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedInfluencerId, setSelectedInfluencerId] = useState<string | null>(null);
+  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   console.log('=== AdminContentPlanning 렌더링 시작 ===');
@@ -77,34 +78,31 @@ const AdminContentPlanning = () => {
   };
 
   const handleCreateContentPlan = async (planData: Partial<ContentPlanDetail>) => {
-    if (!campaign || !campaignId) return;
+    if (!campaign || !campaignId || !selectedInfluencer) return;
 
-    const { influencerId, contentType } = planData;
-    if (!influencerId || !contentType) return;
-
-    const influencer = campaign.influencers.find(inf => inf.id === influencerId);
-    if (!influencer) return;
+    const { contentType } = planData;
+    if (!contentType) return;
 
     try {
       const newPlan: ContentPlanDetail = {
-        id: `plan_${Date.now()}_${influencerId}`,
+        id: `plan_${Date.now()}_${selectedInfluencer.id}`,
         campaignId,
-        influencerId,
-        influencerName: influencer.name,
+        influencerId: selectedInfluencer.id,
+        influencerName: selectedInfluencer.name,
         contentType,
         status: 'draft',
         planData: contentType === 'image' ? {
-          postTitle: '',
-          thumbnailTitle: '',
-          referenceImages: [],
-          script: '',
-          hashtags: []
+          postTitle: planData.planData?.postTitle || '',
+          thumbnailTitle: (planData.planData as any)?.thumbnailTitle || '',
+          referenceImages: (planData.planData as any)?.referenceImages || [],
+          script: planData.planData?.script || '',
+          hashtags: planData.planData?.hashtags || []
         } : {
-          postTitle: '',
-          scenario: '',
-          scenarioFiles: [],
-          script: '',
-          hashtags: []
+          postTitle: planData.planData?.postTitle || '',
+          scenario: (planData.planData as any)?.scenario || '',
+          scenarioFiles: (planData.planData as any)?.scenarioFiles || [],
+          script: planData.planData?.script || '',
+          hashtags: planData.planData?.hashtags || []
         },
         revisions: [],
         currentRevisionNumber: 0,
@@ -112,9 +110,8 @@ const AdminContentPlanning = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // 캠페인의 contentPlans 배열에 추가 (기존 배열과 새 데이터 모두 ContentPlanDetail 타입으로 변환)
+      // 캠페인의 contentPlans 배열에 추가
       const existingPlans = (campaign.contentPlans || []).map(plan => {
-        // ContentPlan을 ContentPlanDetail로 변환
         if ('planDocument' in plan) {
           return {
             ...plan,
@@ -130,7 +127,9 @@ const AdminContentPlanning = () => {
               scenarioFiles: [],
               script: '',
               hashtags: []
-            }
+            },
+            currentRevisionNumber: 0,
+            revisions: []
           } as ContentPlanDetail;
         }
         return plan as ContentPlanDetail;
@@ -139,16 +138,19 @@ const AdminContentPlanning = () => {
       const updatedContentPlans = [...existingPlans, newPlan];
       
       await campaignService.updateCampaign(campaignId, {
-        contentPlans: updatedContentPlans
+        contentPlans: updatedContentPlans.map(plan => ({
+          ...plan,
+          planDocument: 'postTitle' in plan.planData ? plan.planData.postTitle : plan.planData.postTitle
+        }))
       });
 
       setContentPlans(prev => [...prev, newPlan]);
       setShowCreateForm(false);
-      setSelectedInfluencerId(null);
+      setSelectedInfluencer(null);
 
       toast({
         title: "콘텐츠 기획안 생성 완료",
-        description: `${influencer.name}의 ${contentType === 'image' ? '이미지' : '동영상'} 기획안이 생성되었습니다.`
+        description: `${selectedInfluencer.name}의 ${contentType === 'image' ? '이미지' : '동영상'} 기획안이 생성되었습니다.`
       });
     } catch (error) {
       console.error('콘텐츠 기획안 생성 실패:', error);
@@ -325,7 +327,7 @@ const AdminContentPlanning = () => {
                           key={influencer.id}
                           size="sm"
                           onClick={() => {
-                            setSelectedInfluencerId(influencer.id);
+                            setSelectedInfluencer(influencer);
                             setShowCreateForm(true);
                           }}
                           className="bg-blue-600 hover:bg-blue-700"
@@ -399,25 +401,24 @@ const AdminContentPlanning = () => {
           </TabsContent>
         </Tabs>
 
-        {showCreateForm && selectedInfluencerId && (
+        {showCreateForm && selectedInfluencer && (
           <ContentPlanForm
+            influencer={selectedInfluencer}
             campaignId={campaignId!}
-            influencerId={selectedInfluencerId}
-            influencerName={confirmedInfluencers.find(inf => inf.id === selectedInfluencerId)?.name || ''}
-            onClose={() => {
-              setShowCreateForm(false);
-              setSelectedInfluencerId(null);
-            }}
             onSave={handleCreateContentPlan}
+            onCancel={() => {
+              setShowCreateForm(false);
+              setSelectedInfluencer(null);
+            }}
           />
         )}
 
         <ProductionScheduleModal
           isOpen={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
+          onSave={handleSetProductionSchedule}
           campaign={campaign}
           contentPlans={contentPlans}
-          onSave={handleSetProductionSchedule}
         />
       </div>
     </div>
