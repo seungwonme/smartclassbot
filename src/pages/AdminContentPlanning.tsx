@@ -407,81 +407,83 @@ const AdminContentPlanning = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 좌측: 인플루언서 목록 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                확정 인플루언서 ({confirmedInfluencers.length}명)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {confirmedInfluencers.map((influencer) => {
-                  const existingPlan = contentPlans.find(p => p.influencerId === influencer.id);
-                  const hasRevisionRequest = existingPlan && (
-                    existingPlan.status === 'revision' || 
-                    (existingPlan.revisions.length > 0 && existingPlan.revisions[existingPlan.revisions.length - 1].requestedBy === 'brand')
-                  );
-                  const isSelected = selectedInfluencerForWork?.id === influencer.id;
-                  
-                  return (
-                    <div 
-                      key={influencer.id} 
-                      className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{influencer.name}</p>
-                        <p className="text-sm text-gray-500">{influencer.category}</p>
-                        <div className="flex gap-1 mt-1">
-                          {existingPlan && (
-                            <Badge variant="outline">
-                              기획완료
-                            </Badge>
-                          )}
+        <div className="grid grid-cols-12 gap-6">
+          {/* 좌측: 인플루언서 목록 - 폭 축소 */}
+          <div className="col-span-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  확정 인플루언서 ({confirmedInfluencers.length}명)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {confirmedInfluencers.map((influencer) => {
+                    const existingPlan = contentPlans.find(p => p.influencerId === influencer.id);
+                    const hasRevisionRequest = existingPlan && (
+                      existingPlan.status === 'revision' || 
+                      (existingPlan.revisions.length > 0 && existingPlan.revisions[existingPlan.revisions.length - 1].requestedBy === 'brand')
+                    );
+                    const isSelected = selectedInfluencerForWork?.id === influencer.id;
+                    
+                    return (
+                      <div 
+                        key={influencer.id} 
+                        className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{influencer.name}</p>
+                          <p className="text-sm text-gray-500 truncate">{influencer.category}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {existingPlan && (
+                              <Badge variant="outline" className="text-xs">
+                                기획완료
+                              </Badge>
+                            )}
+                            {hasRevisionRequest && (
+                              <Badge className="bg-orange-100 text-orange-800 text-xs">
+                                수정요청
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-1 ml-2 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            onClick={() => existingPlan ? handleEditPlan(influencer) : handleCreatePlan(influencer)}
+                            variant={existingPlan ? "outline" : "default"}
+                          >
+                            {existingPlan ? <Edit className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                          </Button>
                           {hasRevisionRequest && (
-                            <Badge className="bg-orange-100 text-orange-800 text-xs">
-                              수정요청
-                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewRevisionRequest(influencer)}
+                              className="bg-orange-50"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                            </Button>
+                          )}
+                          {isSelected && workMode !== 'idle' && (
+                            <div className="flex items-center ml-2">
+                              <ArrowRight className="w-4 h-4 text-blue-600" />
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          onClick={() => existingPlan ? handleEditPlan(influencer) : handleCreatePlan(influencer)}
-                          variant={existingPlan ? "outline" : "default"}
-                        >
-                          {existingPlan ? <Edit className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                        </Button>
-                        {hasRevisionRequest && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewRevisionRequest(influencer)}
-                            className="bg-orange-50"
-                          >
-                            <MessageSquare className="w-3 h-3" />
-                          </Button>
-                        )}
-                        {isSelected && workMode !== 'idle' && (
-                          <div className="flex items-center ml-2">
-                            <ArrowRight className="w-4 h-4 text-blue-600" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* 우측: 작업 영역 */}
-          <div>
+          {/* 우측: 작업 영역 - 폭 확대 */}
+          <div className="col-span-8">
             {renderWorkArea()}
           </div>
         </div>
