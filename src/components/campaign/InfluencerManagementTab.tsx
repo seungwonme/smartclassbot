@@ -1,8 +1,17 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -13,7 +22,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { Check, X, Eye, Edit, Trash2, Users, MessageCircle, Heart, Share2 } from 'lucide-react';
+import { Check, X, Eye, Edit, Trash2, Users } from 'lucide-react';
 import InfluencerDetailModal from '@/components/InfluencerDetailModal';
 import XiaohongshuInfluencerDetailModal from '@/components/XiaohongshuInfluencerDetailModal';
 import InfluencerEditModal from '@/components/campaign/InfluencerEditModal';
@@ -162,137 +171,121 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
         <h3 className="text-lg font-semibold">선택된 인플루언서 ({campaign.influencers.length}명)</h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {campaign.influencers.map((influencer) => (
-          <Card key={influencer.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <img
-                  src={influencer.profileImage}
-                  alt={influencer.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <CardTitle className="text-sm">{influencer.name}</CardTitle>
-                  <p className="text-xs text-muted-foreground">@{influencer.name}</p>
-                </div>
-                <Badge className={getStatusColor(influencer.status)}>
-                  {getStatusText(influencer.status)}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">팔로워</span>
-                  <span className="font-medium">{influencer.followers.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">참여율</span>
-                  <span className="font-medium">{influencer.engagementRate}%</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">협찬료</span>
-                  <span className="font-medium">{influencer.adFee?.toLocaleString() || 0}원</span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center">
-                      <Heart className="w-3 h-3 mr-1" />
-                      0
-                    </div>
-                    <div className="flex items-center">
-                      <MessageCircle className="w-3 h-3 mr-1" />
-                      0
-                    </div>
-                    <div className="flex items-center">
-                      <Share2 className="w-3 h-3 mr-1" />
-                      0
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <Badge variant="outline" className="text-xs">
-                    {influencer.category}
-                  </Badge>
-                </div>
-
-                <div className="flex space-x-2 mt-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDetailView(influencer)}
-                    className="flex-1"
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    상세보기
-                  </Button>
-                  
-                  {canManageInfluencers && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(influencer)}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setInfluencerToDelete(influencer.id)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                {campaign.status === 'proposing' && influencer.status === 'pending' && (
-                  <div className="flex space-x-2 mt-2">
-                    <Button
-                      size="sm"
-                      onClick={() => onInfluencerApproval(influencer.id, true)}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="w-3 h-3 mr-1" />
-                      승인
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => onInfluencerApproval(influencer.id, false)}
-                      className="flex-1"
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      거절
-                    </Button>
-                  </div>
-                )}
-
-                {canManageInfluencers && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleViewSimilar(influencer.id)}
-                    className="w-full mt-2"
-                  >
-                    <Users className="w-3 h-3 mr-1" />
-                    유사 인플루언서 보기
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {campaign.influencers.length === 0 && (
+      {campaign.influencers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           선택된 인플루언서가 없습니다.
         </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>인플루언서</TableHead>
+                  <TableHead>플랫폼</TableHead>
+                  <TableHead>카테고리</TableHead>
+                  <TableHead>팔로워</TableHead>
+                  <TableHead>참여율</TableHead>
+                  <TableHead>협찬료</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead className="text-right">액션</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campaign.influencers.map((influencer) => (
+                  <TableRow key={influencer.id}>
+                    <TableCell>
+                      <img
+                        src={influencer.profileImage}
+                        alt={influencer.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{influencer.name}</div>
+                        <div className="text-sm text-muted-foreground">@{influencer.name}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {influencer.platform === 'xiaohongshu' ? '샤오홍슈' : '더우인'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{influencer.category}</Badge>
+                    </TableCell>
+                    <TableCell>{influencer.followers.toLocaleString()}</TableCell>
+                    <TableCell>{influencer.engagementRate}%</TableCell>
+                    <TableCell>{influencer.adFee?.toLocaleString() || 0}원</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(influencer.status)}>
+                        {getStatusText(influencer.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDetailView(influencer)}
+                        >
+                          <Eye className="w-3 h-3" />
+                        </Button>
+                        
+                        {canManageInfluencers && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(influencer)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setInfluencerToDelete(influencer.id)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewSimilar(influencer.id)}
+                            >
+                              <Users className="w-3 h-3" />
+                            </Button>
+                          </>
+                        )}
+
+                        {campaign.status === 'proposing' && influencer.status === 'pending' && (
+                          <div className="flex space-x-1">
+                            <Button
+                              size="sm"
+                              onClick={() => onInfluencerApproval(influencer.id, true)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Check className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => onInfluencerApproval(influencer.id, false)}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* 인플루언서 상세보기 모달 */}
