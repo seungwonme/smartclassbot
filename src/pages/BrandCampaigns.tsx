@@ -15,13 +15,20 @@ const BrandCampaigns = () => {
 
   useEffect(() => {
     const loadCampaigns = async () => {
+      console.log('=== BrandCampaigns 캠페인 로딩 시작 ===');
       try {
         const data = await campaignService.getCampaigns();
+        console.log('브랜드 페이지 - 로드된 캠페인 데이터:', data);
+        console.log('캠페인 개수:', data.length);
+        data.forEach((campaign, index) => {
+          console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status} - ID: ${campaign.id}`);
+        });
         setCampaigns(data);
       } catch (error) {
         console.error('캠페인 로딩 실패:', error);
       } finally {
         setIsLoading(false);
+        console.log('=== BrandCampaigns 캠페인 로딩 완료 ===');
       }
     };
 
@@ -29,10 +36,12 @@ const BrandCampaigns = () => {
   }, []);
 
   const handleCampaignClick = (campaignId: string) => {
+    console.log('브랜드 - 캠페인 클릭:', campaignId);
     navigate(`/brand/campaigns/${campaignId}`);
   };
 
   const handleEditClick = (campaignId: string) => {
+    console.log('브랜드 - 캠페인 편집 클릭:', campaignId);
     navigate(`/brand/campaigns/edit/${campaignId}`);
   };
 
@@ -46,6 +55,10 @@ const BrandCampaigns = () => {
       </div>
     );
   }
+
+  console.log('=== BrandCampaigns 렌더링 ===');
+  console.log('현재 캠페인 상태:', campaigns);
+  console.log('캠페인 개수:', campaigns.length);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -71,12 +84,17 @@ const BrandCampaigns = () => {
             </Link>
           </div>
         ) : (
-          <CampaignDashboard
-            campaigns={campaigns}
-            userType="brand"
-            onCampaignClick={handleCampaignClick}
-            onCampaignEdit={handleEditClick}
-          />
+          <>
+            <div className="mb-4 text-sm text-gray-600">
+              총 {campaigns.length}개의 캠페인이 있습니다.
+            </div>
+            <CampaignDashboard
+              campaigns={campaigns}
+              userType="brand"
+              onCampaignClick={handleCampaignClick}
+              onCampaignEdit={handleEditClick}
+            />
+          </>
         )}
       </div>
     </div>
