@@ -172,7 +172,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(null);
     setWorkMode('create');
-    setShowRevisionFeedback(false); // 항상 false로 초기화
+    setShowRevisionFeedback(false); // 새 기획안에서는 항상 false
   };
 
   const handleEditPlan = (influencer: any) => {
@@ -184,7 +184,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('edit');
-    setShowRevisionFeedback(false); // 항상 false로 초기화 - 저장 후에만 나타나도록
+    setShowRevisionFeedback(false); // 수정 시작 시에는 항상 false
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
@@ -192,14 +192,13 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('revision');
-    setShowRevisionFeedback(true); // 수정요청 보기에서는 바로 true
+    setShowRevisionFeedback(true); // 수정요청 보기에서만 true
   };
 
   const handleContentUpdated = () => {
-    console.log('=== 콘텐츠 수정됨 - 피드백 섹션 활성화 ===');
-    if (editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand')) {
-      setShowRevisionFeedback(true);
-    }
+    console.log('=== 콘텐츠 수정됨 - 조건부 피드백 섹션 활성화 ===');
+    // 저장 후에만 피드백 섹션을 보여주도록 변경 - 이 함수에서는 상태 변경하지 않음
+    // 저장 버튼 클릭 후 handleSavePlan에서 처리하도록 함
   };
 
   // 상태 표시 텍스트 통일
@@ -275,6 +274,13 @@ const AdminContentPlanning = () => {
       });
 
       setContentPlans(updatedPlans);
+      
+      // 저장 후 피드백 섹션 표시 여부 결정
+      const savedPlan = updatedPlans.find(p => p.id === newPlan.id);
+      if (savedPlan && savedPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand')) {
+        console.log('저장 후 대기중인 브랜드 수정요청이 있어 피드백 섹션 활성화');
+        setShowRevisionFeedback(true);
+      }
       
       console.log('=== 콘텐츠 기획안 저장 완료 ===');
       
@@ -418,7 +424,10 @@ const AdminContentPlanning = () => {
     const pendingBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
     );
-    return pendingBrandRevisions.length > 0 ? pendingBrandRevisions[0].revisionNumber : null;
+    if (pendingBrandRevisions.length > 0) {
+      return pendingBrandRevisions[0].revisionNumber;
+    }
+    return null;
   };
 
   const renderWorkArea = () => {
@@ -491,7 +500,7 @@ const AdminContentPlanning = () => {
                     .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
                     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
                   
-                  const revisionNumber = pendingRevision ? pendingRevision.revisionNumber : 1;
+                  const revisionNumber = pendingRevision?.revisionNumber || 1;
                   
                   return (
                     <RevisionRequestForm
