@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ImageIcon, VideoIcon, X, Plus, Upload } from 'lucide-react';
+import { ImageIcon, VideoIcon, X, Plus, Upload, FileText } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { CampaignInfluencer } from '@/types/campaign';
 
@@ -38,6 +38,7 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   const [videoData, setVideoData] = useState<VideoPlanData>({
     postTitle: '',
     scenario: '',
+    scenarioFiles: [],
     script: '',
     hashtags: []
   });
@@ -107,6 +108,34 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     setImageData(prev => ({
       ...prev,
       referenceImages: prev.referenceImages.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleScenarioFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setVideoData(prev => ({
+            ...prev,
+            scenarioFiles: [...prev.scenarioFiles, {
+              name: file.name,
+              data: result,
+              type: file.type
+            }]
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeScenarioFile = (index: number) => {
+    setVideoData(prev => ({
+      ...prev,
+      scenarioFiles: prev.scenarioFiles.filter((_, i) => i !== index)
     }));
   };
 
@@ -247,6 +276,51 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
               placeholder="영상 시나리오를 입력하세요"
               rows={12}
             />
+            
+            <div className="mt-4">
+              <Label>시나리오 파일 업로드</Label>
+              <div className="mt-2">
+                <div className="flex items-center justify-center w-full">
+                  <label htmlFor="scenario-files" className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-3 pb-3">
+                      <FileText className="w-6 h-6 mb-2 text-gray-500" />
+                      <p className="text-sm text-gray-500">
+                        <span className="font-semibold">워드, PDF 등 파일 업로드</span>
+                      </p>
+                      <p className="text-xs text-gray-500">DOC, DOCX, PDF, TXT (최대 10MB)</p>
+                    </div>
+                    <input
+                      id="scenario-files"
+                      type="file"
+                      multiple
+                      accept=".doc,.docx,.pdf,.txt"
+                      className="hidden"
+                      onChange={handleScenarioFileUpload}
+                    />
+                  </label>
+                </div>
+                {videoData.scenarioFiles.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    {videoData.scenarioFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm">{file.name}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="w-6 h-6 p-0"
+                          onClick={() => removeScenarioFile(index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div>

@@ -23,6 +23,7 @@ export interface ImagePlanData {
 export interface VideoPlanData {
   postTitle: string;
   scenario: string;
+  scenarioFiles: { name: string; data: string; type: string }[];
   script: string;
   hashtags: string[];
 }
