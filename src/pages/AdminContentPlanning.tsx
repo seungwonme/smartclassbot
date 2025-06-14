@@ -42,31 +42,64 @@ const AdminContentPlanning = () => {
         const campaignData = await campaignService.getCampaignById(campaignId);
         if (campaignData) {
           setCampaign(campaignData);
-          const plans: ContentPlanDetail[] = campaignData.contentPlans?.map(plan => ({
-            id: plan.id,
-            campaignId: plan.campaignId,
-            influencerId: plan.influencerId,
-            influencerName: plan.influencerName,
-            contentType: plan.contentType,
-            status: plan.status,
-            planData: plan.contentType === 'image' ? {
-              postTitle: '',
-              thumbnailTitle: '',
-              referenceImages: [],
-              script: '',
-              hashtags: []
-            } : {
-              postTitle: '',
-              scenario: '',
-              scenarioFiles: [],
-              script: '',
-              hashtags: []
-            },
-            revisions: plan.revisions || [],
-            currentRevisionNumber: plan.revisions?.length || 0,
-            createdAt: plan.createdAt,
-            updatedAt: plan.updatedAt
-          })) || [];
+          
+          console.log('=== 캠페인 데이터 로딩 ===');
+          console.log('원본 contentPlans:', campaignData.contentPlans);
+          
+          const plans: ContentPlanDetail[] = campaignData.contentPlans?.map(plan => {
+            console.log('=== 기획안 복원 처리 ===');
+            console.log('기획안 ID:', plan.id);
+            console.log('planDocument 원본:', plan.planDocument);
+            
+            let planData;
+            try {
+              // planDocument가 문자열이면 파싱, 객체면 그대로 사용
+              planData = typeof plan.planDocument === 'string' 
+                ? JSON.parse(plan.planDocument) 
+                : plan.planDocument;
+              console.log('파싱된 planData:', planData);
+            } catch (error) {
+              console.error('planDocument 파싱 실패:', error);
+              // 기본값 설정
+              planData = plan.contentType === 'image' ? {
+                postTitle: '',
+                thumbnailTitle: '',
+                referenceImages: [],
+                script: '',
+                hashtags: []
+              } : {
+                postTitle: '',
+                scenario: '',
+                scenarioFiles: [],
+                script: '',
+                hashtags: []
+              };
+            }
+            
+            const detailPlan: ContentPlanDetail = {
+              id: plan.id,
+              campaignId: plan.campaignId,
+              influencerId: plan.influencerId,
+              influencerName: plan.influencerName,
+              contentType: plan.contentType,
+              status: plan.status,
+              planData: planData,
+              revisions: plan.revisions || [],
+              currentRevisionNumber: plan.revisions?.length || 0,
+              createdAt: plan.createdAt,
+              updatedAt: plan.updatedAt
+            };
+            
+            console.log('최종 변환된 기획안:', detailPlan);
+            return detailPlan;
+          }) || [];
+          
+          console.log('=== 최종 contentPlans 목록 ===');
+          console.log('총 기획안 수:', plans.length);
+          plans.forEach(plan => {
+            console.log(`- ${plan.influencerName}: ${plan.contentType}, 데이터:`, plan.planData);
+          });
+          
           setContentPlans(plans);
         }
       } catch (error) {
@@ -84,13 +117,21 @@ const AdminContentPlanning = () => {
   }, [campaignId, toast]);
 
   const handleCreatePlan = (influencer: any) => {
+    console.log('=== 새 기획안 작성 시작 ===');
+    console.log('선택된 인플루언서:', influencer);
     setSelectedInfluencer(influencer);
     setEditingPlan(null);
     setShowForm(true);
   };
 
   const handleEditPlan = (plan: ContentPlanDetail) => {
+    console.log('=== 기획안 수정 시작 ===');
+    console.log('수정할 기획안:', plan);
+    console.log('기획안 데이터:', plan.planData);
+    
     const influencer = campaign?.influencers.find(inf => inf.id === plan.influencerId);
+    console.log('연결된 인플루언서:', influencer);
+    
     setSelectedInfluencer(influencer);
     setEditingPlan(plan);
     setShowForm(true);
@@ -100,6 +141,7 @@ const AdminContentPlanning = () => {
     try {
       console.log('=== 콘텐츠 기획안 저장 시작 ===');
       console.log('저장할 기획안 데이터:', planData);
+      console.log('편집 중인 기획안:', editingPlan);
       
       const newPlan: ContentPlanDetail = {
         id: editingPlan?.id || `plan_${Date.now()}`,
@@ -116,23 +158,32 @@ const AdminContentPlanning = () => {
       };
 
       console.log('생성된 기획안:', newPlan);
+      console.log('저장할 planData:', newPlan.planData);
 
       const updatedPlans = editingPlan 
         ? contentPlans.map(p => p.id === editingPlan.id ? newPlan : p)
         : [...contentPlans, newPlan];
 
-      const updatedContentPlans = updatedPlans.map(plan => ({
-        id: plan.id,
-        campaignId: plan.campaignId,
-        influencerId: plan.influencerId,
-        influencerName: plan.influencerName,
-        contentType: plan.contentType,
-        status: plan.status,
-        planDocument: JSON.stringify(plan.planData),
-        revisions: plan.revisions,
-        createdAt: plan.createdAt,
-        updatedAt: plan.updatedAt
-      }));
+      console.log('=== 데이터베이스 저장 준비 ===');
+      const updatedContentPlans = updatedPlans.map(plan => {
+        const planDocument = JSON.stringify(plan.planData);
+        console.log(`기획안 ${plan.id} planDocument:`, planDocument);
+        
+        return {
+          id: plan.id,
+          campaignId: plan.campaignId,
+          influencerId: plan.influencerId,
+          influencerName: plan.influencerName,
+          contentType: plan.contentType,
+          status: plan.status,
+          planDocument: planDocument,
+          revisions: plan.revisions,
+          createdAt: plan.createdAt,
+          updatedAt: plan.updatedAt
+        };
+      });
+
+      console.log('데이터베이스에 저장할 contentPlans:', updatedContentPlans);
 
       await campaignService.updateCampaign(campaignId!, {
         contentPlans: updatedContentPlans

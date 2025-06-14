@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,13 +46,57 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   const [hashtagInput, setHashtagInput] = useState('');
 
   useEffect(() => {
+    console.log('=== ContentPlanForm 데이터 로딩 ===');
+    console.log('existingPlan:', existingPlan);
+    
     if (existingPlan) {
+      console.log('기존 기획안 데이터 복원 시작');
+      console.log('contentType:', existingPlan.contentType);
+      console.log('planData:', existingPlan.planData);
+      
       setContentType(existingPlan.contentType);
+      
       if (existingPlan.contentType === 'image') {
-        setImageData(existingPlan.planData as ImagePlanData);
+        const imagePlan = existingPlan.planData as ImagePlanData;
+        console.log('이미지 기획안 데이터:', imagePlan);
+        
+        setImageData({
+          postTitle: imagePlan.postTitle || '',
+          thumbnailTitle: imagePlan.thumbnailTitle || '',
+          referenceImages: imagePlan.referenceImages || [],
+          script: imagePlan.script || '',
+          hashtags: imagePlan.hashtags || []
+        });
+        
+        console.log('복원된 이미지 데이터:', {
+          postTitle: imagePlan.postTitle,
+          thumbnailTitle: imagePlan.thumbnailTitle,
+          referenceImages: imagePlan.referenceImages?.length || 0,
+          script: imagePlan.script,
+          hashtags: imagePlan.hashtags?.length || 0
+        });
       } else {
-        setVideoData(existingPlan.planData as VideoPlanData);
+        const videoPlan = existingPlan.planData as VideoPlanData;
+        console.log('영상 기획안 데이터:', videoPlan);
+        
+        setVideoData({
+          postTitle: videoPlan.postTitle || '',
+          scenario: videoPlan.scenario || '',
+          scenarioFiles: videoPlan.scenarioFiles || [],
+          script: videoPlan.script || '',
+          hashtags: videoPlan.hashtags || []
+        });
+        
+        console.log('복원된 영상 데이터:', {
+          postTitle: videoPlan.postTitle,
+          scenario: videoPlan.scenario,
+          scenarioFiles: videoPlan.scenarioFiles?.length || 0,
+          script: videoPlan.script,
+          hashtags: videoPlan.hashtags?.length || 0
+        });
       }
+    } else {
+      console.log('새 기획안 작성 - 초기값 설정');
     }
   }, [existingPlan]);
 
@@ -140,14 +185,24 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   };
 
   const handleSave = () => {
+    console.log('=== 기획안 저장 시작 ===');
+    console.log('contentType:', contentType);
+    console.log('현재 imageData:', imageData);
+    console.log('현재 videoData:', videoData);
+    
+    const currentPlanData = contentType === 'image' ? imageData : videoData;
+    console.log('저장할 planData:', currentPlanData);
+    
     const planData: Partial<ContentPlanDetail> = {
       campaignId,
       influencerId: influencer.id,
       influencerName: influencer.name,
       contentType,
-      planData: contentType === 'image' ? imageData : videoData,
+      planData: currentPlanData,
       status: 'draft'
     };
+    
+    console.log('최종 저장 데이터:', planData);
     onSave(planData);
   };
 
@@ -158,7 +213,10 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
       {/* 콘텐츠 타입 선택 */}
       <div>
         <Label className="text-base font-medium mb-3 block">콘텐츠 타입</Label>
-        <RadioGroup value={contentType} onValueChange={(value) => setContentType(value as 'image' | 'video')}>
+        <RadioGroup value={contentType} onValueChange={(value) => {
+          console.log('콘텐츠 타입 변경:', value);
+          setContentType(value as 'image' | 'video');
+        }}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="image" id="image" />
             <Label htmlFor="image" className="flex items-center gap-2 cursor-pointer">
@@ -184,7 +242,10 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
             <Input
               id="postTitle"
               value={imageData.postTitle}
-              onChange={(e) => setImageData(prev => ({ ...prev, postTitle: e.target.value }))}
+              onChange={(e) => {
+                console.log('이미지 포스팅 제목 변경:', e.target.value);
+                setImageData(prev => ({ ...prev, postTitle: e.target.value }));
+              }}
               placeholder="포스팅 제목을 입력하세요"
             />
           </div>
@@ -262,7 +323,10 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
             <Input
               id="postTitle"
               value={videoData.postTitle}
-              onChange={(e) => setVideoData(prev => ({ ...prev, postTitle: e.target.value }))}
+              onChange={(e) => {
+                console.log('영상 포스팅 제목 변경:', e.target.value);
+                setVideoData(prev => ({ ...prev, postTitle: e.target.value }));
+              }}
               placeholder="포스팅 제목을 입력하세요"
             />
           </div>
