@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus, Send, X } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,6 +22,12 @@ interface FieldFeedback {
   fieldLabel: string;
 }
 
+interface InlineComment {
+  planId: string;
+  fieldName: string;
+  comment: string;
+}
+
 const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   plans,
   onApprove,
@@ -29,6 +37,9 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const [feedback, setFeedback] = useState('');
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [fieldFeedback, setFieldFeedback] = useState<FieldFeedback | null>(null);
+  const [activeCommentField, setActiveCommentField] = useState<string | null>(null);
+  const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
+  const [currentComment, setCurrentComment] = useState('');
   const { toast } = useToast();
 
   // 디버깅을 위한 로그 추가
@@ -86,7 +97,23 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   };
 
   const handleRequestRevision = () => {
-    if (!selectedPlan || !feedback.trim()) {
+    if (!selectedPlan) return;
+
+    // 인라인 코멘트들을 수집하여 피드백으로 구성
+    const planComments = inlineComments.filter(comment => comment.planId === selectedPlan.id);
+    let finalFeedback = feedback.trim();
+
+    if (planComments.length > 0) {
+      const commentsFeedback = planComments.map(comment => 
+        `[${comment.fieldName}] ${comment.comment}`
+      ).join('\n');
+      
+      finalFeedback = finalFeedback 
+        ? `${finalFeedback}\n\n${commentsFeedback}`
+        : commentsFeedback;
+    }
+
+    if (!finalFeedback) {
       toast({
         title: "피드백을 입력해주세요",
         variant: "destructive"
@@ -94,25 +121,60 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       return;
     }
 
-    const finalFeedback = fieldFeedback 
-      ? `[${fieldFeedback.fieldLabel}] ${feedback}`
-      : feedback;
-
     onRequestRevision(selectedPlan.id, finalFeedback);
     setFeedback('');
     setShowFeedbackForm(false);
     setSelectedPlan(null);
     setFieldFeedback(null);
+    setInlineComments([]);
     toast({
       title: "수정 요청 전송",
       description: "콘텐츠 기획 수정 요청이 전송되었습니다."
     });
   };
 
-  const handleFieldFeedback = (plan: ContentPlanDetail, fieldName: string, fieldLabel: string) => {
-    setSelectedPlan(plan);
-    setFieldFeedback({ planId: plan.id, fieldName, fieldLabel });
-    setShowFeedbackForm(true);
+  const handleInlineComment = (plan: ContentPlanDetail, fieldName: string, fieldLabel: string) => {
+    const commentKey = `${plan.id}-${fieldName}`;
+    if (activeCommentField === commentKey) {
+      setActiveCommentField(null);
+      setCurrentComment('');
+    } else {
+      const existingComment = inlineComments.find(c => c.planId === plan.id && c.fieldName === fieldLabel);
+      setActiveCommentField(commentKey);
+      setCurrentComment(existingComment?.comment || '');
+    }
+  };
+
+  const handleSaveInlineComment = (plan: ContentPlanDetail, fieldLabel: string) => {
+    if (!currentComment.trim()) return;
+
+    const newComment: InlineComment = {
+      planId: plan.id,
+      fieldName: fieldLabel,
+      comment: currentComment.trim()
+    };
+
+    setInlineComments(prev => {
+      const filtered = prev.filter(c => !(c.planId === plan.id && c.fieldName === fieldLabel));
+      return [...filtered, newComment];
+    });
+
+    setActiveCommentField(null);
+    setCurrentComment('');
+    
+    toast({
+      title: "코멘트 저장됨",
+      description: `${fieldLabel}에 대한 코멘트가 저장되었습니다.`
+    });
+  };
+
+  const handleCancelInlineComment = () => {
+    setActiveCommentField(null);
+    setCurrentComment('');
+  };
+
+  const getFieldComment = (planId: string, fieldLabel: string) => {
+    return inlineComments.find(c => c.planId === planId && c.fieldName === fieldLabel);
   };
 
   const renderFieldWithFeedback = (
@@ -122,6 +184,10 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     content: React.ReactNode,
     canAddFeedback: boolean = true
   ) => {
+    const commentKey = `${plan.id}-${fieldName}`;
+    const isActiveComment = activeCommentField === commentKey;
+    const existingComment = getFieldComment(plan.id, fieldLabel);
+
     return (
       <div className="space-y-2">
         <div className="flex justify-between items-center">
@@ -130,15 +196,70 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleFieldFeedback(plan, fieldName, fieldLabel)}
+              onClick={() => handleInlineComment(plan, fieldName, fieldLabel)}
               className="text-xs px-2 py-1 h-6"
             >
               <Plus className="w-3 h-3 mr-1" />
-              수정요청
+              수정코멘트
             </Button>
           )}
         </div>
         {content}
+        
+        {/* 기존 코멘트 표시 */}
+        {existingComment && !isActiveComment && (
+          <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="font-medium text-orange-700">수정 코멘트: </span>
+                <span className="text-orange-600">{existingComment.comment}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleInlineComment(plan, fieldName, fieldLabel)}
+                className="text-xs px-1 py-0 h-5 text-orange-600 hover:text-orange-800"
+              >
+                수정
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 인라인 코멘트 입력 필드 */}
+        {isActiveComment && (
+          <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">수정 코멘트</Label>
+              <Input
+                value={currentComment}
+                onChange={(e) => setCurrentComment(e.target.value)}
+                placeholder={`${fieldLabel}에 대한 수정 요청 사항을 입력하세요...`}
+                className="text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveInlineComment(plan, fieldLabel)}
+                  className="text-xs px-3 py-1 h-7"
+                  disabled={!currentComment.trim()}
+                >
+                  <Send className="w-3 h-3 mr-1" />
+                  저장
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelInlineComment}
+                  className="text-xs px-3 py-1 h-7"
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  취소
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -409,10 +530,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>
-                  {fieldFeedback 
-                    ? `${fieldFeedback.fieldLabel} 수정 요청 - ${selectedPlan.influencerName}`
-                    : `전체 수정 요청 - ${selectedPlan.influencerName}`
-                  }
+                  전체 수정 요청 - {selectedPlan.influencerName}
                 </CardTitle>
                 <Button variant="outline" onClick={() => {
                   setShowFeedbackForm(false);
@@ -426,26 +544,27 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {fieldFeedback && (
+                {/* 저장된 인라인 코멘트들 표시 */}
+                {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
                   <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>{fieldFeedback.fieldLabel}</strong>에 대한 수정 요청입니다.
-                    </p>
+                    <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
+                    {inlineComments
+                      .filter(c => c.planId === selectedPlan.id)
+                      .map((comment, index) => (
+                        <div key={index} className="text-sm text-blue-600 mb-1">
+                          <strong>{comment.fieldName}:</strong> {comment.comment}
+                        </div>
+                      ))}
                   </div>
                 )}
+                
                 <div>
-                  <Label htmlFor="feedback">
-                    {fieldFeedback ? `${fieldFeedback.fieldLabel} 수정 요청 사항` : '수정 요청 사항'}
-                  </Label>
+                  <Label htmlFor="feedback">전체 수정 요청 사항 (선택사항)</Label>
                   <Textarea
                     id="feedback"
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    placeholder={
-                      fieldFeedback 
-                        ? `${fieldFeedback.fieldLabel}에 대한 구체적인 수정 요청 사항을 입력해주세요...`
-                        : "구체적인 수정 요청 사항을 입력해주세요..."
-                    }
+                    placeholder="전체적인 수정 요청 사항이 있다면 입력해주세요..."
                     rows={6}
                   />
                 </div>
