@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,12 +19,43 @@ const CampaignDetail = () => {
     setActiveTab,
     handleEdit,
     handleDelete,
-    handleSubmit,
     handleInfluencerApproval,
     handleFinalConfirmation,
     updateCampaignInfluencers,
     toast
   } = useCampaignDetail();
+
+  // 로컬 제출 함수 추가
+  const handleSubmit = async () => {
+    if (!campaign) return;
+    
+    try {
+      console.log('캠페인 제출 시작 - 현재 상태:', campaign.status);
+      
+      // 캠페인을 제출됨 상태로 변경
+      await updateCampaignInfluencers(campaign.id, { 
+        status: 'submitted' 
+      });
+      
+      console.log('캠페인 상태를 submitted로 변경 완료');
+      
+      toast({
+        title: "캠페인 제출 완료",
+        description: "캠페인이 성공적으로 제출되었습니다. 시스템 관리자가 검토 후 섭외를 진행합니다."
+      });
+      
+      // 페이지 새로고침하여 최신 상태 반영
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('캠페인 제출 실패:', error);
+      toast({
+        title: "제출 실패",
+        description: "캠페인 제출에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusColor = (status: Campaign['status']) => {
     switch (status) {
