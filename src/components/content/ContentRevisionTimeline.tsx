@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -74,7 +75,7 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge className="bg-blue-100 text-blue-800">
-                      {revision.revisionNumber}차 수정요청
+                      {revision.revisionNumber + 1}차 수정요청
                     </Badge>
                     <Badge variant="outline" className={getStatusColor(revision)}>
                       {getStatusText(revision)}
