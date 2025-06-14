@@ -246,6 +246,10 @@ const AdminContentPlanning = () => {
         return;
       }
 
+      console.log('=== 수정 피드백 처리 ===');
+      console.log('처리할 revision:', pendingRevision);
+      console.log('revision number:', pendingRevision.revisionNumber);
+
       // pending revision을 completed로 업데이트
       const updatedPlans = contentPlans.map(plan => {
         if (plan.id === editingPlan.id) {
@@ -377,14 +381,25 @@ const AdminContentPlanning = () => {
             </div>
             
             {/* 하단: 수정 피드백 섹션 */}
-            {editingPlan && (
+            {editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand') && (
               <div className="border-t pt-6">
-                <RevisionRequestForm
-                  revisionNumber={(editingPlan.currentRevisionNumber || 0) + 1}
-                  onSubmit={handleRevisionFeedback}
-                  onCancel={handleBackToIdle}
-                  requestType="admin-feedback"
-                />
+                {(() => {
+                  // 가장 최근 pending revision의 번호를 찾아서 사용
+                  const pendingRevision = editingPlan.revisions
+                    .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
+                    .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
+                  
+                  const revisionNumber = pendingRevision ? pendingRevision.revisionNumber : 1;
+                  
+                  return (
+                    <RevisionRequestForm
+                      revisionNumber={revisionNumber}
+                      onSubmit={handleRevisionFeedback}
+                      onCancel={handleBackToIdle}
+                      requestType="admin-feedback"
+                    />
+                  );
+                })()}
               </div>
             )}
           </div>
