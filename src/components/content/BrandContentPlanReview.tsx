@@ -65,16 +65,27 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   };
 
   const hasPlanContent = (plan: ContentPlanDetail) => {
-    if (plan.contentType === 'image') {
-      const imageData = plan.planData as ImagePlanData;
-      return !!(imageData.postTitle || imageData.thumbnailTitle || imageData.script || 
-               (imageData.hashtags && imageData.hashtags.length > 0) ||
-               (imageData.referenceImages && imageData.referenceImages.length > 0));
-    } else {
-      const videoData = plan.planData as VideoPlanData;
-      return !!(videoData.postTitle || videoData.scenario || videoData.script ||
-               (videoData.hashtags && videoData.hashtags.length > 0) ||
-               (videoData.scenarioFiles && videoData.scenarioFiles.length > 0));
+    // Add null checks for planData
+    if (!plan.planData) {
+      console.log('Plan data is undefined for plan:', plan.id);
+      return false;
+    }
+
+    try {
+      if (plan.contentType === 'image') {
+        const imageData = plan.planData as ImagePlanData;
+        return !!(imageData?.postTitle || imageData?.thumbnailTitle || imageData?.script || 
+                 (imageData?.hashtags && imageData.hashtags.length > 0) ||
+                 (imageData?.referenceImages && imageData.referenceImages.length > 0));
+      } else {
+        const videoData = plan.planData as VideoPlanData;
+        return !!(videoData?.postTitle || videoData?.scenario || videoData?.script ||
+                 (videoData?.hashtags && videoData.hashtags.length > 0) ||
+                 (videoData?.scenarioFiles && videoData.scenarioFiles.length > 0));
+      }
+    } catch (error) {
+      console.error('Error checking plan content:', error);
+      return false;
     }
   };
 
@@ -214,6 +225,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {plans.map((plan) => {
           const revisionInfo = getCurrentRevisionInfo(plan);
+          const hasContent = hasPlanContent(plan);
           
           return (
             <Card key={plan.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedPlan(plan)}>
@@ -249,7 +261,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   </p>
                   
                   <div className="mt-2">
-                    {hasPlanContent(plan) ? (
+                    {hasContent ? (
                       <Badge variant="outline" className="text-green-600 border-green-200">
                         기획안 작성완료
                       </Badge>
@@ -260,7 +272,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                     )}
                   </div>
 
-                  {canReviewPlan(plan) && hasPlanContent(plan) && (
+                  {canReviewPlan(plan) && hasContent && (
                     <div className="flex gap-2 mt-4">
                       <Button
                         size="sm"
@@ -288,7 +300,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                     </div>
                   )}
 
-                  {canReviewPlan(plan) && !hasPlanContent(plan) && (
+                  {canReviewPlan(plan) && !hasContent && (
                     <div className="mt-4">
                       <p className="text-sm text-gray-500">인플루언서가 기획안을 작성 중입니다.</p>
                     </div>
