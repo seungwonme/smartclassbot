@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
@@ -292,8 +293,8 @@ export const useCampaignForm = (campaignId?: string) => {
       console.log('=== 캠페인 제출 완료 - 목록 페이지로 이동 시작 ===');
       console.log('🎯 리다이렉트 경로: /brand/campaigns');
       
-      // 즉시 리다이렉트 실행
-      navigate('/brand/campaigns', { replace: true });
+      // 페이지 리로드를 방지하고 강제 리다이렉트
+      window.location.href = '/brand/campaigns';
       
     } catch (error) {
       console.error('=== 캠페인 처리 실패 ===', error);
