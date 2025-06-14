@@ -11,15 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Users, Plus } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Users, Plus, Eye, TrendingUp } from 'lucide-react';
 
 interface SimilarInfluencerModalProps {
   isOpen: boolean;
@@ -49,7 +42,7 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
     
     setIsLoading(true);
     
-    // 임시 유사 인플루언서 데이터 생성
+    // 임시 유사 인플루언서 데이터 생성 (브랜드 관리자 검색 목록과 동일한 형태)
     const mockSimilarInfluencers: CampaignInfluencer[] = [
       {
         id: `similar-${Date.now()}-1`,
@@ -91,6 +84,20 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
         category: rejectedInfluencer.category || '뷰티',
         adFee: Math.floor(Math.random() * 2000000) + 1000000,
         socialChannels: ['douyin'],
+        isSelected: false
+      },
+      {
+        id: `similar-${Date.now()}-4`,
+        name: '스타일링전문가최',
+        profileImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face',
+        followers: 95000,
+        engagementRate: 4.1,
+        platform: rejectedInfluencer.platform || 'xiaohongshu',
+        status: 'pending',
+        region: rejectedInfluencer.region || '서울',
+        category: rejectedInfluencer.category || '뷰티',
+        adFee: Math.floor(Math.random() * 2000000) + 1000000,
+        socialChannels: ['xiaohongshu'],
         isSelected: false
       }
     ];
@@ -136,7 +143,7 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -157,79 +164,92 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
               선택한 인플루언서: {selectedInfluencers.size}명
             </div>
             
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">선택</TableHead>
-                    <TableHead className="w-16">프로필</TableHead>
-                    <TableHead>닉네임</TableHead>
-                    <TableHead className="text-center">플랫폼</TableHead>
-                    <TableHead className="text-center">팔로워 수</TableHead>
-                    <TableHead className="text-center">참여율</TableHead>
-                    <TableHead className="text-center">지역</TableHead>
-                    <TableHead className="text-center">카테고리</TableHead>
-                    <TableHead className="text-center">예상 광고비</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {similarInfluencers.map((influencer) => (
-                    <TableRow key={influencer.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={selectedInfluencers.has(influencer.id)}
-                          onChange={() => handleInfluencerSelect(influencer.id)}
-                          className="w-4 h-4"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Avatar className="w-10 h-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {similarInfluencers.map((influencer) => (
+                <Card 
+                  key={influencer.id} 
+                  className={`cursor-pointer transition-all border-2 ${
+                    selectedInfluencers.has(influencer.id) 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => handleInfluencerSelect(influencer.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="w-12 h-12">
                           <AvatarImage src={influencer.profileImage} />
                           <AvatarFallback>
                             {influencer.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-blue-600 font-medium">
-                          {influencer.name}
+                        <div>
+                          <h3 className="font-medium text-blue-600">
+                            {influencer.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <img 
+                              src={influencer.platform === 'xiaohongshu' ? 
+                                "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
+                                "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
+                              } 
+                              alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
+                              className="w-5 h-5 rounded"
+                            />
+                            <span className="text-sm text-gray-500">{influencer.region}</span>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
-                          <img 
-                            src={influencer.platform === 'xiaohongshu' ? 
-                              "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
-                              "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
-                            } 
-                            alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
-                            className="w-6 h-6 rounded"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">{formatFollowers(influencer.followers)}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
-                          <span className="text-green-600 mr-1">↑</span>
-                          {influencer.engagementRate}%
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">{influencer.region}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="text-xs">
-                          {influencer.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="text-green-600 font-medium">
-                          {influencer.adFee?.toLocaleString()}원
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedInfluencers.has(influencer.id)}
+                        onChange={() => handleInfluencerSelect(influencer.id)}
+                        className="w-5 h-5"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-1 text-blue-500" />
+                        <span>{formatFollowers(influencer.followers)}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <TrendingUp className="w-4 h-4 mr-1 text-green-500" />
+                        <span>{influencer.engagementRate}%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-3">
+                      <Badge variant="outline" className="text-xs">
+                        {influencer.category}
+                      </Badge>
+                      <span className="text-green-600 font-medium text-sm">
+                        {influencer.adFee?.toLocaleString()}원
+                      </span>
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">예상 광고비</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // 상세 정보 모달 열기 (향후 구현)
+                          }}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          상세보기
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         )}
