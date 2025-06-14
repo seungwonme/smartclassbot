@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -410,18 +411,30 @@ const AdminContentPlanning = () => {
         </div>
 
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>콘텐츠 기획 - {selectedInfluencer?.name}</DialogTitle>
             </DialogHeader>
             {selectedInfluencer && (
-              <ContentPlanForm
-                influencer={selectedInfluencer}
-                campaignId={campaign.id}
-                existingPlan={editingPlan || undefined}
-                onSave={handleSavePlan}
-                onCancel={() => setShowForm(false)}
-              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 수정 이력이 있는 경우 좌측에 표시 */}
+                {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && (
+                  <div className="lg:col-span-1">
+                    <ContentRevisionTimeline revisions={editingPlan.revisions} />
+                  </div>
+                )}
+                
+                {/* 기획안 폼 */}
+                <div className={editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 ? "lg:col-span-1" : "lg:col-span-2"}>
+                  <ContentPlanForm
+                    influencer={selectedInfluencer}
+                    campaignId={campaign!.id}
+                    existingPlan={editingPlan || undefined}
+                    onSave={handleSavePlan}
+                    onCancel={() => setShowForm(false)}
+                  />
+                </div>
+              </div>
             )}
           </DialogContent>
         </Dialog>
