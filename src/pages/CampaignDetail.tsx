@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -84,13 +83,19 @@ const CampaignDetail = () => {
         
         console.log('Processed plan data:', planData);
         
+        // status를 올바른 타입으로 매핑
+        let status: 'draft' | 'revision' | 'approved' = 'draft';
+        if (plan.status === 'revision' || plan.status === 'approved') {
+          status = plan.status;
+        }
+        
         return {
           id: plan.id,
           campaignId: plan.campaignId,
           influencerId: plan.influencerId,
           influencerName: plan.influencerName,
           contentType: plan.contentType,
-          status: plan.status,
+          status: status,
           planData: planData,
           revisions: plan.revisions || [],
           currentRevisionNumber: plan.revisions?.length || 0,

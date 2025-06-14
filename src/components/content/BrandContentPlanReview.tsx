@@ -43,7 +43,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'submitted': return 'bg-blue-100 text-blue-800';
       case 'revision': return 'bg-orange-100 text-orange-800';
       case 'approved': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -52,16 +51,15 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
 
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
-      case 'draft': return '초안';
-      case 'submitted': return '제출됨';
-      case 'revision': return '수정요청';
-      case 'approved': return '승인됨';
+      case 'draft': return '기획초안';
+      case 'revision': return '기획수정중';
+      case 'approved': return '기획완료';
       default: return status;
     }
   };
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
-    return plan.status === 'draft' || plan.status === 'submitted';
+    return plan.status === 'draft' || plan.status === 'revision';
   };
 
   const hasPlanContent = (plan: ContentPlanDetail) => {
