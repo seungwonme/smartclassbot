@@ -68,6 +68,11 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
     }
   };
 
+  // Get selected influencers from the recommended list
+  const selectedInfluencers = recommendedInfluencers.filter(influencer => 
+    formData.selectedInfluencers.includes(influencer.id)
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -230,6 +235,58 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
                           <Badge variant="secondary">
                             {influencer.category}
                           </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {selectedInfluencers.length > 0 && (
+          <div>
+            <Label>선택된 인플루언서 ({selectedInfluencers.length}명)</Label>
+            <Card className="mt-4">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>프로필</TableHead>
+                      <TableHead>인플루언서명</TableHead>
+                      <TableHead>팔로워 수</TableHead>
+                      <TableHead>참여율</TableHead>
+                      <TableHead>카테고리</TableHead>
+                      <TableHead className="w-12">제거</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedInfluencers.map((influencer) => (
+                      <TableRow key={influencer.id}>
+                        <TableCell>
+                          <Avatar>
+                            <AvatarImage src={influencer.profileImage} />
+                            <AvatarFallback>
+                              {influencer.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{influencer.name}</div>
+                        </TableCell>
+                        <TableCell>{formatFollowers(influencer.followers)}</TableCell>
+                        <TableCell>{influencer.engagementRate}%</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {influencer.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Checkbox
+                            checked={true}
+                            onChange={() => handleInfluencerToggle(influencer.id)}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
