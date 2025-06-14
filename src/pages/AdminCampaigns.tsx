@@ -298,7 +298,7 @@ const AdminCampaigns = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => {
             const shouldShowReceiveButton = campaign.status === 'submitted';
-            const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing';
+            const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing' || campaign.status === 'revising';
             
             console.log(`캠페인 "${campaign.title}" - 상태: ${campaign.status}, 수령 버튼 표시: ${shouldShowReceiveButton}, 관리 버튼 표시: ${shouldShowManageButton}`);
             
@@ -345,7 +345,7 @@ const AdminCampaigns = () => {
                               className="flex-1"
                             >
                               <Eye className="w-4 h-4 mr-2" />
-                              섭외 관리
+                              {campaign.status === 'revising' ? '재제안' : '섭외 관리'}
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
