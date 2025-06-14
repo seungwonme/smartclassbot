@@ -255,13 +255,13 @@ export const useCampaignForm = (campaignId?: string) => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
-        status: 'submitted', // 제출됨 상태로 설정
+        status: isEditMode ? 'creating' : 'creating', // 항상 생성중 상태로 설정
         currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };
 
-      console.log('제출할 캠페인 데이터:', campaignData);
+      console.log('생성할 캠페인 데이터:', campaignData);
       console.log('🔧 설정된 캠페인 상태:', campaignData.status);
 
       if (isEditMode && campaignId) {
@@ -273,14 +273,17 @@ export const useCampaignForm = (campaignId?: string) => {
         });
       } else {
         console.log('🆕 새 캠페인 생성 모드 - 상태:', campaignData.status);
-        await campaignService.createCampaign(campaignData);
+        const newCampaignId = await campaignService.createCampaign(campaignData);
         toast({
-          title: "캠페인 제출 완료",
-          description: "캠페인이 성공적으로 제출되었습니다."
+          title: "캠페인 생성 완료",
+          description: "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
         });
+        // 생성된 캠페인 상세 페이지로 이동
+        navigate(`/brand/campaign/${newCampaignId}`, { replace: true });
+        return;
       }
       
-      console.log('=== 캠페인 제출 완료 - 목록 페이지로 이동 ===');
+      console.log('=== 캠페인 처리 완료 - 목록 페이지로 이동 ===');
       
       // React Router를 사용한 navigation
       navigate('/brand/campaigns', { replace: true });
@@ -289,7 +292,7 @@ export const useCampaignForm = (campaignId?: string) => {
       console.error('=== 캠페인 처리 실패 ===', error);
       toast({
         title: "처리 실패",
-        description: isEditMode ? "캠페인 수정에 실패했습니다." : "캠페인 제출에 실패했습니다.",
+        description: isEditMode ? "캠페인 수정에 실패했습니다." : "캠페인 생성에 실패했습니다.",
         variant: "destructive"
       });
     } finally {
