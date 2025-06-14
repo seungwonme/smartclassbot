@@ -112,8 +112,8 @@ const AdminCampaignDetail = () => {
       // 콘텐츠 기획 목록에 추가
       setContentPlans(prev => [...prev, newPlan]);
       
-      // 선택된 기획으로 설정하여 우측에 표시
-      setSelectedPlan(newPlan);
+      // 우측 상세 화면 숨기기
+      setSelectedPlan(null);
       
       // 폼 닫기 및 선택된 인플루언서 초기화
       setShowCreateForm(false);
@@ -148,8 +148,8 @@ const AdminCampaignDetail = () => {
         plan.id === selectedPlan.id ? updatedPlan : plan
       ));
 
-      // 선택된 기획 업데이트
-      setSelectedPlan(updatedPlan);
+      // 우측 상세 화면 숨기기
+      setSelectedPlan(null);
 
       toast({
         title: "기획안 수정 완료",
