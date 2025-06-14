@@ -4,11 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { campaignService } from '@/services/campaign.service';
 import { contentService } from '@/services/content.service';
 import { contentSubmissionService } from '@/services/contentSubmission.service';
-import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
 import { Clock, Users, FileText, Upload, ImageIcon, VideoIcon } from 'lucide-react';
 import ContentPlanList from '@/components/content/ContentPlanList';
@@ -26,7 +25,14 @@ const AdminContentPlanning: React.FC = () => {
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [selectedContentType, setSelectedContentType] = useState<'image' | 'video'>('image');
 
-  const { data: campaign, isLoading: campaignLoading } = useCampaignDetail(id!);
+  // 캠페인 데이터 로드
+  const { data: campaign, isLoading: campaignLoading, error: campaignError } = useQuery({
+    queryKey: ['campaign', id],
+    queryFn: () => campaignService.getCampaignById(id!),
+    enabled: !!id,
+    retry: 3,
+    retryDelay: 1000
+  });
   
   const { data: contentPlans = [], isLoading: plansLoading } = useQuery({
     queryKey: ['contentPlans', id],
@@ -186,12 +192,28 @@ const AdminContentPlanning: React.FC = () => {
     }
   };
 
+  // 로딩 상태 처리
   if (campaignLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Clock className="w-8 h-8 animate-spin mx-auto mb-4" />
           <p>캠페인 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태 처리
+  if (campaignError) {
+    console.error('캠페인 로딩 에러:', campaignError);
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-500">캠페인 정보를 불러오는데 실패했습니다.</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            다시 시도
+          </Button>
         </div>
       </div>
     );
@@ -303,7 +325,6 @@ const AdminContentPlanning: React.FC = () => {
                             </Button>
                           </div>
 
-                          {/* 기존 제출물 표시 */}
                           {contentSubmissions.filter(s => s.influencerId === influencer.id).length > 0 && (
                             <div className="mt-4">
                               <p className="text-sm font-medium mb-2">제출된 콘텐츠:</p>
