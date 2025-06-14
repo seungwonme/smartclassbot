@@ -484,13 +484,12 @@ const CampaignDetail = () => {
         <CampaignWorkflowSteps campaign={campaign} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="basic">📋 기본정보</TabsTrigger>
             <TabsTrigger value="influencers">👥 인플루언서 관리</TabsTrigger>
             <TabsTrigger value="planning" disabled={campaign.currentStage < 2 && !isPlanning}>💡 콘텐츠 기획</TabsTrigger>
             <TabsTrigger value="production" disabled={campaign.currentStage < 3}>🎬 콘텐츠 제작</TabsTrigger>
             <TabsTrigger value="content" disabled={campaign.currentStage < 4}>🔍 콘텐츠 검수</TabsTrigger>
-            <TabsTrigger value="performance" disabled={campaign.currentStage < 5}>📈 성과 분석</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="mt-6">
@@ -627,22 +626,6 @@ const CampaignDetail = () => {
               <CardContent>
                 <div className="text-center py-12 text-gray-500">
                   콘텐츠 검수 기능이 곧 추가될 예정입니다.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="performance" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  성과 분석
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  성과 분석 기능이 곧 추가될 예정입니다.
                 </div>
               </CardContent>
             </Card>
