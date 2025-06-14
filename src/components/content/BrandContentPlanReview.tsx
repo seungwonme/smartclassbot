@@ -42,13 +42,14 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
 
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
+      case 'draft': return 'bg-blue-100 text-blue-800';
       case 'revision': return 'bg-orange-100 text-orange-800';
       case 'approved': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
+  // 상태 표시 텍스트 통일
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return '기획초안';
@@ -178,6 +179,20 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     );
   };
 
+  // 현재 진행중인 수정 차수 표시 개선
+  const getCurrentRevisionInfo = (plan: ContentPlanDetail) => {
+    const pendingRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'brand' && r.status === 'pending'
+    );
+    
+    if (pendingRevisions.length > 0) {
+      return `${pendingRevisions[0].revisionNumber}차 수정요청`;
+    }
+    
+    const completedRevisions = plan.revisions.filter(r => r.status === 'completed').length;
+    return completedRevisions > 0 ? `${completedRevisions}차 완료` : null;
+  };
+
   if (plans.length === 0) {
     return (
       <Card>
@@ -192,88 +207,92 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {plans.map((plan) => (
-          <Card key={plan.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedPlan(plan)}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="flex items-center gap-2">
-                  {plan.contentType === 'image' ? (
-                    <ImageIcon className="w-5 h-5" />
-                  ) : (
-                    <VideoIcon className="w-5 h-5" />
-                  )}
-                  {plan.influencerName}
-                </CardTitle>
-                <div className="flex flex-col gap-1">
-                  <Badge className={getStatusColor(plan.status)}>
-                    {getStatusText(plan.status)}
-                  </Badge>
-                  {plan.revisions && plan.revisions.length > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      {plan.currentRevisionNumber}차 수정
+        {plans.map((plan) => {
+          const revisionInfo = getCurrentRevisionInfo(plan);
+          
+          return (
+            <Card key={plan.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedPlan(plan)}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="flex items-center gap-2">
+                    {plan.contentType === 'image' ? (
+                      <ImageIcon className="w-5 h-5" />
+                    ) : (
+                      <VideoIcon className="w-5 h-5" />
+                    )}
+                    {plan.influencerName}
+                  </CardTitle>
+                  <div className="flex flex-col gap-1">
+                    <Badge className={getStatusColor(plan.status)}>
+                      {getStatusText(plan.status)}
                     </Badge>
+                    {revisionInfo && (
+                      <Badge variant="outline" className="text-xs">
+                        {revisionInfo}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    콘텐츠 타입: {plan.contentType === 'image' ? '이미지 포스팅' : '영상 포스팅'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    작성일: {new Date(plan.createdAt).toLocaleDateString()}
+                  </p>
+                  
+                  <div className="mt-2">
+                    {hasPlanContent(plan) ? (
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        기획안 작성완료
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-gray-500 border-gray-200">
+                        기획안 미작성
+                      </Badge>
+                    )}
+                  </div>
+
+                  {canReviewPlan(plan) && hasPlanContent(plan) && (
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApprove(plan.id);
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        승인
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPlan(plan);
+                          setShowRevisionForm(true);
+                        }}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        수정요청
+                      </Button>
+                    </div>
+                  )}
+
+                  {canReviewPlan(plan) && !hasPlanContent(plan) && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500">인플루언서가 기획안을 작성 중입니다.</p>
+                    </div>
                   )}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  콘텐츠 타입: {plan.contentType === 'image' ? '이미지 포스팅' : '영상 포스팅'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  작성일: {new Date(plan.createdAt).toLocaleDateString()}
-                </p>
-                
-                <div className="mt-2">
-                  {hasPlanContent(plan) ? (
-                    <Badge variant="outline" className="text-green-600 border-green-200">
-                      기획안 작성완료
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-gray-500 border-gray-200">
-                      기획안 미작성
-                    </Badge>
-                  )}
-                </div>
-
-                {canReviewPlan(plan) && hasPlanContent(plan) && (
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApprove(plan.id);
-                      }}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      승인
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedPlan(plan);
-                        setShowRevisionForm(true);
-                      }}
-                    >
-                      <MessageSquare className="w-4 h-4 mr-1" />
-                      수정요청
-                    </Button>
-                  </div>
-                )}
-
-                {canReviewPlan(plan) && !hasPlanContent(plan) && (
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500">인플루언서가 기획안을 작성 중입니다.</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {selectedPlan && !showRevisionForm && (

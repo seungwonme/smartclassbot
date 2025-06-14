@@ -26,7 +26,7 @@ const AdminContentPlanning = () => {
   const [workMode, setWorkMode] = useState<WorkMode>('idle');
   const [selectedInfluencerForWork, setSelectedInfluencerForWork] = useState<any>(null);
   const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
-  const [showRevisionFeedback, setShowRevisionFeedback] = useState(false); // 새로운 상태 추가
+  const [showRevisionFeedback, setShowRevisionFeedback] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -172,7 +172,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(null);
     setWorkMode('create');
-    setShowRevisionFeedback(false); // 새 기획안 작성시 피드백 섹션 숨김
+    setShowRevisionFeedback(false);
   };
 
   const handleEditPlan = (influencer: any) => {
@@ -184,7 +184,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('edit');
-    setShowRevisionFeedback(false); // 수정 시작시 피드백 섹션 숨김
+    setShowRevisionFeedback(false);
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
@@ -192,18 +192,17 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('revision');
-    setShowRevisionFeedback(true); // 수정요청 조회시 피드백 섹션 표시
+    setShowRevisionFeedback(true);
   };
 
-  // 콘텐츠가 수정되었을 때 호출되는 새로운 핸들러
   const handleContentUpdated = () => {
     console.log('=== 콘텐츠 수정됨 - 피드백 섹션 활성화 ===');
-    // 수정요청이 있는 기획안의 경우에만 피드백 섹션 활성화
     if (editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand')) {
       setShowRevisionFeedback(true);
     }
   };
 
+  // 상태 표시 텍스트 통일
   const getStatusText = (status: string) => {
     switch (status) {
       case 'draft':
@@ -392,7 +391,7 @@ const AdminContentPlanning = () => {
     setWorkMode('idle');
     setSelectedInfluencerForWork(null);
     setEditingPlan(null);
-    setShowRevisionFeedback(false); // 작업 완료시 피드백 섹션 숨김
+    setShowRevisionFeedback(false);
   };
 
   const getRevisionRequestCount = () => {
@@ -412,6 +411,14 @@ const AdminContentPlanning = () => {
     console.log('총 수정요청 수:', revisionPlans.length);
     
     return revisionPlans.length;
+  };
+
+  // 수정 이력 표시 개선 - 현재 진행중인 수정 차수 반환
+  const getCurrentRevisionNumber = (plan: ContentPlanDetail) => {
+    const pendingBrandRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'brand' && r.status === 'pending'
+    );
+    return pendingBrandRevisions.length > 0 ? pendingBrandRevisions[0].revisionNumber : null;
   };
 
   const renderWorkArea = () => {
@@ -471,7 +478,7 @@ const AdminContentPlanning = () => {
                 existingPlan={editingPlan || undefined}
                 onSave={handleSavePlan}
                 onCancel={handleBackToIdle}
-                onContentUpdated={handleContentUpdated} // 새로운 콜백 전달
+                onContentUpdated={handleContentUpdated}
               />
             </div>
             
@@ -546,6 +553,9 @@ const AdminContentPlanning = () => {
               <h1 className="text-3xl font-bold">콘텐츠 기획</h1>
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-gray-600">{campaign.title}</p>
+                <Badge className="bg-blue-100 text-blue-800">
+                  콘텐츠 기획중
+                </Badge>
                 {revisionRequestCount > 0 && (
                   <Badge className="bg-orange-100 text-orange-800">
                     수정요청 {revisionRequestCount}건
@@ -574,6 +584,7 @@ const AdminContentPlanning = () => {
                       existingPlan.status === 'revision' || 
                       existingPlan.revisions.some(r => r.requestedBy === 'brand' && r.status === 'pending')
                     );
+                    const currentRevisionNumber = existingPlan ? getCurrentRevisionNumber(existingPlan) : null;
                     const isSelected = selectedInfluencerForWork?.id === influencer.id;
                     
                     return (
@@ -597,9 +608,9 @@ const AdminContentPlanning = () => {
                                 {getStatusText(existingPlan.status)}
                               </Badge>
                             )}
-                            {hasRevisionRequest && (
+                            {hasRevisionRequest && currentRevisionNumber && (
                               <Badge className="bg-orange-100 text-orange-800 text-xs">
-                                수정요청
+                                {currentRevisionNumber}차 수정요청
                               </Badge>
                             )}
                           </div>
