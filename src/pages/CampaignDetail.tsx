@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -32,10 +33,13 @@ const CampaignDetail = () => {
     try {
       console.log('캠페인 제출 시작 - 현재 상태:', campaign.status);
       
-      // 캠페인을 제출됨 상태로 변경
-      await updateCampaignInfluencers(campaign.id, { 
-        status: 'submitted' 
-      });
+      // 캠페인을 제출됨 상태로 변경 - 올바른 방식으로 호출
+      const updatedInfluencers = campaign.influencers.map(inf => ({ ...inf }));
+      await updateCampaignInfluencers(updatedInfluencers);
+      
+      // 상태 업데이트를 위한 별도 호출
+      const { campaignService } = await import('@/services/campaign.service');
+      await campaignService.updateCampaign(campaign.id, { status: 'submitted' });
       
       console.log('캠페인 상태를 submitted로 변경 완료');
       
