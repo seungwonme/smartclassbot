@@ -28,6 +28,7 @@ import CreateCampaign from "./pages/CreateCampaign";
 import CampaignEdit from "./pages/CampaignEdit";
 import CampaignDetail from "./pages/CampaignDetail";
 import AdminCampaigns from "./pages/AdminCampaigns";
+import AdminCampaignDetail from "./pages/AdminCampaignDetail";
 import BrandInfluencers from "./pages/BrandInfluencers";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
           <Route path="/admin/products/:id" element={<AdminProductDetail />} />
           <Route path="/admin/products/edit/:id" element={<AdminProductDetail />} />
           <Route path="/admin/campaigns" element={<AdminCampaigns />} />
+          <Route path="/admin/campaigns/:id" element={<AdminCampaignDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
