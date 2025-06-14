@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,12 +10,16 @@ import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
 import CampaignConfirmationSummary from '@/components/campaign/CampaignConfirmationSummary';
+import BrandContentPlanReview from '@/components/content/BrandContentPlanReview';
 import { Campaign } from '@/types/campaign';
+import { ContentPlanDetail } from '@/types/content';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
+import { campaignService } from '@/services/campaign.service';
 
 const CampaignDetail = () => {
   const {
     campaign,
+    setCampaign,
     isLoading,
     activeTab,
     setActiveTab,
@@ -25,6 +30,125 @@ const CampaignDetail = () => {
     updateCampaignInfluencers,
     toast
   } = useCampaignDetail();
+
+  const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
+
+  // Load content plans when campaign is loaded
+  React.useEffect(() => {
+    if (campaign?.contentPlans) {
+      const plans: ContentPlanDetail[] = campaign.contentPlans.map(plan => ({
+        id: plan.id,
+        campaignId: plan.campaignId,
+        influencerId: plan.influencerId,
+        influencerName: plan.influencerName,
+        contentType: plan.contentType,
+        status: plan.status,
+        planData: plan.planDocument ? JSON.parse(plan.planDocument) : (
+          plan.contentType === 'image' ? {
+            postTitle: '',
+            thumbnailTitle: '',
+            referenceImages: [],
+            script: '',
+            hashtags: []
+          } : {
+            postTitle: '',
+            scenario: '',
+            scenarioFiles: [],
+            script: '',
+            hashtags: []
+          }
+        ),
+        revisions: plan.revisions || [],
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt
+      }));
+      setContentPlans(plans);
+    }
+  }, [campaign]);
+
+  const handleContentPlanApprove = async (planId: string) => {
+    if (!campaign) return;
+
+    try {
+      const updatedContentPlans = campaign.contentPlans?.map(plan => 
+        plan.id === planId ? { ...plan, status: 'approved' as const } : plan
+      ) || [];
+
+      await campaignService.updateCampaign(campaign.id, {
+        contentPlans: updatedContentPlans
+      });
+
+      setCampaign(prev => prev ? {
+        ...prev,
+        contentPlans: updatedContentPlans
+      } : null);
+
+      // Update local state
+      setContentPlans(prev => prev.map(plan =>
+        plan.id === planId ? { ...plan, status: 'approved' } : plan
+      ));
+
+    } catch (error) {
+      console.error('콘텐츠 기획 승인 실패:', error);
+      toast({
+        title: "승인 실패",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleContentPlanRevision = async (planId: string, feedback: string) => {
+    if (!campaign) return;
+
+    try {
+      const newRevision = {
+        id: `revision_${Date.now()}`,
+        feedback,
+        requestedBy: 'brand',
+        requestedAt: new Date().toISOString(),
+        status: 'pending' as const
+      };
+
+      const updatedContentPlans = campaign.contentPlans?.map(plan => {
+        if (plan.id === planId) {
+          return {
+            ...plan,
+            status: 'revision' as const,
+            revisions: [...(plan.revisions || []), newRevision]
+          };
+        }
+        return plan;
+      }) || [];
+
+      await campaignService.updateCampaign(campaign.id, {
+        contentPlans: updatedContentPlans
+      });
+
+      setCampaign(prev => prev ? {
+        ...prev,
+        contentPlans: updatedContentPlans
+      } : null);
+
+      // Update local state
+      setContentPlans(prev => prev.map(plan => {
+        if (plan.id === planId) {
+          return {
+            ...plan,
+            status: 'revision',
+            revisions: [...plan.revisions, newRevision]
+          };
+        }
+        return plan;
+      }));
+
+    } catch (error) {
+      console.error('콘텐츠 기획 수정 요청 실패:', error);
+      toast({
+        title: "수정 요청 실패",
+        variant: "destructive"
+      });
+    }
+  };
 
   // 로컬 제출 함수 추가
   const handleSubmit = async () => {
@@ -99,6 +223,8 @@ const CampaignDetail = () => {
       case 'revising': return 'bg-red-100 text-red-800';
       case 'revision-feedback': return 'bg-amber-100 text-amber-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'planning': return 'bg-blue-100 text-blue-800';
+      case 'plan-review': return 'bg-indigo-100 text-indigo-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -113,6 +239,8 @@ const CampaignDetail = () => {
       case 'revising': return '제안수정요청';
       case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
+      case 'planning': return '기획중';
+      case 'plan-review': return '기획검토';
       case 'completed': return '완료됨';
       default: return status;
     }
@@ -165,7 +293,7 @@ const CampaignDetail = () => {
 
   const isCreating = campaign.status === 'creating';
   const isConfirmed = campaign.status === 'confirmed';
-  const nextAction = getNextAction();
+  const isPlanning = ['planning', 'plan-review'].includes(campaign.status);
 
   // confirmed 상태일 때는 확정 요약 페이지만 표시
   if (isConfirmed) {
@@ -226,9 +354,9 @@ const CampaignDetail = () => {
                 <Badge className={getStatusColor(campaign.status)}>
                   {getStatusText(campaign.status)}
                 </Badge>
-                {nextAction && (
+                {getNextAction() && (
                   <Badge variant="outline" className="text-blue-600">
-                    {nextAction}
+                    {getNextAction()}
                   </Badge>
                 )}
               </div>
@@ -267,7 +395,7 @@ const CampaignDetail = () => {
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="basic">📋 기본정보</TabsTrigger>
             <TabsTrigger value="influencers">👥 인플루언서 관리</TabsTrigger>
-            <TabsTrigger value="planning" disabled={campaign.currentStage < 2}>💡 콘텐츠 기획</TabsTrigger>
+            <TabsTrigger value="planning" disabled={campaign.currentStage < 2 && !isPlanning}>💡 콘텐츠 기획</TabsTrigger>
             <TabsTrigger value="content" disabled={campaign.currentStage < 3}>🔍 콘텐츠 검수</TabsTrigger>
             <TabsTrigger value="performance" disabled={campaign.currentStage < 4}>📈 성과 분석</TabsTrigger>
           </TabsList>
@@ -366,13 +494,15 @@ const CampaignDetail = () => {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
-                  콘텐츠 기획
+                  콘텐츠 기획 검토
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  콘텐츠 기획 기능이 곧 추가될 예정입니다.
-                </div>
+                <BrandContentPlanReview
+                  plans={contentPlans}
+                  onApprove={handleContentPlanApprove}
+                  onRequestRevision={handleContentPlanRevision}
+                />
               </CardContent>
             </Card>
           </TabsContent>

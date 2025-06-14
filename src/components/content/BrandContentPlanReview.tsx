@@ -1,0 +1,318 @@
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock } from 'lucide-react';
+import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
+import { useToast } from '@/hooks/use-toast';
+
+interface BrandContentPlanReviewProps {
+  plans: ContentPlanDetail[];
+  onApprove: (planId: string) => void;
+  onRequestRevision: (planId: string, feedback: string) => void;
+}
+
+const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
+  plans,
+  onApprove,
+  onRequestRevision
+}) => {
+  const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
+  const [feedback, setFeedback] = useState('');
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const { toast } = useToast();
+
+  const getStatusColor = (status: ContentPlanDetail['status']) => {
+    switch (status) {
+      case 'draft': return 'bg-yellow-100 text-yellow-800';
+      case 'submitted': return 'bg-blue-100 text-blue-800';
+      case 'revision': return 'bg-orange-100 text-orange-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: ContentPlanDetail['status']) => {
+    switch (status) {
+      case 'draft': return '초안';
+      case 'submitted': return '제출됨';
+      case 'revision': return '수정요청';
+      case 'approved': return '승인됨';
+      default: return status;
+    }
+  };
+
+  const handleApprove = (planId: string) => {
+    onApprove(planId);
+    toast({
+      title: "콘텐츠 기획 승인",
+      description: "콘텐츠 기획이 승인되었습니다."
+    });
+  };
+
+  const handleRequestRevision = () => {
+    if (!selectedPlan || !feedback.trim()) {
+      toast({
+        title: "피드백을 입력해주세요",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    onRequestRevision(selectedPlan.id, feedback);
+    setFeedback('');
+    setShowFeedbackForm(false);
+    setSelectedPlan(null);
+    toast({
+      title: "수정 요청 전송",
+      description: "콘텐츠 기획 수정 요청이 전송되었습니다."
+    });
+  };
+
+  const renderPlanData = (plan: ContentPlanDetail) => {
+    if (plan.contentType === 'image') {
+      const imageData = plan.planData as ImagePlanData;
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label className="font-medium">포스팅 제목</Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.postTitle}</p>
+          </div>
+          <div>
+            <Label className="font-medium">썸네일 제목</Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.thumbnailTitle}</p>
+          </div>
+          {imageData.referenceImages.length > 0 && (
+            <div>
+              <Label className="font-medium">참고 이미지</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {imageData.referenceImages.map((image, index) => (
+                  <img key={index} src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded border" />
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <Label className="font-medium">스크립트</Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{imageData.script}</p>
+          </div>
+          {imageData.hashtags.length > 0 && (
+            <div>
+              <Label className="font-medium">해시태그</Label>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {imageData.hashtags.map((tag, index) => (
+                  <Badge key={index} variant="outline">{tag}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      const videoData = plan.planData as VideoPlanData;
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label className="font-medium">포스팅 제목</Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{videoData.postTitle}</p>
+          </div>
+          <div>
+            <Label className="font-medium">시나리오</Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.scenario}</p>
+          </div>
+          {videoData.scenarioFiles.length > 0 && (
+            <div>
+              <Label className="font-medium">시나리오 파일</Label>
+              <div className="space-y-2 mt-2">
+                {videoData.scenarioFiles.map((file, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                    <span className="text-sm">{file.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <Label className="font-medium">스크립트</Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.script}</p>
+          </div>
+          {videoData.hashtags.length > 0 && (
+            <div>
+              <Label className="font-medium">해시태그</Label>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {videoData.hashtags.map((tag, index) => (
+                  <Badge key={index} variant="outline">{tag}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+  };
+
+  if (plans.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-500">아직 콘텐츠 기획이 전달되지 않았습니다.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {plans.map((plan) => (
+          <Card key={plan.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedPlan(plan)}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <CardTitle className="flex items-center gap-2">
+                  {plan.contentType === 'image' ? (
+                    <ImageIcon className="w-5 h-5" />
+                  ) : (
+                    <VideoIcon className="w-5 h-5" />
+                  )}
+                  {plan.influencerName}
+                </CardTitle>
+                <Badge className={getStatusColor(plan.status)}>
+                  {getStatusText(plan.status)}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  콘텐츠 타입: {plan.contentType === 'image' ? '이미지 포스팅' : '영상 포스팅'}
+                </p>
+                <p className="text-sm text-gray-600">
+                  작성일: {new Date(plan.createdAt).toLocaleDateString()}
+                </p>
+                {plan.status === 'submitted' && (
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApprove(plan.id);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      승인
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPlan(plan);
+                        setShowFeedbackForm(true);
+                      }}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-1" />
+                      수정요청
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* 상세보기 모달 */}
+      {selectedPlan && !showFeedbackForm && (
+        <Card className="fixed inset-4 z-50 overflow-auto bg-white">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                {selectedPlan.contentType === 'image' ? (
+                  <ImageIcon className="w-5 h-5" />
+                ) : (
+                  <VideoIcon className="w-5 h-5" />
+                )}
+                {selectedPlan.influencerName} - 콘텐츠 기획 상세
+              </CardTitle>
+              <Button variant="outline" onClick={() => setSelectedPlan(null)}>
+                닫기
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {renderPlanData(selectedPlan)}
+            {selectedPlan.status === 'submitted' && (
+              <div className="flex gap-2 mt-6">
+                <Button
+                  onClick={() => handleApprove(selectedPlan.id)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  승인
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFeedbackForm(true)}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  수정요청
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 피드백 모달 */}
+      {showFeedbackForm && selectedPlan && (
+        <Card className="fixed inset-4 z-50 overflow-auto bg-white">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>수정 요청 - {selectedPlan.influencerName}</CardTitle>
+              <Button variant="outline" onClick={() => {
+                setShowFeedbackForm(false);
+                setSelectedPlan(null);
+                setFeedback('');
+              }}>
+                닫기
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="feedback">수정 요청 사항</Label>
+                <Textarea
+                  id="feedback"
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="구체적인 수정 요청 사항을 입력해주세요..."
+                  rows={6}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleRequestRevision} className="bg-orange-600 hover:bg-orange-700">
+                  수정 요청 전송
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setShowFeedbackForm(false);
+                  setSelectedPlan(null);
+                  setFeedback('');
+                }}>
+                  취소
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default BrandContentPlanReview;
