@@ -39,7 +39,7 @@ const AdminContentPlanning = () => {
         const campaignData = await campaignService.getCampaignById(campaignId);
         if (campaignData) {
           setCampaign(campaignData);
-          // ContentPlan을 ContentPlanDetail로 변환하거나 빈 배열로 초기화
+          // Campaign의 contentPlans를 ContentPlanDetail로 변환
           const plans: ContentPlanDetail[] = campaignData.contentPlans?.map(plan => ({
             id: plan.id,
             campaignId: plan.campaignId,
@@ -59,7 +59,7 @@ const AdminContentPlanning = () => {
               script: '',
               hashtags: []
             },
-            revisions: plan.revisions,
+            revisions: plan.revisions || [],
             createdAt: plan.createdAt,
             updatedAt: plan.updatedAt
           })) || [];
@@ -94,29 +94,60 @@ const AdminContentPlanning = () => {
 
   const handleSavePlan = async (planData: Partial<ContentPlanDetail>) => {
     try {
-      // 실제 구현에서는 API 호출
+      console.log('=== 콘텐츠 기획안 저장 시작 ===');
+      console.log('저장할 기획안 데이터:', planData);
+      
       const newPlan: ContentPlanDetail = {
         id: editingPlan?.id || `plan_${Date.now()}`,
-        ...planData as ContentPlanDetail,
+        campaignId: campaignId!,
+        influencerId: planData.influencerId!,
+        influencerName: planData.influencerName!,
+        contentType: planData.contentType!,
+        status: 'draft',
+        planData: planData.planData!,
+        revisions: editingPlan?.revisions || [],
         createdAt: editingPlan?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        revisions: editingPlan?.revisions || []
+        updatedAt: new Date().toISOString()
       };
 
-      if (editingPlan) {
-        setContentPlans(prev => prev.map(p => p.id === editingPlan.id ? newPlan : p));
-      } else {
-        setContentPlans(prev => [...prev, newPlan]);
-      }
+      console.log('생성된 기획안:', newPlan);
 
+      // Campaign의 contentPlans 배열 업데이트
+      const updatedPlans = editingPlan 
+        ? contentPlans.map(p => p.id === editingPlan.id ? newPlan : p)
+        : [...contentPlans, newPlan];
+
+      // Campaign 데이터 업데이트
+      const updatedContentPlans = updatedPlans.map(plan => ({
+        id: plan.id,
+        campaignId: plan.campaignId,
+        influencerId: plan.influencerId,
+        influencerName: plan.influencerName,
+        contentType: plan.contentType,
+        status: plan.status,
+        planDocument: JSON.stringify(plan.planData), // planData를 문자열로 저장
+        revisions: plan.revisions,
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt
+      }));
+
+      await campaignService.updateCampaign(campaignId!, {
+        contentPlans: updatedContentPlans
+      });
+
+      // 로컬 상태 업데이트
+      setContentPlans(updatedPlans);
       setShowForm(false);
       setSelectedInfluencer(null);
       setEditingPlan(null);
+      
+      console.log('=== 콘텐츠 기획안 저장 완료 ===');
       
       toast({
         title: "콘텐츠 기획이 저장되었습니다"
       });
     } catch (error) {
+      console.error('기획안 저장 실패:', error);
       toast({
         title: "저장 실패",
         variant: "destructive"
@@ -226,7 +257,7 @@ const AdminContentPlanning = () => {
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>콘텐츠 기획</DialogTitle>
+              <DialogTitle>콘텐츠 기획 - {selectedInfluencer?.name}</DialogTitle>
             </DialogHeader>
             {selectedInfluencer && (
               <ContentPlanForm
