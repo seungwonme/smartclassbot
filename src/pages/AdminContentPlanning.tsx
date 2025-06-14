@@ -32,16 +32,31 @@ const AdminContentPlanning = () => {
       if (!campaignId) return;
       
       try {
+        console.log('=== 데이터 로딩 시작 ===');
+        console.log('캠페인 ID:', campaignId);
+        
         const campaignData = await campaignService.getCampaignById(campaignId);
         if (campaignData) {
           setCampaign(campaignData);
           
           console.log('=== 캠페인 데이터 로딩 ===');
           console.log('원본 contentPlans:', campaignData.contentPlans);
+          console.log('contentPlans 배열 길이:', campaignData.contentPlans?.length || 0);
           
           const plans: ContentPlanDetail[] = campaignData.contentPlans?.map(plan => {
             console.log('=== 기획안 복원 처리 ===');
             console.log('기획안 ID:', plan.id);
+            console.log('인플루언서:', plan.influencerName);
+            console.log('상태:', plan.status);
+            console.log('수정 이력 수:', plan.revisions?.length || 0);
+            console.log('수정 이력 상세:', plan.revisions);
+            
+            // 브랜드에서 온 pending 수정요청 특별 확인
+            const pendingBrandRevisions = plan.revisions?.filter(r => 
+              r.requestedBy === 'brand' && r.status === 'pending'
+            ) || [];
+            console.log('대기중인 브랜드 수정요청:', pendingBrandRevisions);
+            
             console.log('planDocument 원본:', plan.planDocument);
             
             let planData;
@@ -75,6 +90,12 @@ const AdminContentPlanning = () => {
               status = plan.status;
             }
             
+            // 브랜드 수정요청이 있으면 상태를 revision으로 강제 설정
+            if (pendingBrandRevisions.length > 0) {
+              status = 'revision';
+              console.log('브랜드 수정요청 감지로 상태를 revision으로 변경');
+            }
+            
             const detailPlan: ContentPlanDetail = {
               id: plan.id,
               campaignId: plan.campaignId,
@@ -99,18 +120,29 @@ const AdminContentPlanning = () => {
             console.log(`- ${plan.influencerName}: ${plan.contentType}, 상태: ${plan.status}`);
             console.log(`  수정 이력 수: ${plan.revisions.length}개`);
             plan.revisions.forEach((revision, idx) => {
-              console.log(`    수정 ${idx + 1}: ${revision.revisionNumber}차 ${revision.requestedBy} ${revision.status}`);
+              console.log(`    수정 ${idx + 1}: ${revision.revisionNumber}차 ${revision.requestedBy} ${revision.status} (${revision.requestedAt})`);
             });
           });
           
           // 김소여와 이민지의 상태 특별 확인
-          const kimSoyeo = plans.find(p => p.influencerName.includes('김소여'));
+          const kimSoyeo = plans.find(p => p.influencerName.includes('김소여') || p.influencerName.includes('김소영'));
           const leeMinji = plans.find(p => p.influencerName.includes('이민지'));
           
           console.log('=== 특정 인플루언서 상태 확인 ===');
           if (kimSoyeo) {
-            console.log('김소여 기획안 상태:', kimSoyeo.status);
-            console.log('김소여 수정 이력:', kimSoyeo.revisions);
+            console.log('김소여/김소영 기획안 상태:', kimSoyeo.status);
+            console.log('김소여/김소영 수정 이력:', kimSoyeo.revisions);
+            
+            // 가장 최근 수정요청 확인
+            const latestRevision = kimSoyeo.revisions[kimSoyeo.revisions.length - 1];
+            if (latestRevision) {
+              console.log('김소여/김소영 최근 수정요청:', {
+                revisionNumber: latestRevision.revisionNumber,
+                requestedBy: latestRevision.requestedBy,
+                status: latestRevision.status,
+                requestedAt: latestRevision.requestedAt
+              });
+            }
           }
           if (leeMinji) {
             console.log('이민지 기획안 상태:', leeMinji.status);
@@ -350,10 +382,22 @@ const AdminContentPlanning = () => {
   };
 
   const getRevisionRequestCount = () => {
-    return contentPlans.filter(plan => 
-      plan.status === 'revision' || 
-      (plan.revisions.length > 0 && plan.revisions[plan.revisions.length - 1].requestedBy === 'brand')
-    ).length;
+    console.log('=== 수정요청 수 계산 ===');
+    const revisionPlans = contentPlans.filter(plan => {
+      const hasPendingBrandRevision = plan.revisions.some(r => 
+        r.requestedBy === 'brand' && r.status === 'pending'
+      );
+      const isRevisionStatus = plan.status === 'revision';
+      
+      console.log(`${plan.influencerName}: status=${plan.status}, hasPendingBrandRevision=${hasPendingBrandRevision}`);
+      
+      return isRevisionStatus || hasPendingBrandRevision;
+    });
+    
+    console.log('수정요청 대상 기획안들:', revisionPlans.map(p => p.influencerName));
+    console.log('총 수정요청 수:', revisionPlans.length);
+    
+    return revisionPlans.length;
   };
 
   const renderWorkArea = () => {
@@ -511,7 +555,7 @@ const AdminContentPlanning = () => {
                     const existingPlan = contentPlans.find(p => p.influencerId === influencer.id);
                     const hasRevisionRequest = existingPlan && (
                       existingPlan.status === 'revision' || 
-                      (existingPlan.revisions.length > 0 && existingPlan.revisions[existingPlan.revisions.length - 1].requestedBy === 'brand')
+                      existingPlan.revisions.some(r => r.requestedBy === 'brand' && r.status === 'pending')
                     );
                     const isSelected = selectedInfluencerForWork?.id === influencer.id;
                     
