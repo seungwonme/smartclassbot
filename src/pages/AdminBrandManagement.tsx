@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building2, Plus, Package, Search, Edit, Trash2, User, Globe, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -317,33 +319,35 @@ const AdminBrandManagement = () => {
 
             {/* Product Management Tab */}
             <TabsContent value="products" className="space-y-6">
-              {/* Brand Filter */}
+              {/* Brand Filter with Dropdown */}
               <Card>
                 <CardHeader>
                   <CardTitle>브랜드 선택</CardTitle>
                   <CardDescription>제품을 관리할 브랜드를 선택하세요</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    <Button
-                      variant={selectedBrand === null ? "default" : "outline"}
-                      onClick={() => setSelectedBrand(null)}
-                      className="justify-start"
-                    >
-                      <Package className="h-4 w-4 mr-2" />
-                      전체 제품
-                    </Button>
-                    {brands.map((brand) => (
-                      <Button
-                        key={brand.id}
-                        variant={selectedBrand === brand.id ? "default" : "outline"}
-                        onClick={() => setSelectedBrand(brand.id)}
-                        className="justify-start"
-                      >
-                        <Building2 className="h-4 w-4 mr-2" />
-                        {brand.name}
-                      </Button>
-                    ))}
+                  <div className="max-w-md">
+                    <Select value={selectedBrand || "all"} onValueChange={(value) => setSelectedBrand(value === "all" ? null : value)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="브랜드를 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="all">
+                          <div className="flex items-center space-x-2">
+                            <Package className="h-4 w-4" />
+                            <span>전체 제품</span>
+                          </div>
+                        </SelectItem>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            <div className="flex items-center space-x-2">
+                              <Building2 className="h-4 w-4" />
+                              <span>{brand.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
