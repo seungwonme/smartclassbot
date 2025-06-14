@@ -8,6 +8,15 @@ import BrandSidebar from '@/components/BrandSidebar';
 import { Campaign } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const CampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -163,6 +172,15 @@ const CampaignDetail = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const formatFollowers = (count: number): string => {
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(0)}K`;
+    }
+    return count.toString();
   };
 
   if (isLoading) {
@@ -329,64 +347,93 @@ const CampaignDetail = () => {
             </CardHeader>
             <CardContent>
               {campaign.influencers.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {campaign.influencers.map((influencer) => (
-                    <Card key={influencer.id} className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <img
-                          src={influencer.profileImage}
-                          alt={influencer.name}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium">{influencer.name}</h4>
-                          <p className="text-sm text-gray-500">{influencer.category}</p>
-                          <p className="text-sm text-gray-500">
-                            팔로워: {influencer.followers.toLocaleString()}명
-                          </p>
-                          {influencer.adFee && (
-                            <p className="text-sm font-medium text-green-600">
-                              광고비: {influencer.adFee.toLocaleString()}원
-                            </p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>프로필</TableHead>
+                        <TableHead>인플루언서명</TableHead>
+                        <TableHead>팔로워 수</TableHead>
+                        <TableHead>참여율</TableHead>
+                        <TableHead>카테고리</TableHead>
+                        <TableHead>광고비</TableHead>
+                        <TableHead>상태</TableHead>
+                        {isProposing && <TableHead>작업</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {campaign.influencers.map((influencer) => (
+                        <TableRow key={influencer.id}>
+                          <TableCell>
+                            <Avatar>
+                              <AvatarImage src={influencer.profileImage} />
+                              <AvatarFallback>
+                                {influencer.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{influencer.name}</div>
+                          </TableCell>
+                          <TableCell>{formatFollowers(influencer.followers)}</TableCell>
+                          <TableCell>{influencer.engagementRate}%</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {influencer.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {influencer.adFee ? (
+                              <span className="font-medium text-green-600">
+                                {influencer.adFee.toLocaleString()}원
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {influencer.status === 'accepted' && !isProposing && (
+                              <Badge className="bg-green-100 text-green-800">섭외 완료</Badge>
+                            )}
+                            {influencer.status === 'accepted' && isProposing && (
+                              <Badge className="bg-yellow-100 text-yellow-800">승인 대기</Badge>
+                            )}
+                            {influencer.status === 'approved' && (
+                              <Badge className="bg-blue-100 text-blue-800">승인 완료</Badge>
+                            )}
+                            {influencer.status === 'rejected' && (
+                              <Badge className="bg-red-100 text-red-800">거절됨</Badge>
+                            )}
+                          </TableCell>
+                          {isProposing && influencer.status === 'accepted' && (
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleInfluencerApproval(influencer.id, true)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  승인
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleInfluencerApproval(influencer.id, false)}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  거절
+                                </Button>
+                              </div>
+                            </TableCell>
                           )}
-                        </div>
-                      </div>
-                      
-                      {/* 상태 표시 및 승인/거절 버튼 */}
-                      <div className="flex items-center justify-between">
-                        {influencer.status === 'accepted' && !isProposing && (
-                          <Badge className="bg-green-100 text-green-800">섭외 완료</Badge>
-                        )}
-                        {influencer.status === 'accepted' && isProposing && (
-                          <div className="flex space-x-2 w-full">
-                            <Button
-                              size="sm"
-                              onClick={() => handleInfluencerApproval(influencer.id, true)}
-                              className="bg-green-600 hover:bg-green-700 flex-1"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              승인
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleInfluencerApproval(influencer.id, false)}
-                              className="flex-1"
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              거절
-                            </Button>
-                          </div>
-                        )}
-                        {influencer.status === 'approved' && (
-                          <Badge className="bg-blue-100 text-blue-800">승인 완료</Badge>
-                        )}
-                        {influencer.status === 'rejected' && (
-                          <Badge className="bg-red-100 text-red-800">거절됨</Badge>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
+                          {!isProposing && (
+                            <TableCell></TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               ) : (
                 <p className="text-gray-500">선택된 인플루언서가 없습니다.</p>
