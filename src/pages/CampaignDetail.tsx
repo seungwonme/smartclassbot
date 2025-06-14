@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -378,7 +379,7 @@ const CampaignDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Users className="w-5 h-5 mr-2" />
-                선택된 인플루언서 ({campaign.influencers.length}명)
+                인플루언서 목록 ({campaign.influencers.length}명)
                 {isProposing && (
                   <Badge className="ml-2 bg-yellow-100 text-yellow-800">승인 대기</Badge>
                 )}
@@ -390,21 +391,21 @@ const CampaignDetail = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>프로필</TableHead>
-                        <TableHead>인플루언서명</TableHead>
-                        <TableHead>팔로워 수</TableHead>
-                        <TableHead>참여율</TableHead>
-                        <TableHead>카테고리</TableHead>
-                        <TableHead>광고비</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>작업</TableHead>
+                        <TableHead className="w-16">프로필</TableHead>
+                        <TableHead>닉네임</TableHead>
+                        <TableHead className="text-center">플랫폼</TableHead>
+                        <TableHead className="text-center">팔로워 수</TableHead>
+                        <TableHead className="text-center">참여율</TableHead>
+                        <TableHead className="text-center">지역</TableHead>
+                        <TableHead className="text-center">카테고리</TableHead>
+                        <TableHead className="text-center w-20">상세보기</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {campaign.influencers.map((influencer) => (
-                        <TableRow key={influencer.id}>
+                        <TableRow key={influencer.id} className="hover:bg-gray-50">
                           <TableCell>
-                            <Avatar>
+                            <Avatar className="w-10 h-10">
                               <AvatarImage src={influencer.profileImage} />
                               <AvatarFallback>
                                 {influencer.name.charAt(0)}
@@ -412,80 +413,46 @@ const CampaignDetail = () => {
                             </Avatar>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium">{influencer.name}</div>
-                          </TableCell>
-                          <TableCell>{formatFollowers(influencer.followers)}</TableCell>
-                          <TableCell>{influencer.engagementRate}%</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {influencer.category}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {influencer.adFee ? (
-                              <span className="font-medium text-green-600">
-                                {influencer.adFee.toLocaleString()}원
-                              </span>
-                            ) : (
-                              '-'
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {influencer.status === 'accepted' && !isProposing && (
-                              <Badge className="bg-green-100 text-green-800">섭외 완료</Badge>
-                            )}
-                            {influencer.status === 'accepted' && isProposing && (
-                              <Badge className="bg-yellow-100 text-yellow-800">승인 대기</Badge>
-                            )}
-                            {influencer.status === 'approved' && (
-                              <Badge className="bg-blue-100 text-blue-800">승인 완료</Badge>
-                            )}
-                            {influencer.status === 'rejected' && (
-                              <Badge className="bg-red-100 text-red-800">거절됨</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleViewPlatformPage(influencer)}
-                                className="text-xs"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                첫페이지
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleViewInfluencerDetail(influencer)}
-                                className="text-xs"
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                상세보기
-                              </Button>
-                              {isProposing && influencer.status === 'accepted' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleInfluencerApproval(influencer.id, true)}
-                                    className="bg-green-600 hover:bg-green-700 text-xs"
-                                  >
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                    승인
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => handleInfluencerApproval(influencer.id, false)}
-                                    className="text-xs"
-                                  >
-                                    <XCircle className="w-3 h-3 mr-1" />
-                                    거절
-                                  </Button>
-                                </>
-                              )}
+                            <div className="text-blue-600 font-medium cursor-pointer hover:underline">
+                              {influencer.name}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center">
+                              <img 
+                                src={influencer.platform === 'xiaohongshu' ? 
+                                  "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
+                                  "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
+                                } 
+                                alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
+                                className="w-6 h-6 rounded"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">{formatFollowers(influencer.followers)}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center">
+                              <span className="text-green-600 mr-1">↑</span>
+                              {influencer.engagementRate}%
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">{influencer.region || '서울'}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              <Badge variant="outline" className="text-xs">
+                                {influencer.category}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleViewInfluencerDetail(influencer)}
+                              className="p-2"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -494,6 +461,53 @@ const CampaignDetail = () => {
                 </div>
               ) : (
                 <p className="text-gray-500">선택된 인플루언서가 없습니다.</p>
+              )}
+
+              {/* 승인/거절 버튼 섹션 (제안중 상태일 때만 표시) */}
+              {isProposing && campaign.influencers.some(inf => inf.status === 'accepted') && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium mb-4">인플루언서 승인 관리</h3>
+                  <div className="space-y-3">
+                    {campaign.influencers
+                      .filter(inf => inf.status === 'accepted')
+                      .map((influencer) => (
+                        <div key={influencer.id} className="flex items-center justify-between p-3 bg-white rounded border">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={influencer.profileImage} />
+                              <AvatarFallback>
+                                {influencer.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{influencer.name}</span>
+                            {influencer.adFee && (
+                              <span className="text-sm text-green-600">
+                                {influencer.adFee.toLocaleString()}원
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleInfluencerApproval(influencer.id, true)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              승인
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleInfluencerApproval(influencer.id, false)}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />
+                              거절
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
