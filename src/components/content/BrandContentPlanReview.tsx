@@ -30,6 +30,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   plans.forEach((plan, index) => {
     console.log(`Plan ${index}:`, plan);
     console.log(`Plan ${index} planData:`, plan.planData);
+    console.log(`Plan ${index} status:`, plan.status);
   });
 
   const getStatusColor = (status: ContentPlanDetail['status']) => {
@@ -49,6 +50,27 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       case 'revision': return '수정요청';
       case 'approved': return '승인됨';
       default: return status;
+    }
+  };
+
+  // 기획안이 검토 가능한지 확인하는 함수
+  const canReviewPlan = (plan: ContentPlanDetail) => {
+    // draft 상태이거나 submitted 상태일 때 검토 가능 (브랜드 관점에서)
+    return plan.status === 'draft' || plan.status === 'submitted';
+  };
+
+  // 기획안에 내용이 있는지 확인하는 함수
+  const hasPlanContent = (plan: ContentPlanDetail) => {
+    if (plan.contentType === 'image') {
+      const imageData = plan.planData as ImagePlanData;
+      return !!(imageData.postTitle || imageData.thumbnailTitle || imageData.script || 
+               (imageData.hashtags && imageData.hashtags.length > 0) ||
+               (imageData.referenceImages && imageData.referenceImages.length > 0));
+    } else {
+      const videoData = plan.planData as VideoPlanData;
+      return !!(videoData.postTitle || videoData.scenario || videoData.script ||
+               (videoData.hashtags && videoData.hashtags.length > 0) ||
+               (videoData.scenarioFiles && videoData.scenarioFiles.length > 0));
     }
   };
 
@@ -206,7 +228,22 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                 <p className="text-sm text-gray-600">
                   작성일: {new Date(plan.createdAt).toLocaleDateString()}
                 </p>
-                {plan.status === 'submitted' && (
+                
+                {/* 기획안 내용 유무 표시 */}
+                <div className="mt-2">
+                  {hasPlanContent(plan) ? (
+                    <Badge variant="outline" className="text-green-600 border-green-200">
+                      기획안 작성완료
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-gray-500 border-gray-200">
+                      기획안 미작성
+                    </Badge>
+                  )}
+                </div>
+
+                {/* 검토 가능한 기획안에 대해 액션 버튼 표시 */}
+                {canReviewPlan(plan) && hasPlanContent(plan) && (
                   <div className="flex gap-2 mt-4">
                     <Button
                       size="sm"
@@ -231,6 +268,13 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                       <MessageSquare className="w-4 h-4 mr-1" />
                       수정요청
                     </Button>
+                  </div>
+                )}
+
+                {/* 기획안이 작성되지 않은 경우 안내 */}
+                {canReviewPlan(plan) && !hasPlanContent(plan) && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-500">인플루언서가 기획안을 작성 중입니다.</p>
                   </div>
                 )}
               </div>
@@ -259,7 +303,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           </CardHeader>
           <CardContent>
             {renderPlanData(selectedPlan)}
-            {selectedPlan.status === 'submitted' && (
+            {canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
               <div className="flex gap-2 mt-6">
                 <Button
                   onClick={() => handleApprove(selectedPlan.id)}
