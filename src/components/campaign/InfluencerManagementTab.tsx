@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -167,6 +166,21 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     }
   };
 
+  const handleInfluencerApproval = (influencerId: string, approved: boolean) => {
+    console.log('=== InfluencerManagementTab 승인/거절 처리 시작 ===');
+    console.log('인플루언서 ID:', influencerId);
+    console.log('승인 여부:', approved);
+    
+    const influencer = campaign.influencers.find(inf => inf.id === influencerId);
+    if (influencer) {
+      console.log('승인 처리할 인플루언서:', influencer.name);
+      console.log('현재 광고비:', influencer.adFee);
+      console.log('현재 상태:', influencer.status);
+    }
+    
+    onInfluencerApproval(influencerId, approved);
+  };
+
   // 단계별 액션 버튼 렌더링 함수
   const renderActionButtons = (influencer: CampaignInfluencer) => {
     const isSubmittedOrRecruiting = campaign.status === 'submitted' || campaign.status === 'recruiting';
@@ -193,7 +207,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
             </div>
             <Button
               size="sm"
-              onClick={() => onInfluencerApproval(influencer.id, true)}
+              onClick={() => handleInfluencerApproval(influencer.id, true)}
               className="bg-green-600 hover:bg-green-700"
             >
               <Check className="w-3 h-3 mr-1" />
@@ -202,7 +216,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => onInfluencerApproval(influencer.id, false)}
+              onClick={() => handleInfluencerApproval(influencer.id, false)}
             >
               <X className="w-3 h-3 mr-1" />
               거절
