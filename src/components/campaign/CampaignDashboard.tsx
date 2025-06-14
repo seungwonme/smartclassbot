@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,13 +43,13 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     live: true
   });
 
-  // 캠페인 단계별 분류
+  // 캠페인 단계별 분류 - producing 상태 추가
   const creationStageCampaigns = campaigns.filter(c => 
     ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
   );
   
   const contentStageCampaigns = campaigns.filter(c => 
-    ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review'].includes(c.status)
+    ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
   );
   
   const liveStageCampaigns = campaigns.filter(c => 
@@ -72,6 +71,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'plan-approved': return 'bg-lime-100 text-lime-800';
       case 'producing': return 'bg-violet-100 text-violet-800';
       case 'content-review': return 'bg-purple-100 text-purple-800';
+      case 'content-approved': return 'bg-emerald-100 text-emerald-800';
       case 'live': return 'bg-green-100 text-green-800';
       case 'monitoring': return 'bg-teal-100 text-teal-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
@@ -92,8 +92,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'plan-review': return '기획검토';
       case 'plan-revision': return '기획수정';
       case 'plan-approved': return '기획승인';
-      case 'producing': return '제작중';
+      case 'producing': return '콘텐츠 제작중';
       case 'content-review': return '콘텐츠검수';
+      case 'content-approved': return '콘텐츠 승인완료';
       case 'live': return '라이브';
       case 'monitoring': return '모니터링';
       case 'completed': return '완료됨';

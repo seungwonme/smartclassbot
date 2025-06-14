@@ -1,3 +1,4 @@
+
 export interface Campaign {
   id: string;
   title: string;
@@ -10,12 +11,19 @@ export interface Campaign {
   campaignEndDate: string;
   proposalDeadline: string;
   adType: 'branding' | 'live-commerce';
-  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'live' | 'monitoring' | 'completed';
+  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-approved' | 'live' | 'monitoring' | 'completed';
   targetContent: TargetContent;
   influencers: CampaignInfluencer[];
   contentPlans?: ContentPlan[];
   currentStage: number;
   quote?: CampaignQuote;
+  productionSchedule?: {
+    startDate: string;
+    endDate: string;
+    notes?: string;
+    createdAt: string;
+    createdBy: string;
+  };
   createdAt: string;
   updatedAt: string;
 }

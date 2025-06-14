@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, Users, Edit, MessageSquare, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Plus, Users, Edit, MessageSquare, ArrowRight, Clock, CheckCircle } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
@@ -12,6 +12,7 @@ import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
+import ProductionScheduleModal from '@/components/content/ProductionScheduleModal';
 
 type WorkMode = 'idle' | 'create' | 'edit' | 'revision';
 
@@ -27,6 +28,7 @@ const AdminContentPlanning = () => {
   const [selectedInfluencerForWork, setSelectedInfluencerForWork] = useState<any>(null);
   const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
   const [showRevisionFeedback, setShowRevisionFeedback] = useState(false);
+  const [showProductionScheduleModal, setShowProductionScheduleModal] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -166,6 +168,42 @@ const AdminContentPlanning = () => {
     loadData();
   }, [campaignId, toast]);
 
+  // 기획 완료 여부 확인 함수
+  const checkPlanningCompletion = () => {
+    if (!campaign || !contentPlans.length) return false;
+    
+    const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+    
+    // 확정된 인플루언서가 없으면 완료되지 않음
+    if (confirmedInfluencers.length === 0) return false;
+    
+    // 모든 확정 인플루언서가 기획안을 가지고 있는지 확인
+    const allInfluencersHavePlans = confirmedInfluencers.every(influencer => 
+      contentPlans.some(plan => plan.influencerId === influencer.id)
+    );
+    
+    if (!allInfluencersHavePlans) return false;
+    
+    // 모든 기획안이 승인되었는지 확인
+    const allPlansApproved = confirmedInfluencers.every(influencer => {
+      const plan = contentPlans.find(p => p.influencerId === influencer.id);
+      return plan && plan.status === 'approved';
+    });
+    
+    console.log('=== 기획 완료 여부 확인 ===');
+    console.log('확정 인플루언서 수:', confirmedInfluencers.length);
+    console.log('기획안 수:', contentPlans.length);
+    console.log('모든 인플루언서가 기획안 보유:', allInfluencersHavePlans);
+    console.log('모든 기획안 승인됨:', allPlansApproved);
+    console.log('기획 완료 여부:', allPlansApproved);
+    
+    return allPlansApproved;
+  };
+
+  // 기획 완료 상태
+  const isPlanningCompleted = checkPlanningCompletion();
+  const canStartProduction = isPlanningCompleted && campaign?.status === 'planning' && !campaign?.productionSchedule;
+
   const handleCreatePlan = (influencer: any) => {
     console.log('=== 새 기획안 작성 시작 ===');
     console.log('선택된 인플루언서:', influencer);
@@ -208,6 +246,61 @@ const AdminContentPlanning = () => {
   const handleContentUpdated = () => {
     console.log('=== 콘텐츠 수정됨 - 피드백 섹션 숨김 유지 ===');
     // 콘텐츠가 수정되어도 피드백 섹션은 표시하지 않음
+  };
+
+  const handleStartProduction = () => {
+    console.log('제작 일정 설정 모달 열기');
+    setShowProductionScheduleModal(true);
+  };
+
+  const handleProductionScheduleSubmit = async (scheduleData: {
+    startDate: string;
+    endDate: string;
+    notes?: string;
+  }) => {
+    if (!campaign) return;
+
+    try {
+      console.log('=== 제작 일정 설정 시작 ===');
+      console.log('일정 데이터:', scheduleData);
+
+      const productionSchedule = {
+        startDate: scheduleData.startDate,
+        endDate: scheduleData.endDate,
+        notes: scheduleData.notes,
+        createdAt: new Date().toISOString(),
+        createdBy: '시스템 관리자'
+      };
+
+      await campaignService.updateCampaign(campaign.id, {
+        status: 'producing',
+        currentStage: 3,
+        productionSchedule
+      });
+
+      setCampaign(prev => prev ? {
+        ...prev,
+        status: 'producing',
+        currentStage: 3,
+        productionSchedule
+      } : null);
+
+      console.log('=== 제작 일정 설정 완료 ===');
+      console.log('캠페인 상태:', 'producing');
+      console.log('현재 단계:', 3);
+
+      toast({
+        title: "제작 단계 시작",
+        description: `제작 기간: ${scheduleData.startDate} ~ ${scheduleData.endDate}`
+      });
+
+    } catch (error) {
+      console.error('제작 일정 설정 실패:', error);
+      toast({
+        title: "설정 실패",
+        variant: "destructive"
+      });
+    }
   };
 
   // 상태 표시 텍스트 통일
@@ -579,11 +672,68 @@ const AdminContentPlanning = () => {
                     수정요청 {revisionRequestCount}건
                   </Badge>
                 )}
+                {isPlanningCompleted && (
+                  <Badge className="bg-green-100 text-green-800">
+                    ✓ 기획 완료
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
+          
+          {/* 제작 단계 시작 버튼 */}
+          {canStartProduction && (
+            <Button 
+              onClick={handleStartProduction}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              제작 단계 시작
+            </Button>
+          )}
         </div>
 
+        {/* 기획 완료 알림 */}
+        {isPlanningCompleted && campaign?.status === 'planning' && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-green-800">모든 콘텐츠 기획이 완료되었습니다!</h3>
+                  <p className="text-sm text-green-700">
+                    {confirmedInfluencers.length}명의 인플루언서 기획안이 모두 승인되었습니다. 
+                    제작 일정을 설정하여 다음 단계로 진행하세요.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 제작 일정 정보 표시 (제작 단계 시작 후) */}
+        {campaign?.productionSchedule && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Clock className="w-6 h-6 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-blue-800">콘텐츠 제작 일정</h3>
+                  <p className="text-sm text-blue-700">
+                    제작 기간: {campaign.productionSchedule.startDate} ~ {campaign.productionSchedule.endDate}
+                  </p>
+                  {campaign.productionSchedule.notes && (
+                    <p className="text-sm text-blue-600 mt-1">
+                      가이드라인: {campaign.productionSchedule.notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 기존 그리드 레이아웃 유지 */}
         <div className="grid grid-cols-12 gap-6">
           {/* 좌측: 인플루언서 목록 */}
           <div className="col-span-4">
@@ -670,6 +820,14 @@ const AdminContentPlanning = () => {
             {renderWorkArea()}
           </div>
         </div>
+
+        {/* 제작 일정 설정 모달 */}
+        <ProductionScheduleModal
+          isOpen={showProductionScheduleModal}
+          onClose={() => setShowProductionScheduleModal(false)}
+          onSubmit={handleProductionScheduleSubmit}
+          campaignTitle={campaign?.title || ''}
+        />
       </div>
     </div>
   );
