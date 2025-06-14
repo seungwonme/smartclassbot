@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CampaignInfluencer } from '@/types/campaign';
 import {
@@ -13,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, Plus, Eye, TrendingUp } from 'lucide-react';
+import InfluencerDetailModal from '@/components/InfluencerDetailModal';
 
 interface SimilarInfluencerModalProps {
   isOpen: boolean;
@@ -30,6 +30,8 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
   const [similarInfluencers, setSimilarInfluencers] = useState<CampaignInfluencer[]>([]);
   const [selectedInfluencers, setSelectedInfluencers] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedInfluencerForDetail, setSelectedInfluencerForDetail] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && rejectedInfluencer) {
@@ -141,134 +143,164 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
     }
   };
 
+  const handleInfluencerDetailView = (influencer: CampaignInfluencer) => {
+    // Convert CampaignInfluencer to the format expected by InfluencerDetailModal
+    const detailInfluencer = {
+      id: influencer.id,
+      profileImage: influencer.profileImage,
+      nickname: influencer.name,
+      platform: influencer.platform || 'douyin',
+      followers: influencer.followers,
+      region: influencer.region || '서울',
+      category: [influencer.category || '뷰티']
+    };
+    
+    setSelectedInfluencerForDetail(detailInfluencer);
+    setIsDetailModalOpen(true);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            유사 인플루언서 추천
-            {rejectedInfluencer && (
-              <span className="text-sm font-normal text-gray-500">
-                ({rejectedInfluencer.name}과 유사한 인플루언서)
-              </span>
-            )}
-          </DialogTitle>
-        </DialogHeader>
-        
-        {isLoading ? (
-          <div className="text-center py-8">로딩 중...</div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-sm text-gray-600">
-              선택한 인플루언서: {selectedInfluencers.size}명
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {similarInfluencers.map((influencer) => (
-                <Card 
-                  key={influencer.id} 
-                  className={`cursor-pointer transition-all border-2 ${
-                    selectedInfluencers.has(influencer.id) 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => handleInfluencerSelect(influencer.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={influencer.profileImage} />
-                          <AvatarFallback>
-                            {influencer.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-medium text-blue-600">
-                            {influencer.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <img 
-                              src={influencer.platform === 'xiaohongshu' ? 
-                                "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
-                                "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
-                              } 
-                              alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
-                              className="w-5 h-5 rounded"
-                            />
-                            <span className="text-sm text-gray-500">{influencer.region}</span>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              유사 인플루언서 추천
+              {rejectedInfluencer && (
+                <span className="text-sm font-normal text-gray-500">
+                  ({rejectedInfluencer.name}과 유사한 인플루언서)
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {isLoading ? (
+            <div className="text-center py-8">로딩 중...</div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">
+                선택한 인플루언서: {selectedInfluencers.size}명
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {similarInfluencers.map((influencer) => (
+                  <Card 
+                    key={influencer.id} 
+                    className={`cursor-pointer transition-all border-2 ${
+                      selectedInfluencers.has(influencer.id) 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleInfluencerSelect(influencer.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={influencer.profileImage} />
+                            <AvatarFallback>
+                              {influencer.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-medium text-blue-600">
+                              {influencer.name}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <img 
+                                src={influencer.platform === 'xiaohongshu' ? 
+                                  "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
+                                  "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
+                                } 
+                                alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
+                                className="w-5 h-5 rounded"
+                              />
+                              <span className="text-sm text-gray-500">{influencer.region}</span>
+                            </div>
                           </div>
                         </div>
+                        <input
+                          type="checkbox"
+                          checked={selectedInfluencers.has(influencer.id)}
+                          onChange={() => handleInfluencerSelect(influencer.id)}
+                          className="w-5 h-5"
+                          onClick={(e) => e.stopPropagation()}
+                        />
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={selectedInfluencers.has(influencer.id)}
-                        onChange={() => handleInfluencerSelect(influencer.id)}
-                        className="w-5 h-5"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-1 text-blue-500" />
-                        <span>{formatFollowers(influencer.followers)}</span>
+                      
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 mr-1 text-blue-500" />
+                          <span>{formatFollowers(influencer.followers)}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <TrendingUp className="w-4 h-4 mr-1 text-green-500" />
+                          <span>{influencer.engagementRate}%</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <TrendingUp className="w-4 h-4 mr-1 text-green-500" />
-                        <span>{influencer.engagementRate}%</span>
+                      
+                      <div className="flex items-center justify-between mt-3">
+                        <Badge variant="outline" className="text-xs">
+                          {influencer.category}
+                        </Badge>
+                        <span className="text-green-600 font-medium text-sm">
+                          {influencer.adFee?.toLocaleString()}원
+                        </span>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-3">
-                      <Badge variant="outline" className="text-xs">
-                        {influencer.category}
-                      </Badge>
-                      <span className="text-green-600 font-medium text-sm">
-                        {influencer.adFee?.toLocaleString()}원
-                      </span>
-                    </div>
-                    
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">예상 광고비</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // 상세 정보 모달 열기 (향후 구현)
-                          }}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          상세보기
-                        </Button>
+                      
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">예상 광고비</span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfluencerDetailView(influencer);
+                            }}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            상세보기
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            취소
-          </Button>
-          <Button 
-            onClick={handleAddSelected}
-            disabled={selectedInfluencers.size === 0}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            선택한 인플루언서 추가 ({selectedInfluencers.size}명)
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              취소
+            </Button>
+            <Button 
+              onClick={handleAddSelected}
+              disabled={selectedInfluencers.size === 0}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              선택한 인플루언서 추가 ({selectedInfluencers.size}명)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 인플루언서 상세보기 모달 */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>인플루언서 상세 정보</DialogTitle>
+          </DialogHeader>
+          {selectedInfluencerForDetail && (
+            <InfluencerDetailModal influencer={selectedInfluencerForDetail} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
