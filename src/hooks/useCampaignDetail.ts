@@ -4,7 +4,7 @@ import { Campaign, CampaignInfluencer } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
 
-export const useCampaignDetail = () => {
+export const useCampaignDetail = (campaignId?: string) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -12,12 +12,14 @@ export const useCampaignDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('basic');
 
+  const targetId = campaignId || id;
+
   useEffect(() => {
     const loadCampaign = async () => {
-      if (!id) return;
+      if (!targetId) return;
       
       try {
-        const data = await campaignService.getCampaignById(id);
+        const data = await campaignService.getCampaignById(targetId);
         if (data) {
           const updatedCampaign = {
             ...data,
@@ -42,10 +44,10 @@ export const useCampaignDetail = () => {
     };
 
     loadCampaign();
-  }, [id, toast]);
+  }, [targetId, toast]);
 
   const handleEdit = () => {
-    navigate(`/brand/campaigns/edit/${id}`);
+    navigate(`/brand/campaigns/edit/${targetId}`);
   };
 
   const handleDelete = async () => {
@@ -226,6 +228,7 @@ export const useCampaignDetail = () => {
   };
 
   return {
+    data: campaign,
     campaign,
     setCampaign,
     isLoading,
