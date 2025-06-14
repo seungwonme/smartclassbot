@@ -50,7 +50,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   );
   
   const contentStageCampaigns = campaigns.filter(c => 
-    ['planning', 'plan-review', 'producing', 'content-review'].includes(c.status)
+    ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review'].includes(c.status)
   );
   
   const liveStageCampaigns = campaigns.filter(c => 
@@ -68,6 +68,8 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'planning': return 'bg-blue-100 text-blue-800';
       case 'plan-review': return 'bg-indigo-100 text-indigo-800';
+      case 'plan-revision': return 'bg-orange-100 text-orange-800';
+      case 'plan-approved': return 'bg-lime-100 text-lime-800';
       case 'producing': return 'bg-violet-100 text-violet-800';
       case 'content-review': return 'bg-purple-100 text-purple-800';
       case 'live': return 'bg-green-100 text-green-800';
@@ -86,8 +88,10 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'revising': return '제안수정요청';
       case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
-      case 'planning': return '기획중';
+      case 'planning': return '콘텐츠 기획중';
       case 'plan-review': return '기획검토';
+      case 'plan-revision': return '기획수정';
+      case 'plan-approved': return '기획승인';
       case 'producing': return '제작중';
       case 'content-review': return '콘텐츠검수';
       case 'live': return '라이브';
