@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -222,7 +223,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
                         </TableCell>
                         <TableCell>
                           <Avatar>
-                            <AvatarImage src={influencer.profileImage} />
+                            <AvatarImage src={influencer.profileImageUrl || influencer.profileImage} />
                             <AvatarFallback>
                               {influencer.name.charAt(0)}
                             </AvatarFallback>
@@ -279,7 +280,7 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
                         </TableCell>
                         <TableCell>
                           <Avatar>
-                            <AvatarImage src={influencer.profileImage} />
+                            <AvatarImage src={influencer.profileImageUrl || influencer.profileImage} />
                             <AvatarFallback>
                               {influencer.name.charAt(0)}
                             </AvatarFallback>

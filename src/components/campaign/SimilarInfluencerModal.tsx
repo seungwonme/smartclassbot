@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CampaignInfluencer } from '@/types/campaign';
 import {
@@ -49,58 +50,74 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
       {
         id: `similar-${Date.now()}-1`,
         name: '뷰티구루김',
-        profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b9130f02?w=150&h=150&fit=crop&crop=face',
+        profileImageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b9130f02?w=150&h=150&fit=crop&crop=face',
         followers: 85000,
+        avgViews: 50000,
+        avgLikes: 3000,
+        avgComments: 200,
         engagementRate: 4.2,
         platform: rejectedInfluencer.platform || 'douyin',
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
         adFee: Math.floor(Math.random() * 2000000) + 1000000,
-        socialChannels: ['douyin'],
-        isSelected: false
+        proposedFee: Math.floor(Math.random() * 2000000) + 1000000,
+        instagramUrl: '',
+        deliverables: []
       },
       {
         id: `similar-${Date.now()}-2`,
         name: '메이크업아티스트이',
-        profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+        profileImageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
         followers: 92000,
+        avgViews: 55000,
+        avgLikes: 3200,
+        avgComments: 180,
         engagementRate: 3.8,
         platform: rejectedInfluencer.platform || 'douyin',
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
         adFee: Math.floor(Math.random() * 2000000) + 1000000,
-        socialChannels: ['douyin'],
-        isSelected: false
+        proposedFee: Math.floor(Math.random() * 2000000) + 1000000,
+        instagramUrl: '',
+        deliverables: []
       },
       {
         id: `similar-${Date.now()}-3`,
         name: '코스메틱리뷰어박',
-        profileImage: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face',
+        profileImageUrl: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face',
         followers: 78000,
+        avgViews: 45000,
+        avgLikes: 2800,
+        avgComments: 220,
         engagementRate: 4.5,
         platform: rejectedInfluencer.platform || 'douyin',
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
         adFee: Math.floor(Math.random() * 2000000) + 1000000,
-        socialChannels: ['douyin'],
-        isSelected: false
+        proposedFee: Math.floor(Math.random() * 2000000) + 1000000,
+        instagramUrl: '',
+        deliverables: []
       },
       {
         id: `similar-${Date.now()}-4`,
         name: '스타일링전문가최',
-        profileImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face',
+        profileImageUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face',
         followers: 95000,
+        avgViews: 60000,
+        avgLikes: 3500,
+        avgComments: 250,
         engagementRate: 4.1,
         platform: rejectedInfluencer.platform || 'xiaohongshu',
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
         adFee: Math.floor(Math.random() * 2000000) + 1000000,
-        socialChannels: ['xiaohongshu'],
-        isSelected: false
+        proposedFee: Math.floor(Math.random() * 2000000) + 1000000,
+        instagramUrl: '',
+        deliverables: []
       }
     ];
     
@@ -147,9 +164,9 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
     // Convert CampaignInfluencer to the format expected by InfluencerDetailModal
     const detailInfluencer = {
       id: influencer.id,
-      profileImage: influencer.profileImage,
+      profileImage: influencer.profileImageUrl || influencer.profileImage || '',
       nickname: influencer.name,
-      platform: influencer.platform || 'douyin',
+      platform: (influencer.platform || 'douyin') as 'douyin' | 'xiaohongshu',
       followers: influencer.followers,
       region: influencer.region || '서울',
       category: [influencer.category || '뷰티']
@@ -198,7 +215,7 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <Avatar className="w-12 h-12">
-                            <AvatarImage src={influencer.profileImage} />
+                            <AvatarImage src={influencer.profileImageUrl || influencer.profileImage} />
                             <AvatarFallback>
                               {influencer.name.charAt(0)}
                             </AvatarFallback>
@@ -209,14 +226,14 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
                               <img 
-                                src={influencer.platform === 'xiaohongshu' ? 
+                                src={(influencer.platform || 'douyin') === 'xiaohongshu' ? 
                                   "/lovable-uploads/e703f951-a663-4cec-a5ed-9321f609d145.png" : 
                                   "/lovable-uploads/ab4c4633-b725-4dea-955a-ec1a22cc8837.png"
                                 } 
-                                alt={influencer.platform === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
+                                alt={(influencer.platform || 'douyin') === 'xiaohongshu' ? "샤오홍슈" : "도우인"} 
                                 className="w-5 h-5 rounded"
                               />
-                              <span className="text-sm text-gray-500">{influencer.region}</span>
+                              <span className="text-sm text-gray-500">{influencer.region || '서울'}</span>
                             </div>
                           </div>
                         </div>
@@ -245,7 +262,7 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
                           {influencer.category}
                         </Badge>
                         <span className="text-green-600 font-medium text-sm">
-                          {influencer.adFee?.toLocaleString()}원
+                          {(influencer.adFee || influencer.proposedFee || 0).toLocaleString()}원
                         </span>
                       </div>
                       

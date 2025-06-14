@@ -42,7 +42,7 @@ const InfluencerEditModal: React.FC<InfluencerEditModalProps> = ({
   React.useEffect(() => {
     if (influencer) {
       setEditForm({
-        adFee: influencer.adFee?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '',
+        adFee: (influencer.adFee || influencer.proposedFee || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','),
         region: influencer.region || '',
         category: influencer.category || ''
       });
@@ -94,7 +94,7 @@ const InfluencerEditModal: React.FC<InfluencerEditModalProps> = ({
         <div className="space-y-4">
           <div className="flex items-center gap-3 p-3 bg-gray-50 rounded">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={influencer.profileImage} />
+              <AvatarImage src={influencer.profileImageUrl || influencer.profileImage} />
               <AvatarFallback>
                 {influencer.name.charAt(0)}
               </AvatarFallback>

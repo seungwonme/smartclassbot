@@ -37,15 +37,19 @@ export interface CampaignInfluencer {
   avgComments: number;
   engagementRate: number;
   profileImageUrl: string;
+  profileImage?: string; // 호환성을 위한 추가 필드
   instagramUrl: string;
   youtubeUrl?: string;
   xiaohongshuUrl?: string;
   tiktokUrl?: string;
   proposedFee: number;
+  adFee?: number; // 추가된 필드
   deliverables: string[];
   additionalTerms?: string;
-  status: 'pending' | 'confirmed' | 'rejected';
+  status: 'pending' | 'confirmed' | 'rejected' | 'accepted' | 'admin-rejected' | 'brand-rejected';
   proposalSubmittedAt?: string;
+  platform?: 'douyin' | 'xiaohongshu';
+  region?: string;
 }
 
 export interface ContentPlan {
@@ -72,4 +76,11 @@ export interface ContentRevision {
   response?: string;
   respondedAt?: string;
   respondedBy?: string;
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  age: string;
+  interests: string[];
 }

@@ -46,7 +46,7 @@ const CampaignConfirmationSummary: React.FC<CampaignConfirmationSummaryProps> = 
   };
 
   const metrics = calculateExpectedMetrics();
-  const totalAdFee = confirmedInfluencers.reduce((sum, inf) => sum + (inf.adFee || 0), 0);
+  const totalAdFee = confirmedInfluencers.reduce((sum, inf) => sum + (inf.adFee || inf.proposedFee || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -101,7 +101,7 @@ const CampaignConfirmationSummary: React.FC<CampaignConfirmationSummaryProps> = 
               <div key={influencer.id} className="border rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-2">
                   <img 
-                    src={influencer.profileImage} 
+                    src={influencer.profileImageUrl || influencer.profileImage} 
                     alt={influencer.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
@@ -113,7 +113,7 @@ const CampaignConfirmationSummary: React.FC<CampaignConfirmationSummaryProps> = 
                 <div className="space-y-1 text-sm">
                   <div>팔로워: {influencer.followers.toLocaleString()}명</div>
                   <div>참여율: {influencer.engagementRate}%</div>
-                  <div>광고비: {influencer.adFee?.toLocaleString()}원</div>
+                  <div>광고비: {(influencer.adFee || influencer.proposedFee || 0).toLocaleString()}원</div>
                 </div>
               </div>
             ))}

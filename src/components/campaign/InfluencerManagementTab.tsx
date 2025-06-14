@@ -36,6 +36,12 @@ interface InfluencerManagementTabProps {
   toast: any;
 }
 
+interface EditFormData {
+  adFee: string;
+  region: string;
+  category: string;
+}
+
 const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   campaign,
   onInfluencerApproval,
@@ -70,10 +76,17 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     setEditingInfluencer(null);
   };
 
-  const handleSaveEdit = async (updatedInfluencer: CampaignInfluencer) => {
+  const handleSaveEdit = async (updatedInfluencer: CampaignInfluencer, editData: EditFormData) => {
     try {
+      const updatedInfluencerData = {
+        ...updatedInfluencer,
+        adFee: parseInt(editData.adFee.replace(/,/g, '')) || 0,
+        region: editData.region,
+        category: editData.category
+      };
+      
       const updatedInfluencers = campaign.influencers.map(inf => 
-        inf.id === updatedInfluencer.id ? updatedInfluencer : inf
+        inf.id === updatedInfluencer.id ? updatedInfluencerData : inf
       );
       
       await onUpdateInfluencers(updatedInfluencers);
@@ -146,7 +159,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   const getStatusColor = (status: CampaignInfluencer['status']) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'accepted': return 'bg-blue-100 text-blue-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'admin-rejected': return 'bg-red-100 text-red-800';
@@ -175,7 +188,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     const influencer = campaign.influencers.find(inf => inf.id === influencerId);
     if (influencer) {
       console.log('승인 처리할 인플루언서:', influencer.name);
-      console.log('현재 광고비:', influencer.adFee);
+      console.log('현재 광고비:', influencer.adFee || influencer.proposedFee);
       console.log('현재 상태:', influencer.status);
     }
     
@@ -185,9 +198,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
   const getActiveInfluencersCount = () => {
     return campaign.influencers.filter(inf => 
-      inf.status !== 'brand-rejected' && 
-      inf.status !== 'admin-rejected' && 
-      inf.status !== 'rejected'
+      !['brand-rejected', 'admin-rejected', 'rejected'].includes(inf.status)
     ).length;
   };
 
@@ -213,7 +224,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
         {isProposingOrRevisionFeedback && influencer.status === 'accepted' && (
           <>
             <div className="text-sm font-medium text-green-600 mr-2">
-              {influencer.adFee?.toLocaleString() || 0}원
+              {(influencer.adFee || influencer.proposedFee || 0).toLocaleString()}원
             </div>
             <Button
               size="sm"
@@ -280,7 +291,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                   <TableRow key={influencer.id}>
                     <TableCell>
                       <img
-                        src={influencer.profileImage}
+                        src={influencer.profileImageUrl || influencer.profileImage}
                         alt={influencer.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
@@ -293,7 +304,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {influencer.platform === 'xiaohongshu' ? '샤오홍슈' : '더우인'}
+                        {(influencer.platform || 'douyin') === 'xiaohongshu' ? '샤오홍슈' : '더우인'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -301,7 +312,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                     </TableCell>
                     <TableCell>{influencer.followers.toLocaleString()}</TableCell>
                     <TableCell>{influencer.engagementRate}%</TableCell>
-                    <TableCell>{influencer.adFee?.toLocaleString() || 0}원</TableCell>
+                    <TableCell>{(influencer.adFee || influencer.proposedFee || 0).toLocaleString()}원</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(influencer.status)}>
                         {getStatusText(influencer.status)}
@@ -325,12 +336,13 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
             <DialogTitle>인플루언서 상세정보</DialogTitle>
           </DialogHeader>
           {selectedInfluencer && (
-            selectedInfluencer.platform === 'xiaohongshu' ? (
+            (selectedInfluencer.platform || 'douyin') === 'xiaohongshu' ? (
               <XiaohongshuInfluencerDetailModal
                 influencer={{
                   ...selectedInfluencer,
+                  profileImage: selectedInfluencer.profileImageUrl || selectedInfluencer.profileImage || '',
                   nickname: selectedInfluencer.name,
-                  platform: selectedInfluencer.platform || 'xiaohongshu',
+                  platform: (selectedInfluencer.platform || 'xiaohongshu') as 'xiaohongshu',
                   region: selectedInfluencer.region || '서울',
                   category: [selectedInfluencer.category]
                 }}
@@ -339,8 +351,9 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
               <InfluencerDetailModal
                 influencer={{
                   ...selectedInfluencer,
+                  profileImage: selectedInfluencer.profileImageUrl || selectedInfluencer.profileImage || '',
                   nickname: selectedInfluencer.name,
-                  platform: selectedInfluencer.platform || 'douyin',
+                  platform: (selectedInfluencer.platform || 'douyin') as 'douyin',
                   region: selectedInfluencer.region || '서울',
                   category: [selectedInfluencer.category]
                 }}
