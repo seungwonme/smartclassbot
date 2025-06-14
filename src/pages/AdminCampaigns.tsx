@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,14 +21,19 @@ const AdminCampaigns = () => {
 
   useEffect(() => {
     const loadCampaigns = async () => {
+      console.log('=== AdminCampaigns 캠페인 로딩 시작 ===');
       try {
         const data = await campaignService.getCampaigns();
-        console.log('로드된 캠페인 데이터:', data); // 디버깅용 로그 추가
+        console.log('관리자 페이지 - 로드된 캠페인 데이터:', data);
+        data.forEach((campaign, index) => {
+          console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status}`);
+        });
         setCampaigns(data);
       } catch (error) {
         console.error('캠페인 로딩 실패:', error);
       } finally {
         setIsLoading(false);
+        console.log('=== AdminCampaigns 캠페인 로딩 완료 ===');
       }
     };
 
@@ -59,23 +63,30 @@ const AdminCampaigns = () => {
   };
 
   const handleCampaignReceive = async (campaignId: string) => {
-    console.log('캠페인 수령 시작:', campaignId, '현재 상태 확인'); // 디버깅용 로그
+    console.log('=== 캠페인 수령 프로세스 시작 ===');
+    console.log('캠페인 수령 시작:', campaignId);
     try {
       // 현재 캠페인 상태 확인
       const currentCampaign = campaigns.find(c => c.id === campaignId);
+      console.log('현재 캠페인 정보:', currentCampaign);
       console.log('현재 캠페인 상태:', currentCampaign?.status);
+      
+      if (currentCampaign?.status !== 'creating') {
+        console.warn('⚠️ 캠페인 상태가 creating이 아닙니다:', currentCampaign?.status);
+      }
       
       await campaignService.updateCampaign(campaignId, { status: 'recruiting' });
       setCampaigns(prev => 
         prev.map(c => c.id === campaignId ? { ...c, status: 'recruiting' as const } : c)
       );
-      console.log('캠페인 상태 변경 완료: recruiting'); // 디버깅용 로그
+      console.log('캠페인 상태 변경 완료: creating → recruiting');
+      console.log('=== 캠페인 수령 프로세스 완료 ===');
       toast({
         title: "캠페인 수령 완료",
         description: "캠페인 상태가 '섭외중'으로 변경되었습니다."
       });
     } catch (error) {
-      console.error('캠페인 수령 실패:', error); // 에러 로그
+      console.error('=== 캠페인 수령 실패 ===', error);
       toast({
         title: "처리 실패",
         description: "캠페인 수령에 실패했습니다.",
@@ -206,7 +217,13 @@ const AdminCampaigns = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => {
-            console.log(`캠페인 "${campaign.title}" 상태:`, campaign.status); // 각 캠페인 상태 확인
+            console.log(`🔍 렌더링 중 - 캠페인 "${campaign.title}" 상태 확인:`, campaign.status);
+            const shouldShowReceiveButton = campaign.status === 'creating';
+            const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing';
+            
+            console.log(`   - 캠페인 수령 버튼 표시: ${shouldShowReceiveButton}`);
+            console.log(`   - 섭외 관리 버튼 표시: ${shouldShowManageButton}`);
+            
             return (
               <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -233,10 +250,10 @@ const AdminCampaigns = () => {
                       인플루언서: {campaign.influencers.length}명
                     </div>
                     <div className="flex justify-between mt-4">
-                      {campaign.status === 'creating' && (
+                      {shouldShowReceiveButton && (
                         <Button
                           onClick={() => {
-                            console.log('캠페인 수령 버튼 클릭:', campaign.id, campaign.status);
+                            console.log('🎯 캠페인 수령 버튼 클릭:', campaign.id, campaign.status);
                             handleCampaignReceive(campaign.id);
                           }}
                           className="bg-blue-600 hover:bg-blue-700 flex-1"
@@ -244,7 +261,7 @@ const AdminCampaigns = () => {
                           캠페인 수령
                         </Button>
                       )}
-                      {(campaign.status === 'recruiting' || campaign.status === 'proposing') && (
+                      {shouldShowManageButton && (
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                           <DialogTrigger asChild>
                             <Button

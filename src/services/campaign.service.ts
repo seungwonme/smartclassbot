@@ -46,6 +46,9 @@ export const campaignService = {
   createCampaign: async (campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<Campaign> =>
     new Promise((resolve) => {
       setTimeout(() => {
+        console.log('=== campaignService.createCampaign 시작 ===');
+        console.log('받은 캠페인 데이터:', campaign);
+        
         const campaigns = storageService.getCampaigns();
         const newCampaign: Campaign = {
           ...campaign,
@@ -56,8 +59,16 @@ export const campaignService = {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
+        
+        console.log('생성될 새 캠페인:', newCampaign);
+        console.log('새 캠페인 상태:', newCampaign.status);
+        
         campaigns.push(newCampaign);
         storageService.setCampaigns(campaigns);
+        
+        console.log('저장 완료 - 전체 캠페인 목록:', campaigns);
+        console.log('=== campaignService.createCampaign 완료 ===');
+        
         resolve(newCampaign);
       }, 500);
     }),
@@ -65,15 +76,27 @@ export const campaignService = {
   updateCampaign: async (id: string, updates: Partial<Campaign>): Promise<Campaign> =>
     new Promise((resolve) => {
       setTimeout(() => {
+        console.log('=== campaignService.updateCampaign 시작 ===');
+        console.log('업데이트할 캠페인 ID:', id);
+        console.log('업데이트 데이터:', updates);
+        
         const campaigns = storageService.getCampaigns();
         const index = campaigns.findIndex(c => c.id === id);
         if (index !== -1) {
+          const originalCampaign = campaigns[index];
+          console.log('원본 캠페인:', originalCampaign);
+          
           campaigns[index] = { 
             ...campaigns[index], 
             ...updates, 
             updatedAt: new Date().toISOString() 
           };
+          
+          console.log('업데이트된 캠페인:', campaigns[index]);
+          console.log('업데이트된 캠페인 상태:', campaigns[index].status);
+          
           storageService.setCampaigns(campaigns);
+          console.log('=== campaignService.updateCampaign 완료 ===');
           resolve(campaigns[index]);
         }
       }, 300);

@@ -238,6 +238,11 @@ export const useCampaignForm = (campaignId?: string) => {
   };
 
   const handleSubmit = async () => {
+    console.log('=== 캠페인 제출 시작 ===');
+    console.log('캠페인 ID:', campaignId);
+    console.log('편집 모드:', isEditMode);
+    console.log('현재 폼 데이터:', formData);
+    
     setIsLoading(true);
     try {
       const selectedInfluencerData = recommendedInfluencers.filter(inf => 
@@ -261,24 +266,33 @@ export const useCampaignForm = (campaignId?: string) => {
         influencers: selectedInfluencerData
       };
 
+      console.log('제출할 캠페인 데이터:', campaignData);
+      console.log('캠페인 상태 설정:', campaignData.status);
+
       if (isEditMode && campaignId) {
-        await campaignService.updateCampaign(campaignId, campaignData);
+        console.log('캠페인 수정 모드 - ID:', campaignId);
+        const updatedCampaign = await campaignService.updateCampaign(campaignId, campaignData);
+        console.log('수정된 캠페인 결과:', updatedCampaign);
         toast({
           title: "캠페인 수정 완료",
           description: "캠페인이 성공적으로 수정되었습니다."
         });
       } else {
-        await campaignService.createCampaign(campaignData);
+        console.log('새 캠페인 생성 모드');
+        const newCampaign = await campaignService.createCampaign(campaignData);
+        console.log('생성된 캠페인 결과:', newCampaign);
+        console.log('생성된 캠페인 상태:', newCampaign.status);
         toast({
           title: "캠페인 생성 완료",
           description: "캠페인이 성공적으로 생성되었습니다."
         });
       }
       
+      console.log('=== 캠페인 제출 완료 - 목록 페이지로 이동 ===');
       // 캠페인 목록 페이지로 리다이렉트
       navigate('/brand/campaigns');
     } catch (error) {
-      console.error('캠페인 처리 실패:', error);
+      console.error('=== 캠페인 처리 실패 ===', error);
       toast({
         title: "처리 실패",
         description: isEditMode ? "캠페인 수정에 실패했습니다." : "캠페인 생성에 실패했습니다.",
