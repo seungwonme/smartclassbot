@@ -53,6 +53,7 @@ const AdminCampaigns = () => {
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
       case 'revising': return 'bg-red-100 text-red-800';
+      case 'revision-feedback': return 'bg-amber-100 text-amber-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -66,6 +67,7 @@ const AdminCampaigns = () => {
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
       case 'revising': return '제안수정요청';
+      case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
       case 'completed': return '완료됨';
       default: return status;
@@ -245,19 +247,32 @@ const AdminCampaigns = () => {
 
     try {
       const quote = calculateQuote();
+      
+      // 브랜드가 거절한 인플루언서가 있는지 확인
+      const hasRevisedInfluencers = selectedCampaign.influencers.some(inf => inf.status === 'brand-rejected');
+      
+      // 상태 결정: 수정 제안인지 최초 제안인지에 따라 다름
+      const newStatus = hasRevisedInfluencers ? 'revision-feedback' as const : 'proposing' as const;
+      
+      console.log('=== 제안 제출 프로세스 ===');
+      console.log('브랜드 거절 인플루언서 존재:', hasRevisedInfluencers);
+      console.log('새로운 캠페인 상태:', newStatus);
+      
       await campaignService.updateCampaign(selectedCampaign.id, {
-        status: 'proposing',
+        status: newStatus,
         influencers: selectedCampaign.influencers,
         quote
       });
 
       setCampaigns(prev => 
-        prev.map(c => c.id === selectedCampaign.id ? { ...selectedCampaign, status: 'proposing' as const } : c)
+        prev.map(c => c.id === selectedCampaign.id ? { ...selectedCampaign, status: newStatus } : c)
       );
 
       toast({
-        title: "제안 완료",
-        description: "브랜드 관리자에게 섭외 결과를 제안했습니다."
+        title: hasRevisedInfluencers ? "수정 제안 완료" : "제안 완료",
+        description: hasRevisedInfluencers 
+          ? "브랜드 관리자에게 수정된 섭외 결과를 재제안했습니다."
+          : "브랜드 관리자에게 섭외 결과를 제안했습니다."
       });
 
       setIsDialogOpen(false);
@@ -327,6 +342,8 @@ const AdminCampaigns = () => {
 
   const quote = selectedCampaign ? calculateQuote() : { subtotal: 0, agencyFee: 0, vat: 0, total: 0 };
 
+  const shouldShowManageButton = campaign => campaign.status === 'recruiting' || campaign.status === 'proposing' || campaign.status === 'revising' || campaign.status === 'revision-feedback';
+
   return (
     <div className="flex min-h-screen w-full">
       <AdminSidebar />
@@ -338,7 +355,6 @@ const AdminCampaigns = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => {
             const shouldShowReceiveButton = campaign.status === 'submitted';
-            const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing' || campaign.status === 'revising';
             
             console.log(`캠페인 "${campaign.title}" - 상태: ${campaign.status}, 수령 버튼 표시: ${shouldShowReceiveButton}, 관리 버튼 표시: ${shouldShowManageButton}`);
             
@@ -386,7 +402,7 @@ const AdminCampaigns = () => {
                           캠페인 수령
                         </Button>
                       )}
-                      {shouldShowManageButton && (
+                      {shouldShowManageButton(campaign) && (
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                           <DialogTrigger asChild>
                             <Button

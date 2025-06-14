@@ -68,6 +68,7 @@ const CampaignDetail = () => {
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
       case 'revising': return 'bg-red-100 text-red-800';
+      case 'revision-feedback': return 'bg-amber-100 text-amber-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -81,6 +82,7 @@ const CampaignDetail = () => {
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
       case 'revising': return '제안수정요청';
+      case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
       case 'completed': return '완료됨';
       default: return status;

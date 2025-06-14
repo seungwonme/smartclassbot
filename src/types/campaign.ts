@@ -1,4 +1,3 @@
-
 export interface Campaign {
   id: string;
   title: string;
@@ -11,7 +10,7 @@ export interface Campaign {
   campaignStartDate: string;
   campaignEndDate: string;
   adType: 'branding' | 'live-commerce';
-  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-revision' | 'content-approved' | 'live' | 'monitoring' | 'completed';
+  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-revision' | 'content-approved' | 'live' | 'monitoring' | 'completed';
   currentStage: 1 | 2 | 3 | 4; // 1: 캠페인생성, 2: 콘텐츠기획, 3: 콘텐츠검수, 4: 성과모니터링
   targetContent: {
     influencerCategories: string[];

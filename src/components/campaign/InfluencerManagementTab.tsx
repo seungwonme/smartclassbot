@@ -194,7 +194,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   // 단계별 액션 버튼 렌더링 함수
   const renderActionButtons = (influencer: CampaignInfluencer) => {
     const isSubmittedOrRecruiting = campaign.status === 'submitted' || campaign.status === 'recruiting';
-    const isProposing = campaign.status === 'proposing';
+    const isProposingOrRevisionFeedback = campaign.status === 'proposing' || campaign.status === 'revision-feedback';
 
     return (
       <div className="flex items-center justify-end space-x-2">
@@ -209,8 +209,8 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
           </Button>
         )}
 
-        {/* 제안 단계: 광고비 표시, 승인/거절 버튼 */}
-        {isProposing && influencer.status === 'accepted' && (
+        {/* 제안 단계 또는 제안수정피드백 단계: 광고비 표시, 승인/거절 버튼 */}
+        {isProposingOrRevisionFeedback && influencer.status === 'accepted' && (
           <>
             <div className="text-sm font-medium text-green-600 mr-2">
               {influencer.adFee?.toLocaleString() || 0}원
@@ -235,7 +235,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
         )}
 
         {/* 기타 단계에서는 상세보기만 */}
-        {!isSubmittedOrRecruiting && !isProposing && (
+        {!isSubmittedOrRecruiting && !isProposingOrRevisionFeedback && (
           <Button
             size="sm"
             variant="outline"
