@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -210,12 +209,12 @@ const AdminContentPlanning = () => {
   };
 
   const handleRevisionFeedback = async (feedback: string) => {
-    if (!selectedPlanForRevision) return;
+    if (!editingPlan) return;
 
     try {
       const newRevision = {
         id: `revision_${Date.now()}`,
-        revisionNumber: (selectedPlanForRevision.currentRevisionNumber || 0) + 1,
+        revisionNumber: (editingPlan.currentRevisionNumber || 0) + 1,
         feedback,
         requestedBy: 'admin' as const,
         requestedByName: '시스템 관리자',
@@ -227,7 +226,7 @@ const AdminContentPlanning = () => {
       };
 
       const updatedPlans = contentPlans.map(plan => {
-        if (plan.id === selectedPlanForRevision.id) {
+        if (plan.id === editingPlan.id) {
           return {
             ...plan,
             revisions: [...plan.revisions, newRevision],
@@ -257,8 +256,8 @@ const AdminContentPlanning = () => {
       });
 
       setContentPlans(updatedPlans);
-      setShowRevisionForm(false);
-      setSelectedPlanForRevision(null);
+      setEditingPlan(null);
+      setShowForm(false);
 
       toast({
         title: "수정 피드백 전송 완료",
@@ -411,28 +410,40 @@ const AdminContentPlanning = () => {
         </div>
 
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>콘텐츠 기획 - {selectedInfluencer?.name}</DialogTitle>
             </DialogHeader>
             {selectedInfluencer && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* 수정 이력이 있는 경우 좌측에 표시 */}
+              <div className="space-y-6">
                 {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && (
-                  <div className="lg:col-span-1">
+                  <div className="border-b pb-4">
                     <ContentRevisionTimeline revisions={editingPlan.revisions} />
                   </div>
                 )}
                 
-                {/* 기획안 폼 */}
-                <div className={editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 ? "lg:col-span-1" : "lg:col-span-2"}>
-                  <ContentPlanForm
-                    influencer={selectedInfluencer}
-                    campaignId={campaign!.id}
-                    existingPlan={editingPlan || undefined}
-                    onSave={handleSavePlan}
-                    onCancel={() => setShowForm(false)}
-                  />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="lg:col-span-1">
+                    <ContentPlanForm
+                      influencer={selectedInfluencer}
+                      campaignId={campaign!.id}
+                      existingPlan={editingPlan || undefined}
+                      onSave={handleSavePlan}
+                      onCancel={() => setShowForm(false)}
+                    />
+                  </div>
+                  
+                  {editingPlan && editingPlan.revisions && editingPlan.revisions.length > 0 && 
+                   editingPlan.revisions.some(rev => rev.requestedBy === 'brand' && rev.status !== 'completed') && (
+                    <div className="lg:col-span-1">
+                      <RevisionRequestForm
+                        revisionNumber={(editingPlan.currentRevisionNumber || 0) + 1}
+                        onSubmit={handleRevisionFeedback}
+                        onCancel={() => {}}
+                        requestType="admin-feedback"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
