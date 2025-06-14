@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, XCircle, ExternalLink, Eye } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Campaign } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
@@ -17,6 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import InfluencerDetailModal from '@/components/InfluencerDetailModal';
+import XiaohongshuInfluencerDetailModal from '@/components/XiaohongshuInfluencerDetailModal';
 
 const CampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +32,8 @@ const CampaignDetail = () => {
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     const loadCampaign = async () => {
@@ -181,6 +191,34 @@ const CampaignDetail = () => {
       return `${(count / 1000).toFixed(0)}K`;
     }
     return count.toString();
+  };
+
+  const handleViewPlatformPage = (influencer: any) => {
+    // 플랫폼별 URL 생성 로직
+    let platformUrl = '';
+    
+    if (influencer.platform === 'douyin') {
+      platformUrl = `https://www.douyin.com/user/${influencer.id}`;
+    } else if (influencer.platform === 'xiaohongshu') {
+      platformUrl = `https://www.xiaohongshu.com/user/profile/${influencer.id}`;
+    }
+    
+    if (platformUrl) {
+      window.open(platformUrl, '_blank');
+    }
+  };
+
+  const handleViewInfluencerDetail = (influencer: any) => {
+    // 인플루언서 상세 정보에 플랫폼 정보 추가
+    const influencerWithPlatform = {
+      ...influencer,
+      platform: influencer.platform || 'douyin', // 기본값 설정
+      region: influencer.region || '서울',
+      category: Array.isArray(influencer.category) ? influencer.category : [influencer.category || '뷰티']
+    };
+    
+    setSelectedInfluencer(influencerWithPlatform);
+    setIsDetailModalOpen(true);
   };
 
   if (isLoading) {
@@ -358,7 +396,7 @@ const CampaignDetail = () => {
                         <TableHead>카테고리</TableHead>
                         <TableHead>광고비</TableHead>
                         <TableHead>상태</TableHead>
-                        {isProposing && <TableHead>작업</TableHead>}
+                        <TableHead>작업</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -405,31 +443,49 @@ const CampaignDetail = () => {
                               <Badge className="bg-red-100 text-red-800">거절됨</Badge>
                             )}
                           </TableCell>
-                          {isProposing && influencer.status === 'accepted' && (
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleInfluencerApproval(influencer.id, true)}
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-1" />
-                                  승인
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleInfluencerApproval(influencer.id, false)}
-                                >
-                                  <XCircle className="w-4 h-4 mr-1" />
-                                  거절
-                                </Button>
-                              </div>
-                            </TableCell>
-                          )}
-                          {!isProposing && (
-                            <TableCell></TableCell>
-                          )}
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleViewPlatformPage(influencer)}
+                                className="text-xs"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                첫페이지
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleViewInfluencerDetail(influencer)}
+                                className="text-xs"
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                상세보기
+                              </Button>
+                              {isProposing && influencer.status === 'accepted' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleInfluencerApproval(influencer.id, true)}
+                                    className="bg-green-600 hover:bg-green-700 text-xs"
+                                  >
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    승인
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleInfluencerApproval(influencer.id, false)}
+                                    className="text-xs"
+                                  >
+                                    <XCircle className="w-3 h-3 mr-1" />
+                                    거절
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -441,6 +497,25 @@ const CampaignDetail = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* 인플루언서 상세보기 모달 */}
+        <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                인플루언서 상세보기
+              </DialogTitle>
+            </DialogHeader>
+            {selectedInfluencer && (
+              selectedInfluencer.platform === 'xiaohongshu' ? (
+                <XiaohongshuInfluencerDetailModal influencer={selectedInfluencer} />
+              ) : (
+                <InfluencerDetailModal influencer={selectedInfluencer} />
+              )
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
