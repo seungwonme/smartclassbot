@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
@@ -140,17 +141,19 @@ export const useCampaignDetail = () => {
 
       // 캠페인 상태 결정
       const hasBrandRejected = updatedInfluencers.some(inf => inf.status === 'brand-rejected');
+      const confirmedInfluencers = updatedInfluencers.filter(inf => inf.status === 'confirmed');
+      const allActiveInfluencersConfirmed = updatedInfluencers
+        .filter(inf => inf.status !== 'brand-rejected' && inf.status !== 'admin-rejected' && inf.status !== 'rejected')
+        .every(inf => inf.status === 'confirmed');
+      
       let newStatus = campaign.status;
       
       if (hasBrandRejected) {
         newStatus = 'revising';
         console.log('브랜드 관리자가 거절한 인플루언서가 있어 상태를 revising으로 변경');
-      } else {
-        const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'brand-rejected');
-        if (allDecided) {
-          newStatus = 'confirmed';
-          console.log('모든 인플루언서가 결정되어 상태를 confirmed로 변경');
-        }
+      } else if (allActiveInfluencersConfirmed && confirmedInfluencers.length > 0) {
+        newStatus = 'confirmed';
+        console.log('모든 활성 인플루언서가 승인되어 상태를 confirmed로 자동 변경');
       }
 
       // 데이터베이스 업데이트
@@ -170,10 +173,18 @@ export const useCampaignDetail = () => {
       console.log('=== 브랜드 관리자 승인/거절 처리 완료 ===');
       console.log('최종 저장된 상태:', newStatus);
       
-      toast({
-        title: approved ? "인플루언서 승인" : "인플루언서 거절",
-        description: approved ? "인플루언서가 승인되었습니다." : "제안 수정 요청이 전송되었습니다."
-      });
+      // 캠페인이 자동으로 confirmed 상태가 된 경우 안내 메시지
+      if (newStatus === 'confirmed') {
+        toast({
+          title: "캠페인 확정 완료",
+          description: "모든 인플루언서가 승인되어 캠페인이 확정되었습니다. 캠페인 진행 동의를 확인해주세요."
+        });
+      } else {
+        toast({
+          title: approved ? "인플루언서 승인" : "인플루언서 거절",
+          description: approved ? "인플루언서가 승인되었습니다." : "제안 수정 요청이 전송되었습니다."
+        });
+      }
     } catch (error) {
       console.error('인플루언서 승인/거절 처리 실패:', error);
       toast({
