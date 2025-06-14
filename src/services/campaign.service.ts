@@ -54,7 +54,7 @@ export const campaignService = {
         const newCampaign: Campaign = {
           ...campaign,
           id: `c${Date.now()}`,
-          status: 'creating', // 강제로 creating 상태로 설정
+          status: 'creating', // 항상 creating 상태로 강제 설정
           currentStage: 1,
           contentPlans: [],
           contentProductions: [],
@@ -70,6 +70,7 @@ export const campaignService = {
         storageService.setCampaigns(campaigns);
         
         console.log('💾 저장 완료 - 전체 캠페인 목록:', campaigns.length);
+        console.log('💾 저장된 캠페인들의 상태:', campaigns.map(c => ({ id: c.id, title: c.title, status: c.status })));
         console.log('=== campaignService.createCampaign 완료 ===');
         
         resolve(newCampaign);

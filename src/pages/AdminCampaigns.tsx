@@ -26,7 +26,7 @@ const AdminCampaigns = () => {
         const data = await campaignService.getCampaigns();
         console.log('관리자 페이지 - 로드된 캠페인 데이터:', data);
         data.forEach((campaign, index) => {
-          console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status}`);
+          console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status} - ID: ${campaign.id}`);
         });
         setCampaigns(data);
       } catch (error) {
@@ -213,6 +213,8 @@ const AdminCampaigns = () => {
           {campaigns.map((campaign) => {
             const shouldShowReceiveButton = campaign.status === 'creating';
             const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing';
+            
+            console.log(`캠페인 "${campaign.title}" - 상태: ${campaign.status}, 수령 버튼 표시: ${shouldShowReceiveButton}, 관리 버튼 표시: ${shouldShowManageButton}`);
             
             return (
               <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
