@@ -66,14 +66,8 @@ const AdminCampaigns = () => {
     console.log('=== 캠페인 수령 프로세스 시작 ===');
     console.log('캠페인 수령 시작:', campaignId);
     try {
-      // 현재 캠페인 상태 확인
       const currentCampaign = campaigns.find(c => c.id === campaignId);
-      console.log('현재 캠페인 정보:', currentCampaign);
       console.log('현재 캠페인 상태:', currentCampaign?.status);
-      
-      if (currentCampaign?.status !== 'creating') {
-        console.warn('⚠️ 캠페인 상태가 creating이 아닙니다:', currentCampaign?.status);
-      }
       
       await campaignService.updateCampaign(campaignId, { status: 'recruiting' });
       setCampaigns(prev => 
@@ -217,12 +211,8 @@ const AdminCampaigns = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => {
-            console.log(`🔍 렌더링 중 - 캠페인 "${campaign.title}" 상태 확인:`, campaign.status);
             const shouldShowReceiveButton = campaign.status === 'creating';
             const shouldShowManageButton = campaign.status === 'recruiting' || campaign.status === 'proposing';
-            
-            console.log(`   - 캠페인 수령 버튼 표시: ${shouldShowReceiveButton}`);
-            console.log(`   - 섭외 관리 버튼 표시: ${shouldShowManageButton}`);
             
             return (
               <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
@@ -252,10 +242,7 @@ const AdminCampaigns = () => {
                     <div className="flex justify-between mt-4">
                       {shouldShowReceiveButton && (
                         <Button
-                          onClick={() => {
-                            console.log('🎯 캠페인 수령 버튼 클릭:', campaign.id, campaign.status);
-                            handleCampaignReceive(campaign.id);
-                          }}
+                          onClick={() => handleCampaignReceive(campaign.id)}
                           className="bg-blue-600 hover:bg-blue-700 flex-1"
                         >
                           캠페인 수령
@@ -265,10 +252,7 @@ const AdminCampaigns = () => {
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                           <DialogTrigger asChild>
                             <Button
-                              onClick={() => {
-                                console.log('섭외관리 버튼 클릭:', campaign.id, campaign.status);
-                                setSelectedCampaign(campaign);
-                              }}
+                              onClick={() => setSelectedCampaign(campaign)}
                               variant="outline"
                               className="flex-1"
                             >
