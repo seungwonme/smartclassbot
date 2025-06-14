@@ -47,12 +47,14 @@ export const campaignService = {
     new Promise((resolve) => {
       setTimeout(() => {
         console.log('=== campaignService.createCampaign 시작 ===');
-        console.log('받은 캠페인 데이터:', campaign);
+        console.log('📨 받은 캠페인 데이터:', campaign);
+        console.log('📨 받은 캠페인 상태:', campaign.status);
         
         const campaigns = storageService.getCampaigns();
         const newCampaign: Campaign = {
           ...campaign,
           id: `c${Date.now()}`,
+          status: 'creating', // 강제로 creating 상태로 설정
           currentStage: 1,
           contentPlans: [],
           contentProductions: [],
@@ -60,13 +62,14 @@ export const campaignService = {
           updatedAt: new Date().toISOString()
         };
         
-        console.log('생성될 새 캠페인:', newCampaign);
-        console.log('새 캠페인 상태:', newCampaign.status);
+        console.log('🏗️ 생성될 새 캠페인:', newCampaign);
+        console.log('🏗️ 강제 설정된 캠페인 상태:', newCampaign.status);
+        console.log('🏗️ 캠페인 ID:', newCampaign.id);
         
         campaigns.push(newCampaign);
         storageService.setCampaigns(campaigns);
         
-        console.log('저장 완료 - 전체 캠페인 목록:', campaigns);
+        console.log('💾 저장 완료 - 전체 캠페인 목록:', campaigns.length);
         console.log('=== campaignService.createCampaign 완료 ===');
         
         resolve(newCampaign);

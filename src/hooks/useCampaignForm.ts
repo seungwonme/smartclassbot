@@ -261,14 +261,14 @@ export const useCampaignForm = (campaignId?: string) => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
-        status: 'creating',
+        status: 'creating', // 명시적으로 creating 상태로 설정
         currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };
 
       console.log('제출할 캠페인 데이터:', campaignData);
-      console.log('캠페인 상태 설정:', campaignData.status);
+      console.log('🔧 명시적으로 설정한 캠페인 상태:', campaignData.status);
 
       if (isEditMode && campaignId) {
         console.log('캠페인 수정 모드 - ID:', campaignId);
@@ -279,10 +279,11 @@ export const useCampaignForm = (campaignId?: string) => {
           description: "캠페인이 성공적으로 수정되었습니다."
         });
       } else {
-        console.log('새 캠페인 생성 모드');
+        console.log('🆕 새 캠페인 생성 모드 - 상태 확인:', campaignData.status);
         const newCampaign = await campaignService.createCampaign(campaignData);
-        console.log('생성된 캠페인 결과:', newCampaign);
-        console.log('생성된 캠페인 상태:', newCampaign.status);
+        console.log('✅ 생성된 캠페인 결과:', newCampaign);
+        console.log('✅ 최종 생성된 캠페인 상태:', newCampaign.status);
+        console.log('✅ 생성된 캠페인 ID:', newCampaign.id);
         toast({
           title: "캠페인 생성 완료",
           description: "캠페인이 성공적으로 생성되었습니다."
