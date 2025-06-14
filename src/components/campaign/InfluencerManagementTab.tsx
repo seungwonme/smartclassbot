@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -190,13 +191,6 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     ).length;
   };
 
-  // 표시할 인플루언서 목록 (거절된 인플루언서 제외)
-  const displayInfluencers = campaign.influencers.filter(inf => 
-    inf.status !== 'brand-rejected' && 
-    inf.status !== 'admin-rejected' && 
-    inf.status !== 'rejected'
-  );
-
   // 단계별 액션 버튼 렌더링 함수
   const renderActionButtons = (influencer: CampaignInfluencer) => {
     const isSubmittedOrRecruiting = campaign.status === 'submitted' || campaign.status === 'recruiting';
@@ -260,7 +254,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
         <h3 className="text-lg font-semibold">선택된 인플루언서 ({getActiveInfluencersCount()}명)</h3>
       </div>
 
-      {displayInfluencers.length === 0 ? (
+      {campaign.influencers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           선택된 인플루언서가 없습니다.
         </div>
@@ -282,7 +276,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayInfluencers.map((influencer) => (
+                {campaign.influencers.map((influencer) => (
                   <TableRow key={influencer.id}>
                     <TableCell>
                       <img
