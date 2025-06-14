@@ -16,6 +16,7 @@ interface ContentPlanFormProps {
   existingPlan?: ContentPlanDetail;
   onSave: (planData: Partial<ContentPlanDetail>) => void;
   onCancel: () => void;
+  onContentUpdated?: () => void; // 새로운 콜백 추가
 }
 
 const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
@@ -23,7 +24,8 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   campaignId,
   existingPlan,
   onSave,
-  onCancel
+  onCancel,
+  onContentUpdated
 }) => {
   const [contentType, setContentType] = useState<'image' | 'video'>(
     existingPlan?.contentType || 'image'
@@ -100,10 +102,18 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
 
   const handleImageDataUpdate = (updates: Partial<ImagePlanData>) => {
     setImageData(prev => ({ ...prev, ...updates }));
+    // 콘텐츠가 수정되었음을 알림
+    if (onContentUpdated) {
+      onContentUpdated();
+    }
   };
 
   const handleVideoDataUpdate = (updates: Partial<VideoPlanData>) => {
     setVideoData(prev => ({ ...prev, ...updates }));
+    // 콘텐츠가 수정되었음을 알림
+    if (onContentUpdated) {
+      onContentUpdated();
+    }
   };
 
   const handleHashtagUpdate = (hashtags: string[]) => {
@@ -146,6 +156,10 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
         <RadioGroup value={contentType} onValueChange={(value) => {
           console.log('콘텐츠 타입 변경:', value);
           setContentType(value as 'image' | 'video');
+          // 타입 변경도 콘텐츠 수정으로 간주
+          if (onContentUpdated) {
+            onContentUpdated();
+          }
         }}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="image" id="image" />

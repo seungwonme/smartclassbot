@@ -26,6 +26,7 @@ const AdminContentPlanning = () => {
   const [workMode, setWorkMode] = useState<WorkMode>('idle');
   const [selectedInfluencerForWork, setSelectedInfluencerForWork] = useState<any>(null);
   const [editingPlan, setEditingPlan] = useState<ContentPlanDetail | null>(null);
+  const [showRevisionFeedback, setShowRevisionFeedback] = useState(false); // 새로운 상태 추가
 
   useEffect(() => {
     const loadData = async () => {
@@ -171,6 +172,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(null);
     setWorkMode('create');
+    setShowRevisionFeedback(false); // 새 기획안 작성시 피드백 섹션 숨김
   };
 
   const handleEditPlan = (influencer: any) => {
@@ -182,6 +184,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('edit');
+    setShowRevisionFeedback(false); // 수정 시작시 피드백 섹션 숨김
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
@@ -189,6 +192,16 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('revision');
+    setShowRevisionFeedback(true); // 수정요청 조회시 피드백 섹션 표시
+  };
+
+  // 콘텐츠가 수정되었을 때 호출되는 새로운 핸들러
+  const handleContentUpdated = () => {
+    console.log('=== 콘텐츠 수정됨 - 피드백 섹션 활성화 ===');
+    // 수정요청이 있는 기획안의 경우에만 피드백 섹션 활성화
+    if (editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand')) {
+      setShowRevisionFeedback(true);
+    }
   };
 
   const getStatusText = (status: string) => {
@@ -379,6 +392,7 @@ const AdminContentPlanning = () => {
     setWorkMode('idle');
     setSelectedInfluencerForWork(null);
     setEditingPlan(null);
+    setShowRevisionFeedback(false); // 작업 완료시 피드백 섹션 숨김
   };
 
   const getRevisionRequestCount = () => {
@@ -411,6 +425,8 @@ const AdminContentPlanning = () => {
         </Card>
       );
     }
+
+    const hasPendingRevision = editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand');
 
     return (
       <Card>
@@ -455,15 +471,16 @@ const AdminContentPlanning = () => {
                 existingPlan={editingPlan || undefined}
                 onSave={handleSavePlan}
                 onCancel={handleBackToIdle}
+                onContentUpdated={handleContentUpdated} // 새로운 콜백 전달
               />
             </div>
             
-            {/* 하단: 수정 피드백 섹션 */}
-            {editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand') && (
+            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback 상태에 따라 표시 */}
+            {showRevisionFeedback && hasPendingRevision && (
               <div className="border-t pt-6">
                 {(() => {
                   // 가장 최근 pending revision의 번호를 찾아서 사용
-                  const pendingRevision = editingPlan.revisions
+                  const pendingRevision = editingPlan!.revisions
                     .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
                     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
                   
