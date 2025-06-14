@@ -399,8 +399,18 @@ const AdminContentPlanning = () => {
 
       setContentPlans(updatedPlans);
       
-      // 저장 후에는 피드백 섹션을 표시하지 않음 (수정요청 보기를 명시적으로 클릭했을 때만 표시)
-      console.log('저장 완료 - 피드백 섹션 숨김 유지');
+      // 수정요청이 있는 기획안을 저장한 경우 자동으로 피드백 섹션 표시
+      const hasPendingBrandRevision = newPlan.revisions.some(r => 
+        r.requestedBy === 'brand' && r.status === 'pending'
+      );
+      
+      if (newPlan.status === 'revision' && hasPendingBrandRevision) {
+        console.log('수정요청이 있는 기획안 저장 완료 - 피드백 섹션 자동 표시');
+        setWorkMode('revision');
+        setShowRevisionFeedback(true);
+      } else {
+        console.log('저장 완료 - 피드백 섹션 숨김 유지');
+      }
       
       console.log('=== 콘텐츠 기획안 저장 완료 ===');
       
