@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,72 +48,99 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
     }
   };
 
+  const getRevisionDisplayNumber = (revision: ContentRevision, index: number) => {
+    // 브랜드 수정요청은 순차적으로 1, 2, 3... 번호를 부여
+    // 시스템 피드백은 해당 수정요청과 동일한 번호를 사용
+    if (revision.requestedBy === 'brand') {
+      const brandRevisions = sortedRevisions.filter(r => r.requestedBy === 'brand');
+      const brandIndex = brandRevisions.findIndex(r => r.id === revision.id);
+      return brandIndex + 1;
+    } else {
+      // 시스템 피드백의 경우, 바로 앞의 브랜드 수정요청과 동일한 번호 사용
+      const brandRevisions = sortedRevisions.filter(r => r.requestedBy === 'brand');
+      const currentBrandRevisionIndex = brandRevisions.findIndex(r => 
+        new Date(r.requestedAt).getTime() <= new Date(revision.requestedAt).getTime()
+      );
+      return currentBrandRevisionIndex >= 0 ? currentBrandRevisionIndex + 1 : 1;
+    }
+  };
+
+  const getRevisionTypeText = (revision: ContentRevision) => {
+    return revision.requestedBy === 'brand' ? '수정요청' : '수정 피드백';
+  };
+
   if (sortedRevisions.length === 0) {
     return null;
   }
+
+  const completedCount = sortedRevisions.filter(r => r.status === 'completed' && r.requestedBy === 'brand').length;
 
   return (
     <Card className="mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
-          수정 이력 ({sortedRevisions.filter(r => r.status === 'completed').length}차 완료)
+          수정 이력 ({completedCount}차 완료)
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {sortedRevisions.map((revision, index) => (
-            <div key={revision.id} className="relative">
-              {index < sortedRevisions.length - 1 && (
-                <div className="absolute left-3 top-8 w-0.5 h-16 bg-gray-200"></div>
-              )}
-              
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-                  {getStatusIcon(revision)}
-                </div>
+          {sortedRevisions.map((revision, index) => {
+            const displayNumber = getRevisionDisplayNumber(revision, index);
+            
+            return (
+              <div key={revision.id} className="relative">
+                {index < sortedRevisions.length - 1 && (
+                  <div className="absolute left-3 top-8 w-0.5 h-16 bg-gray-200"></div>
+                )}
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className="bg-blue-100 text-blue-800">
-                      {revision.revisionNumber + 1}차 수정요청
-                    </Badge>
-                    <Badge variant="outline" className={getStatusColor(revision)}>
-                      {getStatusText(revision)}
-                    </Badge>
-                    <span className="text-sm text-gray-500">
-                      {new Date(revision.requestedAt).toLocaleDateString()} {new Date(revision.requestedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
+                    {getStatusIcon(revision)}
                   </div>
                   
-                  <div className="bg-gray-50 rounded-lg p-3 mb-2">
-                    <div className="text-sm font-medium text-gray-700 mb-1">
-                      수정요청: {revision.requestedByName}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-blue-100 text-blue-800">
+                        {displayNumber}차 {getRevisionTypeText(revision)}
+                      </Badge>
+                      <Badge variant="outline" className={getStatusColor(revision)}>
+                        {getStatusText(revision)}
+                      </Badge>
+                      <span className="text-sm text-gray-500">
+                        {new Date(revision.requestedAt).toLocaleDateString()} {new Date(revision.requestedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                      {revision.feedback}
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                      <div className="text-sm font-medium text-gray-700 mb-1">
+                        {revision.requestedBy === 'brand' ? '수정요청' : '시스템 피드백'}: {revision.requestedByName}
+                      </div>
+                      <div className="text-sm text-gray-600 whitespace-pre-wrap">
+                        {revision.feedback}
+                      </div>
                     </div>
-                  </div>
 
-                  {revision.response && revision.status === 'completed' && (
-                    <div className="bg-purple-50 rounded-lg p-3 ml-4">
-                      <div className="text-sm font-medium text-purple-700 mb-1">
-                        시스템 피드백: {revision.respondedBy}
-                      </div>
-                      <div className="text-sm text-purple-600 whitespace-pre-wrap mb-1">
-                        {revision.response}
-                      </div>
-                      {revision.respondedAt && (
-                        <div className="text-xs text-purple-500">
-                          {new Date(revision.respondedAt).toLocaleDateString()} {new Date(revision.respondedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                    {revision.response && revision.status === 'completed' && (
+                      <div className="bg-purple-50 rounded-lg p-3 ml-4">
+                        <div className="text-sm font-medium text-purple-700 mb-1">
+                          시스템 피드백: {revision.respondedBy}
                         </div>
-                      )}
-                    </div>
-                  )}
+                        <div className="text-sm text-purple-600 whitespace-pre-wrap mb-1">
+                          {revision.response}
+                        </div>
+                        {revision.respondedAt && (
+                          <div className="text-xs text-purple-500">
+                            {new Date(revision.respondedAt).toLocaleDateString()} {new Date(revision.respondedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -120,3 +148,4 @@ const ContentRevisionTimeline: React.FC<ContentRevisionTimelineProps> = ({ revis
 };
 
 export default ContentRevisionTimeline;
+
