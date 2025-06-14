@@ -91,7 +91,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'confirmed': return '확정됨';
       case 'planning': return '기획중';
       case 'plan-review': return '기획검토';
-      case 'plan-revision': return '기획수정';
+      case 'plan-revision': return '수정중';
       case 'plan-approved': return '기획승인';
       case 'producing': return '제작중';
       case 'content-review': return '콘텐츠검수';
@@ -158,7 +158,12 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       
       // 브랜드 관리자가 승인하지 않은 상태만 수정요청으로 처리
       if (plan.status !== 'approved' && hasPendingBrandRevision) {
-        revisionCount++;
+        // 브랜드가 요청한 수정요청 개수를 정확히 계산
+        const brandRevisionCount = plan.revisions?.filter(r => 
+          r.requestedBy === 'brand'
+        ).length || 0;
+        
+        revisionCount = Math.max(revisionCount, brandRevisionCount);
         hasRevisions = true;
       }
     });
@@ -211,14 +216,14 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
               
               {/* 기획 완료 배지 */}
               {isPlanningCompleted && (
-                <Badge className="bg-green-100 text-green-800">
+                <Badge className="bg-green-100 text-green-800 px-2 py-1">
                   ✓ 기획완료
                 </Badge>
               )}
               
               {/* 수정요청 배지 */}
-              {revisionInfo.hasRevisions && (
-                <Badge className="bg-orange-100 text-orange-800">
+              {revisionInfo.hasRevisions && revisionInfo.count > 0 && (
+                <Badge className="bg-orange-100 text-orange-800 px-2 py-1">
                   <MessageSquare className="w-3 h-3 mr-1" />
                   {revisionInfo.count}차 수정요청
                 </Badge>
