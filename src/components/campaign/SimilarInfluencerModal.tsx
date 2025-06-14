@@ -61,7 +61,9 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
-        adFee: Math.floor(Math.random() * 2000000) + 1000000
+        adFee: Math.floor(Math.random() * 2000000) + 1000000,
+        socialChannels: ['douyin'],
+        isSelected: false
       },
       {
         id: `similar-${Date.now()}-2`,
@@ -73,7 +75,9 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
-        adFee: Math.floor(Math.random() * 2000000) + 1000000
+        adFee: Math.floor(Math.random() * 2000000) + 1000000,
+        socialChannels: ['douyin'],
+        isSelected: false
       },
       {
         id: `similar-${Date.now()}-3`,
@@ -85,7 +89,9 @@ const SimilarInfluencerModal: React.FC<SimilarInfluencerModalProps> = ({
         status: 'pending',
         region: rejectedInfluencer.region || '서울',
         category: rejectedInfluencer.category || '뷰티',
-        adFee: Math.floor(Math.random() * 2000000) + 1000000
+        adFee: Math.floor(Math.random() * 2000000) + 1000000,
+        socialChannels: ['douyin'],
+        isSelected: false
       }
     ];
     
