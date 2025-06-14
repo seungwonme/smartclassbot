@@ -5,11 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Users, DollarSign, Eye, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { Calendar, Users, DollarSign, Eye, CheckCircle, XCircle, Plus, Edit } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
 import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
+import InfluencerEditModal from '@/components/campaign/InfluencerEditModal';
 
 const AdminCampaigns = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -17,6 +18,8 @@ const AdminCampaigns = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [influencerFees, setInfluencerFees] = useState<{ [key: string]: number }>({});
+  const [editingInfluencer, setEditingInfluencer] = useState<CampaignInfluencer | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -189,6 +192,50 @@ const AdminCampaigns = () => {
     }
   };
 
+  const handleInfluencerEdit = (influencer: CampaignInfluencer) => {
+    setEditingInfluencer(influencer);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveInfluencerEdit = async (influencer: CampaignInfluencer, editData: any) => {
+    if (!selectedCampaign) return;
+
+    const updatedInfluencers = selectedCampaign.influencers.map(inf => 
+      inf.id === influencer.id 
+        ? { 
+            ...inf, 
+            adFee: editData.adFee ? parseInt(editData.adFee.replace(/,/g, '')) : undefined,
+            region: editData.region,
+            category: editData.category
+          }
+        : inf
+    );
+
+    try {
+      await campaignService.updateCampaign(selectedCampaign.id, {
+        influencers: updatedInfluencers
+      });
+
+      setSelectedCampaign(prev => prev ? { ...prev, influencers: updatedInfluencers } : null);
+      
+      // Also update the main campaigns list
+      setCampaigns(prev => 
+        prev.map(c => c.id === selectedCampaign.id ? { ...c, influencers: updatedInfluencers } : c)
+      );
+      
+      toast({
+        title: "인플루언서 정보 수정 완료",
+        description: "인플루언서 정보가 성공적으로 수정되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "수정 실패",
+        description: "인플루언서 정보 수정에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -351,6 +398,14 @@ const AdminCampaigns = () => {
                                                 <div className="flex items-center space-x-2">
                                                   <Badge className="bg-green-100 text-green-800">승인됨</Badge>
                                                   <span className="text-sm font-medium">{influencer.adFee?.toLocaleString()}원</span>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleInfluencerEdit(influencer)}
+                                                  >
+                                                    <Edit className="w-4 h-4 mr-1" />
+                                                    수정
+                                                  </Button>
                                                 </div>
                                               )}
                                               {influencer.status === 'rejected' && (
@@ -429,6 +484,14 @@ const AdminCampaigns = () => {
           </div>
         )}
       </div>
+
+      {/* 인플루언서 수정 모달 */}
+      <InfluencerEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        influencer={editingInfluencer}
+        onSave={handleSaveInfluencerEdit}
+      />
     </div>
   );
 };
