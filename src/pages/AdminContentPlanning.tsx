@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -77,8 +76,11 @@ const AdminContentPlanning = () => {
     }
   };
 
-  const handleCreateContentPlan = async (influencerId: string, contentType: 'image' | 'video') => {
+  const handleCreateContentPlan = async (planData: Partial<ContentPlanDetail>) => {
     if (!campaign || !campaignId) return;
+
+    const { influencerId, contentType } = planData;
+    if (!influencerId || !contentType) return;
 
     const influencer = campaign.influencers.find(inf => inf.id === influencerId);
     if (!influencer) return;
@@ -110,8 +112,31 @@ const AdminContentPlanning = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // 캠페인의 contentPlans 배열에 추가
-      const updatedContentPlans = [...(campaign.contentPlans || []), newPlan];
+      // 캠페인의 contentPlans 배열에 추가 (기존 배열과 새 데이터 모두 ContentPlanDetail 타입으로 변환)
+      const existingPlans = (campaign.contentPlans || []).map(plan => {
+        // ContentPlan을 ContentPlanDetail로 변환
+        if ('planDocument' in plan) {
+          return {
+            ...plan,
+            planData: plan.contentType === 'image' ? {
+              postTitle: plan.planDocument,
+              thumbnailTitle: '',
+              referenceImages: [],
+              script: '',
+              hashtags: []
+            } : {
+              postTitle: plan.planDocument,
+              scenario: '',
+              scenarioFiles: [],
+              script: '',
+              hashtags: []
+            }
+          } as ContentPlanDetail;
+        }
+        return plan as ContentPlanDetail;
+      });
+
+      const updatedContentPlans = [...existingPlans, newPlan];
       
       await campaignService.updateCampaign(campaignId, {
         contentPlans: updatedContentPlans

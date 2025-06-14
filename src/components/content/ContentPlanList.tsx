@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,14 +10,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ContentPlanListProps {
   plans: ContentPlanDetail[];
-  onEdit: (plan: ContentPlanDetail) => void;
-  onView: (plan: ContentPlanDetail) => void;
+  onEdit?: (plan: ContentPlanDetail) => void;
+  onView?: (plan: ContentPlanDetail) => void;
+  onPlanUpdate?: (planId: string, updates: any) => void;
+  userType?: 'admin' | 'brand';
 }
 
 const ContentPlanList: React.FC<ContentPlanListProps> = ({
   plans,
   onEdit,
-  onView
+  onView,
+  onPlanUpdate,
+  userType = 'admin'
 }) => {
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
@@ -33,6 +38,12 @@ const ContentPlanList: React.FC<ContentPlanListProps> = ({
       case 'revision': return '기획수정중';
       case 'approved': return '기획완료';
       default: return status;
+    }
+  };
+
+  const handleStatusUpdate = (planId: string, newStatus: ContentPlanDetail['status']) => {
+    if (onPlanUpdate) {
+      onPlanUpdate(planId, { status: newStatus });
     }
   };
 
@@ -86,31 +97,47 @@ const ContentPlanList: React.FC<ContentPlanListProps> = ({
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge className={getStatusColor(plan.status)}>
-                        {getStatusText(plan.status)}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge className={getStatusColor(plan.status)}>
+                          {getStatusText(plan.status)}
+                        </Badge>
+                        {userType === 'admin' && plan.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusUpdate(plan.id, 'approved')}
+                            className="text-xs"
+                          >
+                            승인
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-center text-sm text-gray-500">
                       {new Date(plan.updatedAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onView(plan)}
-                          className="p-2"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onEdit(plan)}
-                          className="p-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        {onView && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onView(plan)}
+                            className="p-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {onEdit && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onEdit(plan)}
+                            className="p-2"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

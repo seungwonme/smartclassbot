@@ -11,23 +11,27 @@ import { Calendar as CalendarIcon, Clock, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Campaign } from '@/types/campaign';
+import { ContentPlanDetail } from '@/types/content';
 
 interface ProductionScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (scheduleData: {
+  onSave: (scheduleData: {
     startDate: string;
     endDate: string;
     notes?: string;
   }) => void;
-  campaignTitle: string;
+  campaign: Campaign;
+  contentPlans: ContentPlanDetail[];
 }
 
 const ProductionScheduleModal: React.FC<ProductionScheduleModalProps> = ({
   isOpen,
   onClose,
-  onSubmit,
-  campaignTitle
+  onSave,
+  campaign,
+  contentPlans
 }) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -46,7 +50,7 @@ const ProductionScheduleModal: React.FC<ProductionScheduleModalProps> = ({
       return;
     }
 
-    onSubmit({
+    onSave({
       startDate: format(startDate, 'yyyy-MM-dd'),
       endDate: format(endDate, 'yyyy-MM-dd'),
       notes
@@ -71,9 +75,9 @@ const ProductionScheduleModal: React.FC<ProductionScheduleModalProps> = ({
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{campaignTitle}</CardTitle>
+            <CardTitle className="text-lg">{campaign.title}</CardTitle>
             <p className="text-sm text-gray-600">
-              모든 콘텐츠 기획이 완료되었습니다. 제작 일정을 입력하여 제작 단계로 진행하세요.
+              {contentPlans.length}개의 콘텐츠 기획이 완료되었습니다. 제작 일정을 입력하여 제작 단계로 진행하세요.
             </p>
           </CardHeader>
           <CardContent>
