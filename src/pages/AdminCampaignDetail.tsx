@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
+import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 
 const AdminCampaignDetail = () => {
@@ -16,7 +17,10 @@ const AdminCampaignDetail = () => {
     campaign,
     isLoading,
     activeTab,
-    setActiveTab
+    setActiveTab,
+    handleInfluencerApproval,
+    updateCampaignInfluencers,
+    toast
   } = useCampaignDetail();
 
   const getStatusColor = (status: any) => {
@@ -203,19 +207,12 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="influencers" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  인플루언서 관리
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  인플루언서 관리 기능이 곧 추가될 예정입니다.
-                </div>
-              </CardContent>
-            </Card>
+            <InfluencerManagementTab
+              campaign={campaign}
+              onInfluencerApproval={handleInfluencerApproval}
+              onUpdateInfluencers={updateCampaignInfluencers}
+              toast={toast}
+            />
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
