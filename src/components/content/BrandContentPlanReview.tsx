@@ -60,13 +60,10 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     }
   };
 
-  // 기획안이 검토 가능한지 확인하는 함수
   const canReviewPlan = (plan: ContentPlanDetail) => {
-    // draft 상태이거나 submitted 상태일 때 검토 가능 (브랜드 관점에서)
     return plan.status === 'draft' || plan.status === 'submitted';
   };
 
-  // 기획안에 내용이 있는지 확인하는 함수
   const hasPlanContent = (plan: ContentPlanDetail) => {
     if (plan.contentType === 'image') {
       const imageData = plan.planData as ImagePlanData;
@@ -168,18 +165,20 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.thumbnailTitle || '썸네일 제목이 입력되지 않았습니다.'}</p>
           )}
           
-          {imageData.referenceImages && imageData.referenceImages.length > 0 && 
-            renderFieldWithFeedback(
-              plan,
-              'referenceImages',
-              '참고 이미지',
+          {renderFieldWithFeedback(
+            plan,
+            'referenceImages',
+            '참고 이미지',
+            imageData.referenceImages && imageData.referenceImages.length > 0 ? (
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {imageData.referenceImages.map((image, index) => (
                   <img key={index} src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded border" />
                 ))}
               </div>
+            ) : (
+              <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">참고 이미지가 업로드되지 않았습니다.</p>
             )
-          }
+          )}
           
           {renderFieldWithFeedback(
             plan,
@@ -222,11 +221,11 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.scenario || '시나리오가 입력되지 않았습니다.'}</p>
           )}
           
-          {videoData.scenarioFiles && videoData.scenarioFiles.length > 0 && 
-            renderFieldWithFeedback(
-              plan,
-              'scenarioFiles',
-              '시나리오 파일',
+          {renderFieldWithFeedback(
+            plan,
+            'scenarioFiles',
+            '시나리오 파일',
+            videoData.scenarioFiles && videoData.scenarioFiles.length > 0 ? (
               <div className="space-y-2 mt-2">
                 {videoData.scenarioFiles.map((file, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
@@ -234,8 +233,10 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">시나리오 파일이 업로드되지 않았습니다.</p>
             )
-          }
+          )}
           
           {renderFieldWithFeedback(
             plan,
@@ -303,7 +304,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   작성일: {new Date(plan.createdAt).toLocaleDateString()}
                 </p>
                 
-                {/* 기획안 내용 유무 표시 */}
                 <div className="mt-2">
                   {hasPlanContent(plan) ? (
                     <Badge variant="outline" className="text-green-600 border-green-200">
@@ -316,7 +316,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   )}
                 </div>
 
-                {/* 검토 가능한 기획안에 대해 액션 버튼 표시 */}
                 {canReviewPlan(plan) && hasPlanContent(plan) && (
                   <div className="flex gap-2 mt-4">
                     <Button
@@ -346,7 +345,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
                   </div>
                 )}
 
-                {/* 기획안이 작성되지 않은 경우 안내 */}
                 {canReviewPlan(plan) && !hasPlanContent(plan) && (
                   <div className="mt-4">
                     <p className="text-sm text-gray-500">인플루언서가 기획안을 작성 중입니다.</p>
@@ -358,113 +356,117 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
         ))}
       </div>
 
-      {/* 상세보기 모달 */}
+      {/* 상세보기 모달 - A4 size width */}
       {selectedPlan && !showFeedbackForm && (
-        <Card className="fixed inset-4 z-50 overflow-auto bg-white">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                {selectedPlan.contentType === 'image' ? (
-                  <ImageIcon className="w-5 h-5" />
-                ) : (
-                  <VideoIcon className="w-5 h-5" />
-                )}
-                {selectedPlan.influencerName} - 콘텐츠 기획 상세
-              </CardTitle>
-              <Button variant="outline" onClick={() => setSelectedPlan(null)}>
-                닫기
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {renderPlanData(selectedPlan)}
-            {canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
-              <div className="flex gap-2 mt-6">
-                <Button
-                  onClick={() => handleApprove(selectedPlan.id)}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  승인
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFieldFeedback(null);
-                    setShowFeedbackForm(true);
-                  }}
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  전체 수정요청
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white mx-4">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  {selectedPlan.contentType === 'image' ? (
+                    <ImageIcon className="w-5 h-5" />
+                  ) : (
+                    <VideoIcon className="w-5 h-5" />
+                  )}
+                  {selectedPlan.influencerName} - 콘텐츠 기획 상세
+                </CardTitle>
+                <Button variant="outline" onClick={() => setSelectedPlan(null)}>
+                  닫기
                 </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 피드백 모달 */}
-      {showFeedbackForm && selectedPlan && (
-        <Card className="fixed inset-4 z-50 overflow-auto bg-white">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>
-                {fieldFeedback 
-                  ? `${fieldFeedback.fieldLabel} 수정 요청 - ${selectedPlan.influencerName}`
-                  : `전체 수정 요청 - ${selectedPlan.influencerName}`
-                }
-              </CardTitle>
-              <Button variant="outline" onClick={() => {
-                setShowFeedbackForm(false);
-                setSelectedPlan(null);
-                setFieldFeedback(null);
-                setFeedback('');
-              }}>
-                닫기
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {fieldFeedback && (
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <strong>{fieldFeedback.fieldLabel}</strong>에 대한 수정 요청입니다.
-                  </p>
+            </CardHeader>
+            <CardContent>
+              {renderPlanData(selectedPlan)}
+              {canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
+                <div className="flex gap-2 mt-6">
+                  <Button
+                    onClick={() => handleApprove(selectedPlan.id)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    승인
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFieldFeedback(null);
+                      setShowFeedbackForm(true);
+                    }}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    전체 수정요청
+                  </Button>
                 </div>
               )}
-              <div>
-                <Label htmlFor="feedback">
-                  {fieldFeedback ? `${fieldFeedback.fieldLabel} 수정 요청 사항` : '수정 요청 사항'}
-                </Label>
-                <Textarea
-                  id="feedback"
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  placeholder={
-                    fieldFeedback 
-                      ? `${fieldFeedback.fieldLabel}에 대한 구체적인 수정 요청 사항을 입력해주세요...`
-                      : "구체적인 수정 요청 사항을 입력해주세요..."
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 피드백 모달 - A4 size width */}
+      {showFeedbackForm && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white mx-4">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>
+                  {fieldFeedback 
+                    ? `${fieldFeedback.fieldLabel} 수정 요청 - ${selectedPlan.influencerName}`
+                    : `전체 수정 요청 - ${selectedPlan.influencerName}`
                   }
-                  rows={6}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleRequestRevision} className="bg-orange-600 hover:bg-orange-700">
-                  수정 요청 전송
-                </Button>
+                </CardTitle>
                 <Button variant="outline" onClick={() => {
                   setShowFeedbackForm(false);
                   setSelectedPlan(null);
                   setFieldFeedback(null);
                   setFeedback('');
                 }}>
-                  취소
+                  닫기
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {fieldFeedback && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>{fieldFeedback.fieldLabel}</strong>에 대한 수정 요청입니다.
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="feedback">
+                    {fieldFeedback ? `${fieldFeedback.fieldLabel} 수정 요청 사항` : '수정 요청 사항'}
+                  </Label>
+                  <Textarea
+                    id="feedback"
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder={
+                      fieldFeedback 
+                        ? `${fieldFeedback.fieldLabel}에 대한 구체적인 수정 요청 사항을 입력해주세요...`
+                        : "구체적인 수정 요청 사항을 입력해주세요..."
+                    }
+                    rows={6}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleRequestRevision} className="bg-orange-600 hover:bg-orange-700">
+                    수정 요청 전송
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setShowFeedbackForm(false);
+                    setSelectedPlan(null);
+                    setFieldFeedback(null);
+                    setFeedback('');
+                  }}>
+                    취소
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
