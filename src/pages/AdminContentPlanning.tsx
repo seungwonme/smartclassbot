@@ -96,8 +96,26 @@ const AdminContentPlanning = () => {
           console.log('=== 최종 contentPlans 목록 ===');
           console.log('총 기획안 수:', plans.length);
           plans.forEach(plan => {
-            console.log(`- ${plan.influencerName}: ${plan.contentType}, 데이터:`, plan.planData);
+            console.log(`- ${plan.influencerName}: ${plan.contentType}, 상태: ${plan.status}`);
+            console.log(`  수정 이력 수: ${plan.revisions.length}개`);
+            plan.revisions.forEach((revision, idx) => {
+              console.log(`    수정 ${idx + 1}: ${revision.revisionNumber}차 ${revision.requestedBy} ${revision.status}`);
+            });
           });
+          
+          // 김소여와 이민지의 상태 특별 확인
+          const kimSoyeo = plans.find(p => p.influencerName.includes('김소여'));
+          const leeMinji = plans.find(p => p.influencerName.includes('이민지'));
+          
+          console.log('=== 특정 인플루언서 상태 확인 ===');
+          if (kimSoyeo) {
+            console.log('김소여 기획안 상태:', kimSoyeo.status);
+            console.log('김소여 수정 이력:', kimSoyeo.revisions);
+          }
+          if (leeMinji) {
+            console.log('이민지 기획안 상태:', leeMinji.status);
+            console.log('이민지 수정 이력:', leeMinji.revisions);
+          }
           
           setContentPlans(plans);
         }
@@ -246,9 +264,11 @@ const AdminContentPlanning = () => {
         return;
       }
 
-      console.log('=== 수정 피드백 처리 ===');
+      console.log('=== 수정 피드백 처리 시작 ===');
       console.log('처리할 revision:', pendingRevision);
       console.log('revision number:', pendingRevision.revisionNumber);
+      console.log('인플루언서:', editingPlan.influencerName);
+      console.log('현재 기획안 상태:', editingPlan.status);
 
       // pending revision을 completed로 업데이트
       const updatedPlans = contentPlans.map(plan => {
@@ -266,13 +286,19 @@ const AdminContentPlanning = () => {
             return revision;
           });
 
-          return {
+          const updatedPlan = {
             ...plan,
             revisions: updatedRevisions,
             currentRevisionNumber: updatedRevisions.filter(r => r.status === 'completed').length,
             status: 'revision' as const,
             updatedAt: new Date().toISOString()
           };
+
+          console.log('업데이트된 기획안:', updatedPlan);
+          console.log('새로운 상태:', updatedPlan.status);
+          console.log('완료된 수정 수:', updatedPlan.currentRevisionNumber);
+
+          return updatedPlan;
         }
         return plan;
       });
@@ -295,6 +321,14 @@ const AdminContentPlanning = () => {
       });
 
       setContentPlans(updatedPlans);
+
+      console.log('=== 수정 피드백 처리 완료 ===');
+      console.log('최종 상태 확인:');
+      const updatedPlan = updatedPlans.find(p => p.id === editingPlan.id);
+      if (updatedPlan) {
+        console.log(`${updatedPlan.influencerName} 최종 상태: ${updatedPlan.status}`);
+        console.log(`완료된 수정 이력: ${updatedPlan.currentRevisionNumber}차`);
+      }
 
       toast({
         title: "수정 피드백 완료",
