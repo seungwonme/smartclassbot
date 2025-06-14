@@ -129,10 +129,10 @@ export const storageService = {
       const contentPlans = this.getContentPlans();
       
       console.log('데이터 무결성 검사 결과:', {
-        campaigns: campaigns.length,
-        brands: brands.length,
-        products: products.length,
-        contentPlans: contentPlans.length
+        campaigns: campaigns?.length || 0,
+        brands: brands?.length || 0,
+        products: products?.length || 0,
+        contentPlans: contentPlans?.length || 0
       });
       
       return Array.isArray(campaigns) && Array.isArray(brands) && Array.isArray(products) && Array.isArray(contentPlans);
