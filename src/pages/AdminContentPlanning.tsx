@@ -172,7 +172,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(null);
     setWorkMode('create');
-    setShowRevisionFeedback(false); // 새 기획안에서는 항상 false
+    setShowRevisionFeedback(false);
   };
 
   const handleEditPlan = (influencer: any) => {
@@ -184,7 +184,7 @@ const AdminContentPlanning = () => {
     setSelectedInfluencerForWork(influencer);
     setEditingPlan(existingPlan || null);
     setWorkMode('edit');
-    setShowRevisionFeedback(false); // 편집 시작 시에는 항상 false로 설정
+    setShowRevisionFeedback(false); // 편집 시작 시에는 무조건 false
   };
 
   const handleViewRevisionRequest = (influencer: any) => {
@@ -196,9 +196,8 @@ const AdminContentPlanning = () => {
   };
 
   const handleContentUpdated = () => {
-    console.log('=== 콘텐츠 수정됨 - 콘텐츠 업데이트만 처리 ===');
-    // 콘텐츠가 수정되었다는 것만 로깅하고, 피드백 섹션은 표시하지 않음
-    // 저장 후에만 피드백 섹션을 보여주도록 함
+    console.log('=== 콘텐츠 수정됨 - 피드백 섹션 숨김 유지 ===');
+    // 콘텐츠가 수정되어도 피드백 섹션은 표시하지 않음
   };
 
   // 상태 표시 텍스트 통일
@@ -445,9 +444,6 @@ const AdminContentPlanning = () => {
       );
     }
 
-    // pending revision 체크는 showRevisionFeedback 상태와 함께 사용
-    const hasPendingRevision = editingPlan && editingPlan.revisions.some(r => r.status === 'pending' && r.requestedBy === 'brand');
-
     return (
       <Card>
         <CardHeader>
@@ -495,20 +491,24 @@ const AdminContentPlanning = () => {
               />
             </div>
             
-            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback이 true이고 pending revision이 있을 때만 표시 */}
-            {showRevisionFeedback && hasPendingRevision && (
+            {/* 하단: 수정 피드백 섹션 - showRevisionFeedback이 명시적으로 true일 때만 표시 */}
+            {showRevisionFeedback && editingPlan && (
               <div className="border-t pt-6">
                 {(() => {
                   // 가장 최근 pending revision의 번호를 찾아서 사용
-                  const pendingRevision = editingPlan!.revisions
+                  const pendingRevision = editingPlan.revisions
                     .filter(r => r.status === 'pending' && r.requestedBy === 'brand')
                     .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())[0];
                   
-                  const revisionNumber = pendingRevision?.revisionNumber || 1;
+                  // revision number가 없으면 피드백 섹션을 표시하지 않음
+                  if (!pendingRevision || !pendingRevision.revisionNumber) {
+                    console.log('revision number가 없어 피드백 섹션 숨김');
+                    return null;
+                  }
                   
                   return (
                     <RevisionRequestForm
-                      revisionNumber={revisionNumber}
+                      revisionNumber={pendingRevision.revisionNumber}
                       onSubmit={handleRevisionFeedback}
                       onCancel={handleBackToIdle}
                       requestType="admin-feedback"
