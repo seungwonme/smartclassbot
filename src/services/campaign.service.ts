@@ -10,7 +10,18 @@ export const campaignService = {
     new Promise((resolve) => 
       setTimeout(() => {
         const campaign = mockCampaigns.find(c => c.id === id);
-        resolve(campaign || null);
+        if (campaign) {
+          // 기존 캠페인에 새 필드 기본값 추가
+          const updatedCampaign = {
+            ...campaign,
+            currentStage: campaign.currentStage || 1,
+            contentPlans: campaign.contentPlans || [],
+            contentProductions: campaign.contentProductions || []
+          };
+          resolve(updatedCampaign);
+        } else {
+          resolve(null);
+        }
       }, 300)
     ),
 
@@ -20,6 +31,9 @@ export const campaignService = {
         const newCampaign: Campaign = {
           ...campaign,
           id: `c${Date.now()}`,
+          currentStage: 1,
+          contentPlans: [],
+          contentProductions: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
