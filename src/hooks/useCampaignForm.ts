@@ -208,11 +208,13 @@ export const useCampaignForm = () => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
-        status: 'creating',
+        status: 'creating', // 확실히 'creating' 상태로 설정
         currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };
+
+      console.log('캠페인 생성 데이터:', campaignData); // 디버깅용 로그 추가
 
       await campaignService.createCampaign(campaignData);
       
@@ -224,6 +226,7 @@ export const useCampaignForm = () => {
       // Navigate to campaigns list page after successful creation
       navigate('/brand/campaigns');
     } catch (error) {
+      console.error('캠페인 생성 실패:', error); // 에러 로그 추가
       toast({
         title: "생성 실패",
         description: "캠페인 생성에 실패했습니다.",

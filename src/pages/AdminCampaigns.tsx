@@ -57,16 +57,19 @@ const AdminCampaigns = () => {
   };
 
   const handleCampaignReceive = async (campaignId: string) => {
+    console.log('캠페인 수령 시작:', campaignId); // 디버깅용 로그
     try {
       await campaignService.updateCampaign(campaignId, { status: 'recruiting' });
       setCampaigns(prev => 
         prev.map(c => c.id === campaignId ? { ...c, status: 'recruiting' as const } : c)
       );
+      console.log('캠페인 상태 변경 완료: recruiting'); // 디버깅용 로그
       toast({
         title: "캠페인 수령 완료",
         description: "캠페인 상태가 '섭외중'으로 변경되었습니다."
       });
     } catch (error) {
+      console.error('캠페인 수령 실패:', error); // 에러 로그
       toast({
         title: "처리 실패",
         description: "캠페인 수령에 실패했습니다.",
@@ -196,212 +199,215 @@ const AdminCampaigns = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campaigns.map((campaign) => (
-            <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                  <Badge className={getStatusColor(campaign.status)}>
-                    {getStatusText(campaign.status)}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm">
-                    <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                    예산: {campaign.budget.toLocaleString()}원
+          {campaigns.map((campaign) => {
+            console.log(`캠페인 ${campaign.title} 상태:`, campaign.status); // 각 캠페인 상태 확인
+            return (
+              <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{campaign.title}</CardTitle>
+                    <Badge className={getStatusColor(campaign.status)}>
+                      {getStatusText(campaign.status)}
+                    </Badge>
                   </div>
-                  <div className="flex items-center text-sm">
-                    <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-                    {campaign.campaignStartDate} ~ {campaign.campaignEndDate}
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <Users className="w-4 h-4 mr-2 text-purple-600" />
-                    인플루언서: {campaign.influencers.length}명
-                  </div>
-                  <div className="flex justify-between mt-4">
-                    {campaign.status === 'creating' && (
-                      <Button
-                        onClick={() => handleCampaignReceive(campaign.id)}
-                        className="bg-blue-600 hover:bg-blue-700 flex-1"
-                      >
-                        캠페인 수령
-                      </Button>
-                    )}
-                    {(campaign.status === 'recruiting' || campaign.status === 'proposing') && (
-                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            onClick={() => setSelectedCampaign(campaign)}
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            섭외 관리
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>{selectedCampaign?.title} - 인플루언서 섭외</DialogTitle>
-                          </DialogHeader>
-                          
-                          {selectedCampaign && (
-                            <div className="space-y-6">
-                              {/* 기본 캠페인 정보 */}
-                              <Card>
-                                <CardHeader>
-                                  <CardTitle>기본 정보</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <Label>브랜드</Label>
-                                      <p className="text-sm font-medium">{selectedCampaign.brandName}</p>
+                  <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm">
+                      <DollarSign className="w-4 h-4 mr-2 text-green-600" />
+                      예산: {campaign.budget.toLocaleString()}원
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                      {campaign.campaignStartDate} ~ {campaign.campaignEndDate}
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Users className="w-4 h-4 mr-2 text-purple-600" />
+                      인플루언서: {campaign.influencers.length}명
+                    </div>
+                    <div className="flex justify-between mt-4">
+                      {campaign.status === 'creating' && (
+                        <Button
+                          onClick={() => handleCampaignReceive(campaign.id)}
+                          className="bg-blue-600 hover:bg-blue-700 flex-1"
+                        >
+                          캠페인 수령
+                        </Button>
+                      )}
+                      {(campaign.status === 'recruiting' || campaign.status === 'proposing') && (
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button
+                              onClick={() => setSelectedCampaign(campaign)}
+                              variant="outline"
+                              className="flex-1"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              섭외 관리
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>{selectedCampaign?.title} - 인플루언서 섭외</DialogTitle>
+                            </DialogHeader>
+                            
+                            {selectedCampaign && (
+                              <div className="space-y-6">
+                                {/* 기본 캠페인 정보 */}
+                                <Card>
+                                  <CardHeader>
+                                    <CardTitle>기본 정보</CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <Label>브랜드</Label>
+                                        <p className="text-sm font-medium">{selectedCampaign.brandName}</p>
+                                      </div>
+                                      <div>
+                                        <Label>제품</Label>
+                                        <p className="text-sm font-medium">{selectedCampaign.productName}</p>
+                                      </div>
+                                      <div>
+                                        <Label>예산</Label>
+                                        <p className="text-sm font-medium">{selectedCampaign.budget.toLocaleString()}원</p>
+                                      </div>
+                                      <div>
+                                        <Label>광고 유형</Label>
+                                        <p className="text-sm font-medium">{selectedCampaign.adType === 'branding' ? '브랜딩' : '라이브커머스'}</p>
+                                      </div>
                                     </div>
-                                    <div>
-                                      <Label>제품</Label>
-                                      <p className="text-sm font-medium">{selectedCampaign.productName}</p>
-                                    </div>
-                                    <div>
-                                      <Label>예산</Label>
-                                      <p className="text-sm font-medium">{selectedCampaign.budget.toLocaleString()}원</p>
-                                    </div>
-                                    <div>
-                                      <Label>광고 유형</Label>
-                                      <p className="text-sm font-medium">{selectedCampaign.adType === 'branding' ? '브랜딩' : '라이브커머스'}</p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
+                                  </CardContent>
+                                </Card>
 
-                              {/* 인플루언서 섭외 현황 */}
-                              <Card>
-                                <CardHeader>
-                                  <CardTitle>인플루언서 섭외 현황</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="space-y-4">
-                                    {selectedCampaign.influencers.map((influencer) => (
-                                      <Card key={influencer.id} className="p-4">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center space-x-3">
-                                            <img
-                                              src={influencer.profileImage}
-                                              alt={influencer.name}
-                                              className="w-12 h-12 rounded-full"
-                                            />
-                                            <div>
-                                              <h4 className="font-medium">{influencer.name}</h4>
-                                              <p className="text-sm text-muted-foreground">
-                                                {influencer.followers.toLocaleString()}명 팔로워 • {influencer.category}
-                                              </p>
+                                {/* 인플루언서 섭외 현황 */}
+                                <Card>
+                                  <CardHeader>
+                                    <CardTitle>인플루언서 섭외 현황</CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <div className="space-y-4">
+                                      {selectedCampaign.influencers.map((influencer) => (
+                                        <Card key={influencer.id} className="p-4">
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                              <img
+                                                src={influencer.profileImage}
+                                                alt={influencer.name}
+                                                className="w-12 h-12 rounded-full"
+                                              />
+                                              <div>
+                                                <h4 className="font-medium">{influencer.name}</h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                  {influencer.followers.toLocaleString()}명 팔로워 • {influencer.category}
+                                                </p>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center space-x-2">
+                                              {influencer.status === 'pending' && (
+                                                <>
+                                                  <Input
+                                                    type="number"
+                                                    placeholder="광고비 (원)"
+                                                    className="w-32"
+                                                    value={influencerFees[influencer.id] || ''}
+                                                    onChange={(e) => handleInfluencerFeeChange(influencer.id, parseInt(e.target.value) || 0)}
+                                                  />
+                                                  <Button
+                                                    size="sm"
+                                                    onClick={() => handleInfluencerConfirm(influencer.id)}
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                  >
+                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    확인
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => handleInfluencerReject(influencer.id)}
+                                                  >
+                                                    <XCircle className="w-4 h-4 mr-1" />
+                                                    거절
+                                                  </Button>
+                                                </>
+                                              )}
+                                              {influencer.status === 'accepted' && (
+                                                <div className="flex items-center space-x-2">
+                                                  <Badge className="bg-green-100 text-green-800">승인됨</Badge>
+                                                  <span className="text-sm font-medium">{influencer.adFee?.toLocaleString()}원</span>
+                                                </div>
+                                              )}
+                                              {influencer.status === 'rejected' && (
+                                                <div className="flex items-center space-x-2">
+                                                  <Badge className="bg-red-100 text-red-800">거절됨</Badge>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleAddSimilarInfluencer(influencer.id)}
+                                                  >
+                                                    <Plus className="w-4 h-4 mr-1" />
+                                                    유사 인플루언서 추가
+                                                  </Button>
+                                                </div>
+                                              )}
                                             </div>
                                           </div>
-                                          
-                                          <div className="flex items-center space-x-2">
-                                            {influencer.status === 'pending' && (
-                                              <>
-                                                <Input
-                                                  type="number"
-                                                  placeholder="광고비 (원)"
-                                                  className="w-32"
-                                                  value={influencerFees[influencer.id] || ''}
-                                                  onChange={(e) => handleInfluencerFeeChange(influencer.id, parseInt(e.target.value) || 0)}
-                                                />
-                                                <Button
-                                                  size="sm"
-                                                  onClick={() => handleInfluencerConfirm(influencer.id)}
-                                                  className="bg-green-600 hover:bg-green-700"
-                                                >
-                                                  <CheckCircle className="w-4 h-4 mr-1" />
-                                                  확인
-                                                </Button>
-                                                <Button
-                                                  size="sm"
-                                                  variant="destructive"
-                                                  onClick={() => handleInfluencerReject(influencer.id)}
-                                                >
-                                                  <XCircle className="w-4 h-4 mr-1" />
-                                                  거절
-                                                </Button>
-                                              </>
-                                            )}
-                                            {influencer.status === 'accepted' && (
-                                              <div className="flex items-center space-x-2">
-                                                <Badge className="bg-green-100 text-green-800">승인됨</Badge>
-                                                <span className="text-sm font-medium">{influencer.adFee?.toLocaleString()}원</span>
-                                              </div>
-                                            )}
-                                            {influencer.status === 'rejected' && (
-                                              <div className="flex items-center space-x-2">
-                                                <Badge className="bg-red-100 text-red-800">거절됨</Badge>
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={() => handleAddSimilarInfluencer(influencer.id)}
-                                                >
-                                                  <Plus className="w-4 h-4 mr-1" />
-                                                  유사 인플루언서 추가
-                                                </Button>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </Card>
-                                    ))}
-                                  </div>
-                                </CardContent>
-                              </Card>
+                                        </Card>
+                                      ))}
+                                    </div>
+                                  </CardContent>
+                                </Card>
 
-                              {/* 견적서 */}
-                              <Card>
-                                <CardHeader>
-                                  <CardTitle>견적서</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                      <span>인플루언서 광고비 소계</span>
-                                      <span>{quote.subtotal.toLocaleString()}원</span>
+                                {/* 견적서 */}
+                                <Card>
+                                  <CardHeader>
+                                    <CardTitle>견적서</CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <div className="space-y-3">
+                                      <div className="flex justify-between">
+                                        <span>인플루언서 광고비 소계</span>
+                                        <span>{quote.subtotal.toLocaleString()}원</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>대행료 (15%)</span>
+                                        <span>{quote.agencyFee.toLocaleString()}원</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>VAT (10%)</span>
+                                        <span>{quote.vat.toLocaleString()}원</span>
+                                      </div>
+                                      <hr />
+                                      <div className="flex justify-between font-bold text-lg">
+                                        <span>총 합계</span>
+                                        <span>{quote.total.toLocaleString()}원</span>
+                                      </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span>대행료 (15%)</span>
-                                      <span>{quote.agencyFee.toLocaleString()}원</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>VAT (10%)</span>
-                                      <span>{quote.vat.toLocaleString()}원</span>
-                                    </div>
-                                    <hr />
-                                    <div className="flex justify-between font-bold text-lg">
-                                      <span>총 합계</span>
-                                      <span>{quote.total.toLocaleString()}원</span>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
+                                  </CardContent>
+                                </Card>
 
-                              <div className="flex justify-end">
-                                <Button
-                                  onClick={handleProposalSubmit}
-                                  className="bg-green-600 hover:bg-green-700"
-                                  disabled={selectedCampaign.influencers.filter(inf => inf.status === 'accepted').length === 0}
-                                >
-                                  제안 제출하기
-                                </Button>
+                                <div className="flex justify-end">
+                                  <Button
+                                    onClick={handleProposalSubmit}
+                                    className="bg-green-600 hover:bg-green-700"
+                                    disabled={selectedCampaign.influencers.filter(inf => inf.status === 'accepted').length === 0}
+                                  >
+                                    제안 제출하기
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    )}
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {campaigns.length === 0 && (
