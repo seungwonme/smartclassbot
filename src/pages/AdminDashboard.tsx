@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Users, Building2, DollarSign, Activity } from 'lucide-react';
 
 const AdminDashboard = () => {
-  console.log('AdminDashboard component rendering...');
+  console.log('=== AdminDashboard 컴포넌트 시작 ===');
+  console.log('현재 경로:', window.location.pathname);
+  console.log('현재 시간:', new Date().toLocaleString());
 
   const stats = [
     {
@@ -39,28 +41,35 @@ const AdminDashboard = () => {
     }
   ];
 
-  console.log('Stats data:', stats);
+  console.log('통계 데이터:', stats);
 
-  return (
-    <div className="flex h-screen bg-gray-50">
-      <AdminSidebar />
-      
-      <div className="flex-1 overflow-auto">
-        <div className="p-8">
+  try {
+    return (
+      <div className="min-h-screen w-full bg-gray-50 flex">
+        <AdminSidebar />
+        
+        <main className="flex-1 p-8 overflow-auto">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">관리자 대시보드</h1>
             <p className="text-gray-600 mt-2">플랫폼 전체 현황 및 시스템 관리</p>
           </div>
 
+          {/* 상태 확인 알림 */}
+          <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg">
+            <p className="text-green-800 font-semibold">✅ 관리자 대시보드가 정상적으로 로드되었습니다!</p>
+            <p className="text-sm text-green-700">시간: {new Date().toLocaleString()}</p>
+            <p className="text-sm text-green-700">경로: {window.location.pathname}</p>
+          </div>
+
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {stats.map((stat, index) => {
-              console.log('Rendering stat card:', stat.title);
+              console.log(`통계 카드 ${index + 1} 렌더링:`, stat.title);
               const IconComponent = stat.icon;
               
               return (
-                <Card key={index}>
+                <Card key={index} className="shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-gray-600">
                       {stat.title}
@@ -80,8 +89,8 @@ const AdminDashboard = () => {
           </div>
 
           {/* Recent Activities */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>최근 가입 브랜드</CardTitle>
                 <CardDescription>새로 가입한 브랜드 현황</CardDescription>
@@ -108,7 +117,7 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>시스템 상태</CardTitle>
                 <CardDescription>플랫폼 운영 현황</CardDescription>
@@ -141,16 +150,37 @@ const AdminDashboard = () => {
             </Card>
           </div>
 
-          {/* Debug info */}
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
-              디버그: 관리자 대시보드가 정상적으로 렌더링되었습니다.
-            </p>
+          {/* 화면 표시 확인을 위한 테스트 섹션 */}
+          <div className="p-6 bg-blue-50 border-2 border-blue-200 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-800 mb-3">🔍 화면 표시 테스트</h3>
+            <div className="space-y-2 text-sm text-blue-700">
+              <p><strong>✅ 관리자 대시보드 페이지가 정상적으로 렌더링되고 있습니다!</strong></p>
+              <p><strong>현재 시간:</strong> {new Date().toLocaleTimeString()}</p>
+              <p><strong>경로:</strong> {window.location.pathname}</p>
+              <p><strong>화면 크기:</strong> {window.innerWidth} x {window.innerHeight}</p>
+            </div>
           </div>
+        </main>
+      </div>
+    );
+  } catch (error) {
+    console.error('AdminDashboard 렌더링 오류:', error);
+    return (
+      <div className="min-h-screen w-full bg-red-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">관리자 대시보드 오류</h1>
+          <p className="text-red-500 mb-4">페이지 로딩 중 오류가 발생했습니다.</p>
+          <p className="text-sm text-red-400">{error?.toString()}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            페이지 새로고침
+          </button>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 };
 
 export default AdminDashboard;
