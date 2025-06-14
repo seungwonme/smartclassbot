@@ -1,521 +1,400 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { campaignService } from '@/services/campaign.service';
-import { contentService } from '@/services/content.service';
-import { contentSubmissionService } from '@/services/contentSubmission.service';
-import { useToast } from '@/hooks/use-toast';
-import { Clock, Users, FileText, Upload, ImageIcon, VideoIcon } from 'lucide-react';
-import ContentPlanList from '@/components/content/ContentPlanList';
-import BrandContentPlanReview from '@/components/content/BrandContentPlanReview';
-import BrandContentReview from '@/components/content/BrandContentReview';
-import ContentUploadForm from '@/components/content/ContentUploadForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Plus, FileText, Clock, Users, CheckCircle } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { ContentSubmission } from '@/types/contentSubmission';
+import ContentPlanList from '@/components/content/ContentPlanList';
+import ContentPlanForm from '@/components/content/ContentPlanForm';
+import ProductionScheduleModal from '@/components/content/ProductionScheduleModal';
+import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
+import { useCampaignDetail } from '@/hooks/useCampaignDetail';
+import { contentService } from '@/services/content.service';
+import { campaignService } from '@/services/campaign.service';
+import { useToast } from '@/hooks/use-toast';
 
-const AdminContentPlanning: React.FC = () => {
-  const params = useParams();
+const AdminContentPlanning = () => {
+  const { campaignId } = useParams<{ campaignId: string }>();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [showUploadForm, setShowUploadForm] = useState(false);
-  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
-  const [selectedContentType, setSelectedContentType] = useState<'image' | 'video'>('image');
-
-  // URL에서 캠페인 ID 추출 - 여러 패턴 지원
-  const campaignId = params.id || params.campaignId || window.location.pathname.split('/')[3];
+  const { data: campaign, isLoading: campaignLoading } = useCampaignDetail(campaignId);
+  
+  const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('plans');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedInfluencerId, setSelectedInfluencerId] = useState<string | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   console.log('=== AdminContentPlanning 렌더링 시작 ===');
-  console.log('URL params:', params);
+  console.log('URL params:', { campaignId });
   console.log('추출된 캠페인 ID:', campaignId);
   console.log('현재 URL:', window.location.pathname);
-
-  // 캠페인 데이터 로드
-  const { data: campaign, isLoading: campaignLoading, error: campaignError } = useQuery({
-    queryKey: ['campaign', campaignId],
-    queryFn: () => campaignService.getCampaignById(campaignId!),
-    enabled: !!campaignId,
-    retry: 3,
-    retryDelay: 1000
-  });
-  
-  const { data: contentPlans = [], isLoading: plansLoading } = useQuery({
-    queryKey: ['contentPlans', campaignId],
-    queryFn: () => contentService.getContentPlans(campaignId!),
-    enabled: !!campaignId
-  });
-
-  const { data: contentSubmissions = [], isLoading: submissionsLoading } = useQuery({
-    queryKey: ['contentSubmissions', campaignId],
-    queryFn: () => contentSubmissionService.getContentSubmissions(campaignId!),
-    enabled: !!campaignId
-  });
 
   console.log('=== AdminContentPlanning 데이터 상태 ===');
   console.log('캠페인 로딩중:', campaignLoading);
   console.log('캠페인 데이터:', campaign);
   console.log('콘텐츠 기획안 개수:', contentPlans.length);
-  console.log('콘텐츠 제출물 개수:', contentSubmissions.length);
-  console.log('캠페인 에러:', campaignError);
+  console.log('캠페인 에러:', null);
 
-  const approvePlanMutation = useMutation({
-    mutationFn: (planId: string) => contentService.updateContentPlan(campaignId!, planId, { status: 'approved' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentPlans', campaignId] });
-      toast({
-        title: "기획 승인",
-        description: "콘텐츠 기획이 승인되었습니다."
-      });
+  useEffect(() => {
+    const loadContentPlans = async () => {
+      if (!campaignId) return;
+      
+      try {
+        const plans = await contentService.getContentPlans(campaignId);
+        setContentPlans(plans);
+      } catch (error) {
+        console.error('콘텐츠 기획안 로딩 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContentPlans();
+  }, [campaignId]);
+
+  const getStageInfo = (status: Campaign['status']) => {
+    console.log('=== getStageInfo 호출 ===');
+    console.log('캠페인 상태:', status);
+    
+    switch (status) {
+      case 'planning':
+        return { stage: 2, title: '콘텐츠 기획', description: '인플루언서별 콘텐츠 기획안을 작성하고 검토합니다.' };
+      case 'plan-review':
+        return { stage: 2, title: '기획 검토', description: '브랜드 관리자의 기획안 검토가 진행중입니다.' };
+      case 'plan-approved':
+        return { stage: 2, title: '기획 승인완료', description: '모든 기획안이 승인되었습니다. 제작 일정을 설정하세요.' };
+      case 'producing':
+        return { stage: 3, title: '콘텐츠 제작', description: '콘텐츠 제작이 진행중입니다.' };
+      case 'content-review':
+        return { stage: 3, title: '콘텐츠 검수', description: '제작된 콘텐츠의 검수가 진행중입니다.' };
+      default:
+        return { stage: 3, title: '콘텐츠 제작', description: '콘텐츠 제작 단계입니다.' };
     }
-  });
+  };
 
-  const requestRevisionMutation = useMutation({
-    mutationFn: ({ planId, feedback }: { planId: string; feedback: string }) =>
-      contentService.updateContentPlan(campaignId!, planId, {
-        status: 'revision',
-        revisions: [
-          {
-            id: `revision_${Date.now()}`,
-            revisionNumber: 1,
-            feedback,
-            requestedBy: 'brand',
-            requestedByName: '브랜드 관리자',
-            requestedAt: new Date().toISOString(),
-            status: 'pending'
-          }
-        ],
-        currentRevisionNumber: 1
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentPlans', campaignId] });
-      toast({
-        title: "수정 요청 전송",
-        description: "콘텐츠 기획 수정 요청이 전송되었습니다."
-      });
-    }
-  });
+  const handleCreateContentPlan = async (influencerId: string, contentType: 'image' | 'video') => {
+    if (!campaign || !campaignId) return;
 
-  const createSubmissionMutation = useMutation({
-    mutationFn: (submissionData: Partial<ContentSubmission>) =>
-      contentSubmissionService.createContentSubmission(campaignId!, submissionData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', campaignId] });
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      setShowUploadForm(false);
-      setSelectedInfluencer(null);
-      toast({
-        title: "콘텐츠 업로드 완료",
-        description: "콘텐츠가 성공적으로 업로드되었습니다."
+    const influencer = campaign.influencers.find(inf => inf.id === influencerId);
+    if (!influencer) return;
+
+    try {
+      const newPlan: ContentPlanDetail = {
+        id: `plan_${Date.now()}_${influencerId}`,
+        campaignId,
+        influencerId,
+        influencerName: influencer.name,
+        contentType,
+        status: 'draft',
+        planData: contentType === 'image' ? {
+          postTitle: '',
+          thumbnailTitle: '',
+          referenceImages: [],
+          script: '',
+          hashtags: []
+        } : {
+          postTitle: '',
+          scenario: '',
+          scenarioFiles: [],
+          script: '',
+          hashtags: []
+        },
+        revisions: [],
+        currentRevisionNumber: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // 캠페인의 contentPlans 배열에 추가
+      const updatedContentPlans = [...(campaign.contentPlans || []), newPlan];
+      
+      await campaignService.updateCampaign(campaignId, {
+        contentPlans: updatedContentPlans
       });
-    },
-    onError: (error) => {
-      console.error('콘텐츠 업로드 실패:', error);
+
+      setContentPlans(prev => [...prev, newPlan]);
+      setShowCreateForm(false);
+      setSelectedInfluencerId(null);
+
       toast({
-        title: "업로드 실패",
-        description: "콘텐츠 업로드에 실패했습니다.",
+        title: "콘텐츠 기획안 생성 완료",
+        description: `${influencer.name}의 ${contentType === 'image' ? '이미지' : '동영상'} 기획안이 생성되었습니다.`
+      });
+    } catch (error) {
+      console.error('콘텐츠 기획안 생성 실패:', error);
+      toast({
+        title: "생성 실패",
+        description: "콘텐츠 기획안 생성에 실패했습니다.",
         variant: "destructive"
       });
     }
-  });
+  };
 
-  const approveSubmissionMutation = useMutation({
-    mutationFn: (submissionId: string) =>
-      contentSubmissionService.updateContentSubmission(campaignId!, submissionId, { status: 'approved' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', campaignId] });
+  const handlePlanUpdate = async (planId: string, updates: any) => {
+    if (!campaignId) return;
+
+    try {
+      const updatedPlan = await contentService.updateContentPlan(campaignId, planId, updates);
+      setContentPlans(prev => prev.map(plan => 
+        plan.id === planId ? updatedPlan : plan
+      ));
+
       toast({
-        title: "콘텐츠 승인",
-        description: "콘텐츠가 승인되었습니다."
+        title: "기획안 수정 완료",
+        description: "콘텐츠 기획안이 수정되었습니다."
+      });
+    } catch (error) {
+      console.error('기획안 수정 실패:', error);
+      toast({
+        title: "수정 실패",
+        description: "기획안 수정에 실패했습니다.",
+        variant: "destructive"
       });
     }
-  });
+  };
 
-  const requestSubmissionRevisionMutation = useMutation({
-    mutationFn: ({ submissionId, feedback }: { submissionId: string; feedback: string }) =>
-      contentSubmissionService.updateContentSubmission(campaignId!, submissionId, {
-        status: 'revision',
-        revisions: [
-          {
-            id: `revision_${Date.now()}`,
-            revisionNumber: 1,
-            feedback,
-            requestedBy: 'brand',
-            requestedByName: '브랜드 관리자',
-            requestedAt: new Date().toISOString(),
-            status: 'pending'
-          }
-        ],
-        currentRevisionNumber: 1
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentSubmissions', campaignId] });
+  const handleSetProductionSchedule = async (scheduleData: any) => {
+    if (!campaign || !campaignId) return;
+
+    try {
+      await campaignService.updateCampaign(campaignId, {
+        status: 'producing',
+        currentStage: 3,
+        productionSchedule: scheduleData
+      });
+
       toast({
-        title: "수정 요청 전송",
-        description: "콘텐츠 수정 요청이 전송되었습니다."
+        title: "제작 일정 설정 완료",
+        description: "콘텐츠 제작 단계로 전환되었습니다."
+      });
+
+      // 페이지 새로고침으로 최신 상태 반영
+      window.location.reload();
+    } catch (error) {
+      console.error('제작 일정 설정 실패:', error);
+      toast({
+        title: "설정 실패",
+        description: "제작 일정 설정에 실패했습니다.",
+        variant: "destructive"
       });
     }
-  });
-
-  const handleUploadSubmit = (submissionData: Partial<ContentSubmission>) => {
-    createSubmissionMutation.mutate(submissionData);
   };
 
-  const handleShowUploadForm = (influencer: any, contentType: 'image' | 'video') => {
-    setSelectedInfluencer(influencer);
-    setSelectedContentType(contentType);
-    setShowUploadForm(true);
-  };
-
-  const getStageInfo = () => {
-    if (!campaign) return { stage: 0, title: '', description: '' };
-
-    console.log('=== getStageInfo 호출 ===');
-    console.log('캠페인 상태:', campaign.status);
-
-    switch (campaign.status) {
-      case 'producing':
-        return {
-          stage: 3,
-          title: '콘텐츠 제작중',
-          description: '인플루언서들이 콘텐츠를 제작하고 있습니다.'
-        };
-      case 'content-review':
-        return {
-          stage: 4,
-          title: '콘텐츠 검수',
-          description: '제작된 콘텐츠를 검토하고 승인합니다.'
-        };
-      case 'content-revision':
-        return {
-          stage: 4,
-          title: '콘텐츠 수정중',
-          description: '콘텐츠 수정 요청이 진행중입니다.'
-        };
-      case 'content-approved':
-        return {
-          stage: 5,
-          title: '콘텐츠 승인완료',
-          description: '모든 콘텐츠가 승인되어 라이브 준비중입니다.'
-        };
-      default:
-        return {
-          stage: 3,
-          title: '콘텐츠 제작',
-          description: '콘텐츠 제작 단계입니다.'
-        };
-    }
-  };
-
-  // 캠페인 ID가 없는 경우
-  if (!campaignId) {
-    console.log('=== 캠페인 ID 없음 ===');
+  if (campaignLoading || isLoading) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen w-full">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-500">캠페인 ID를 찾을 수 없습니다.</p>
-            <p className="text-sm text-gray-500 mt-2">URL: {window.location.pathname}</p>
-            <Button onClick={() => window.history.back()} className="mt-4">
-              이전 페이지로
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 로딩 상태 처리
-  if (campaignLoading) {
-    console.log('=== 캠페인 로딩중 ===');
-    return (
-      <div className="flex min-h-screen bg-gray-50">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Clock className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p>캠페인 정보를 불러오는 중...</p>
-            <p className="text-sm text-gray-500 mt-2">캠페인 ID: {campaignId}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 에러 상태 처리
-  if (campaignError) {
-    console.error('캠페인 로딩 에러:', campaignError);
-    return (
-      <div className="flex min-h-screen bg-gray-50">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-500">캠페인 정보를 불러오는데 실패했습니다.</p>
-            <p className="text-sm text-gray-500 mt-2">캠페인 ID: {campaignId}</p>
-            <Button onClick={() => window.location.reload()} className="mt-4">
-              다시 시도
-            </Button>
-          </div>
+        <div className="flex-1 p-8">
+          <div className="text-center">로딩 중...</div>
         </div>
       </div>
     );
   }
 
   if (!campaign) {
-    console.log('=== 캠페인 데이터 없음 ===');
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen w-full">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center py-12">
-            <p>캠페인을 찾을 수 없습니다.</p>
-            <p className="text-sm text-gray-500 mt-2">캠페인 ID: {campaignId}</p>
-          </div>
+        <div className="flex-1 p-8">
+          <div className="text-center">캠페인을 찾을 수 없습니다.</div>
         </div>
       </div>
     );
   }
 
-  const stageInfo = getStageInfo();
+  const stageInfo = getStageInfo(campaign.status);
+  const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+  const allPlansApproved = contentPlans.length > 0 && contentPlans.every(plan => plan.status === 'approved');
+
   console.log('=== 최종 렌더링 정보 ===');
   console.log('스테이지 정보:', stageInfo);
   console.log('캠페인 제목:', campaign.title);
-  console.log('인플루언서 수:', campaign.influencers?.length || 0);
+  console.log('인플루언서 수:', confirmedInfluencers.length);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen w-full">
       <AdminSidebar />
-      <div className="flex-1 p-6">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
+      <div className="flex-1 p-8">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center space-x-4">
+            <Link to={`/admin/campaigns/${campaignId}`}>
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                캠페인 상세로
+              </Button>
+            </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{campaign.title}</h1>
-              <p className="text-gray-600">콘텐츠 제작 및 검수 관리</p>
+              <h1 className="text-3xl font-bold">{campaign.title}</h1>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className="bg-blue-100 text-blue-800">
+                  {stageInfo.title}
+                </Badge>
+                <Badge variant="outline" className="text-purple-600">
+                  시스템 관리자
+                </Badge>
+              </div>
             </div>
-            <Badge variant="outline" className="text-sm">
-              {stageInfo.title}
-            </Badge>
           </div>
+          
+          {campaign.status === 'plan-approved' && (
+            <Button 
+              onClick={() => setShowScheduleModal(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              제작 일정 설정
+            </Button>
+          )}
+        </div>
 
+        <div className="mb-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+              <CardTitle className="flex items-center">
+                <FileText className="w-5 h-5 mr-2" />
                 현재 진행 단계
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full font-semibold">
-                    {stageInfo.stage}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{stageInfo.title}</h3>
-                    <p className="text-sm text-gray-600">{stageInfo.description}</p>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-medium">{stageInfo.title}</p>
+                  <p className="text-sm text-gray-600">{stageInfo.description}</p>
                 </div>
-                
-                {/* 디버그 정보 추가 */}
-                <div className="mt-4 p-3 bg-gray-50 rounded text-xs">
-                  <p><strong>디버그 정보:</strong></p>
-                  <p>캠페인 ID: {campaign.id}</p>
-                  <p>캠페인 상태: {campaign.status}</p>
-                  <p>콘텐츠 기획안: {contentPlans.length}개</p>
-                  <p>콘텐츠 제출물: {contentSubmissions.length}개</p>
-                  <p>인플루언서: {campaign.influencers?.length || 0}명</p>
-                  <p>URL 캠페인 ID: {campaignId}</p>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">캠페인 ID</div>
+                  <div className="font-mono text-sm">{campaignId}</div>
                 </div>
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          <Tabs defaultValue="content-plans" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="content-plans">콘텐츠 기획</TabsTrigger>
-              <TabsTrigger value="content-upload">콘텐츠 업로드</TabsTrigger>
-              <TabsTrigger value="content-review">콘텐츠 검수</TabsTrigger>
-            </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="plans">📝 콘텐츠 기획</TabsTrigger>
+            <TabsTrigger value="upload">📤 콘텐츠 업로드</TabsTrigger>
+            <TabsTrigger value="review">🔍 콘텐츠 검수</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="content-plans">
-              <Card>
-                <CardHeader>
-                  <CardTitle>콘텐츠 기획안 관리</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {contentPlans.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 mb-4">등록된 콘텐츠 기획안이 없습니다.</p>
-                      <p className="text-sm text-gray-400">인플루언서가 콘텐츠 기획안을 제출하면 여기에 표시됩니다.</p>
-                      <div className="mt-4 p-3 bg-blue-50 rounded text-xs">
-                        <p><strong>참고:</strong> 캠페인이 '기획' 단계에 있을 때 인플루언서들이 기획안을 작성할 수 있습니다.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <BrandContentPlanReview
+          <TabsContent value="plans" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    콘텐츠 기획안 관리
+                  </div>
+                  <div className="flex gap-2">
+                    {confirmedInfluencers.map(influencer => {
+                      const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
+                      if (existingPlan) return null;
+                      
+                      return (
+                        <Button
+                          key={influencer.id}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedInfluencerId(influencer.id);
+                            setShowCreateForm(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          {influencer.name} 기획안 생성
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {contentPlans.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 콘텐츠 기획안이 없습니다</h3>
+                    <p className="text-gray-500 mb-4">인플루언서가 콘텐츠 기획안을 제출할 때까지 기다리거나 직접 생성하세요.</p>
+                    <p className="text-sm text-gray-400">
+                      참고: 캠페인이 '기획' 단계에 있어야 인플루언서가 기획안을 작성할 수 있습니다.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <ContentPlanList
                       plans={contentPlans}
-                      onApprove={(planId) => approvePlanMutation.mutate(planId)}
-                      onRequestRevision={(planId, feedback) => 
-                        requestRevisionMutation.mutate({ planId, feedback })
-                      }
+                      onPlanUpdate={handlePlanUpdate}
+                      userType="admin"
                     />
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="content-upload">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Upload className="w-5 h-5" />
-                      콘텐츠 업로드
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {!campaign.influencers || campaign.influencers.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500">확정된 인플루언서가 없습니다.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {campaign.influencers?.map((influencer) => (
-                          <Card key={influencer.id}>
-                            <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
-                                <Users className="w-5 h-5" />
-                                {influencer.name}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                <p className="text-sm text-gray-600">
-                                  카테고리: {influencer.category}
-                                </p>
-                                
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleShowUploadForm(influencer, 'image')}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <ImageIcon className="w-4 h-4" />
-                                    이미지 업로드
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleShowUploadForm(influencer, 'video')}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <VideoIcon className="w-4 h-4" />
-                                    영상 업로드
-                                  </Button>
-                                </div>
-
-                                {contentSubmissions.filter(s => s.influencerId === influencer.id).length > 0 && (
-                                  <div className="mt-4">
-                                    <p className="text-sm font-medium mb-2">제출된 콘텐츠:</p>
-                                    <div className="space-y-1">
-                                      {contentSubmissions
-                                        .filter(s => s.influencerId === influencer.id)
-                                        .map(submission => (
-                                          <div key={submission.id} className="text-xs text-gray-600 flex items-center gap-2">
-                                            {submission.contentType === 'image' ? (
-                                              <ImageIcon className="w-3 h-3" />
-                                            ) : (
-                                              <VideoIcon className="w-3 h-3" />
-                                            )}
-                                            {submission.contentType === 'image' ? '이미지' : '영상'} - {submission.contentFiles.length}개 파일
-                                            <Badge variant="outline" className="text-xs">
-                                              {submission.status === 'draft' ? '검수대기' : 
-                                               submission.status === 'revision' ? '수정중' : '승인완료'}
-                                            </Badge>
-                                          </div>
-                                        ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                    {allPlansApproved && campaign.status === 'planning' && (
+                      <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center">
+                          <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                          <div>
+                            <h4 className="font-medium text-green-800">모든 기획안이 승인되었습니다</h4>
+                            <p className="text-sm text-green-600">제작 일정을 설정하여 다음 단계로 진행하세요.</p>
+                          </div>
+                        </div>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-
-                {showUploadForm && selectedInfluencer && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-lg mx-4">
-                      <ContentUploadForm
-                        influencer={selectedInfluencer}
-                        campaignId={campaignId!}
-                        contentType={selectedContentType}
-                        onSubmit={handleUploadSubmit}
-                        onCancel={() => {
-                          setShowUploadForm(false);
-                          setSelectedInfluencer(null);
-                        }}
-                      />
-                    </div>
-                  </div>
+                  </>
                 )}
-              </div>
-            </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="content-review">
-              <Card>
-                <CardHeader>
-                  <CardTitle>콘텐츠 검수</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {contentSubmissions.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 mb-4">제출된 콘텐츠가 없습니다.</p>
-                      <p className="text-sm text-gray-400">인플루언서가 콘텐츠를 업로드하면 여기에 표시됩니다.</p>
-                      <div className="mt-4 p-3 bg-blue-50 rounded text-xs">
-                        <p><strong>참고:</strong> 콘텐츠 업로드 탭에서 인플루언서별로 콘텐츠를 업로드할 수 있습니다.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <BrandContentReview
-                      submissions={contentSubmissions}
-                      onApprove={(submissionId) => approveSubmissionMutation.mutate(submissionId)}
-                      onRequestRevision={(submissionId, feedback) => 
-                        requestSubmissionRevisionMutation.mutate({ submissionId, feedback })
-                      }
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+          <TabsContent value="upload" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>콘텐츠 업로드</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-gray-500">
+                  콘텐츠 업로드 기능이 곧 추가될 예정입니다.
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="review" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>콘텐츠 검수</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-gray-500">
+                  콘텐츠 검수 기능이 곧 추가될 예정입니다.
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {showCreateForm && selectedInfluencerId && (
+          <ContentPlanForm
+            campaignId={campaignId!}
+            influencerId={selectedInfluencerId}
+            influencerName={confirmedInfluencers.find(inf => inf.id === selectedInfluencerId)?.name || ''}
+            onClose={() => {
+              setShowCreateForm(false);
+              setSelectedInfluencerId(null);
+            }}
+            onSave={handleCreateContentPlan}
+          />
+        )}
+
+        <ProductionScheduleModal
+          isOpen={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          campaign={campaign}
+          contentPlans={contentPlans}
+          onSave={handleSetProductionSchedule}
+        />
       </div>
-
-      {showUploadForm && selectedInfluencer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white rounded-lg mx-4">
-            <ContentUploadForm
-              influencer={selectedInfluencer}
-              campaignId={campaignId!}
-              contentType={selectedContentType}
-              onSubmit={handleUploadSubmit}
-              onCancel={() => {
-                setShowUploadForm(false);
-                setSelectedInfluencer(null);
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
