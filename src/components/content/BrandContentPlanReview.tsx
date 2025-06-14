@@ -108,16 +108,18 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             <Label className="font-medium">스크립트</Label>
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{imageData.script || '스크립트가 입력되지 않았습니다.'}</p>
           </div>
-          {imageData.hashtags && imageData.hashtags.length > 0 && (
-            <div>
-              <Label className="font-medium">해시태그</Label>
+          <div>
+            <Label className="font-medium">해시태그</Label>
+            {imageData.hashtags && imageData.hashtags.length > 0 ? (
               <div className="flex flex-wrap gap-1 mt-1">
                 {imageData.hashtags.map((tag, index) => (
                   <Badge key={index} variant="outline">{tag}</Badge>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">해시태그가 입력되지 않았습니다.</p>
+            )}
+          </div>
         </div>
       );
     } else {
@@ -148,16 +150,18 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
             <Label className="font-medium">스크립트</Label>
             <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.script || '스크립트가 입력되지 않았습니다.'}</p>
           </div>
-          {videoData.hashtags && videoData.hashtags.length > 0 && (
-            <div>
-              <Label className="font-medium">해시태그</Label>
+          <div>
+            <Label className="font-medium">해시태그</Label>
+            {videoData.hashtags && videoData.hashtags.length > 0 ? (
               <div className="flex flex-wrap gap-1 mt-1">
                 {videoData.hashtags.map((tag, index) => (
                   <Badge key={index} variant="outline">{tag}</Badge>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">해시태그가 입력되지 않았습니다.</p>
+            )}
+          </div>
         </div>
       );
     }
