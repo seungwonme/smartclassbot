@@ -60,8 +60,10 @@ const AdminCampaignDetail = () => {
       case 'revising': return '제안수정요청';
       case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
-      case 'planning': return '기획중';
-      case 'plan-review': return '기획검토';
+      case 'planning': return '콘텐츠 기획중';
+      case 'plan-review': return '콘텐츠 기획중';
+      case 'plan-revision': return '콘텐츠 기획중';
+      case 'plan-approved': return '콘텐츠 기획중';
       case 'producing': return '제작중';
       case 'content-review': return '콘텐츠검수';
       case 'live': return '라이브';
