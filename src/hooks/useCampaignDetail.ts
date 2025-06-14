@@ -101,12 +101,12 @@ export const useCampaignDetail = () => {
           console.log('처리할 인플루언서:', inf);
           console.log('기존 광고비:', inf.adFee);
           
-          // 광고비 정보를 유지하면서 상태만 변경 - 브랜드 관리자의 거절은 'brand-rejected'
+          // 광고비 정보를 명시적으로 유지하면서 상태만 변경
           const updatedInfluencer = { 
             ...inf, 
             status: approved ? 'confirmed' as const : 'brand-rejected' as const,
-            // 광고비 정보 유지 - adFee를 명시적으로 포함
-            adFee: inf.adFee
+            // 광고비 정보를 명시적으로 유지
+            adFee: inf.adFee || 0
           };
           
           console.log('업데이트된 인플루언서:', updatedInfluencer);
