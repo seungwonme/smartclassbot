@@ -138,19 +138,26 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     return allPlansApproved;
   };
 
-  // 수정요청 개수 및 정보 가져오기
+  // 수정요청 개수 및 정보 가져오기 (브랜드 관리자 승인 기준으로 수정)
   const getRevisionInfo = (campaign: Campaign) => {
     if (!campaign.contentPlans?.length) return { count: 0, hasRevisions: false };
     
     let revisionCount = 0;
     let hasRevisions = false;
     
-    campaign.contentPlans.forEach(plan => {
+    const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+    
+    confirmedInfluencers.forEach(influencer => {
+      const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
+      if (!plan) return;
+      
+      // 브랜드 관리자 승인 기준: pending 브랜드 수정요청이 있거나 approved가 아닌 경우만 수정요청으로 간주
       const hasPendingBrandRevision = plan.revisions?.some(r => 
         r.requestedBy === 'brand' && r.status === 'pending'
       );
       
-      if (plan.status === 'revision' || hasPendingBrandRevision) {
+      // 브랜드 관리자가 승인하지 않은 상태만 수정요청으로 처리
+      if (plan.status !== 'approved' && hasPendingBrandRevision) {
         revisionCount++;
         hasRevisions = true;
       }
