@@ -209,9 +209,10 @@ const CampaignDetail = () => {
   };
 
   const handleViewInfluencerDetail = (influencer: any) => {
-    // 인플루언서 상세 정보에 플랫폼 정보 추가
+    // 인플루언서 상세 정보에 플랫폼 정보 추가하고 데이터 구조 맞춤
     const influencerWithPlatform = {
       ...influencer,
+      nickname: influencer.name || influencer.nickname || 'Unknown', // name을 nickname으로 매핑
       platform: influencer.platform || 'douyin', // 기본값 설정
       region: influencer.region || '서울',
       category: Array.isArray(influencer.category) ? influencer.category : [influencer.category || '뷰티']
