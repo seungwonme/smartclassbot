@@ -138,6 +138,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   const getStatusColor = (status: CampaignInfluencer['status']) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'accepted': return 'bg-green-100 text-green-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -147,6 +148,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
   const getStatusText = (status: CampaignInfluencer['status']) => {
     switch (status) {
       case 'pending': return '대기중';
+      case 'accepted': return '수락됨';
       case 'confirmed': return '승인됨';
       case 'rejected': return '거절됨';
       default: return status;
@@ -173,7 +175,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                 />
                 <div className="flex-1">
                   <CardTitle className="text-sm">{influencer.name}</CardTitle>
-                  <p className="text-xs text-muted-foreground">@{influencer.handle}</p>
+                  <p className="text-xs text-muted-foreground">@{influencer.name}</p>
                 </div>
                 <Badge className={getStatusColor(influencer.status)}>
                   {getStatusText(influencer.status)}
@@ -192,37 +194,30 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">협찬료</span>
-                  <span className="font-medium">{influencer.cost.toLocaleString()}원</span>
+                  <span className="font-medium">{influencer.adFee?.toLocaleString() || 0}원</span>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center">
                       <Heart className="w-3 h-3 mr-1" />
-                      {influencer.avgLikes?.toLocaleString() || 0}
+                      0
                     </div>
                     <div className="flex items-center">
                       <MessageCircle className="w-3 h-3 mr-1" />
-                      {influencer.avgComments?.toLocaleString() || 0}
+                      0
                     </div>
                     <div className="flex items-center">
                       <Share2 className="w-3 h-3 mr-1" />
-                      {influencer.avgShares?.toLocaleString() || 0}
+                      0
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {influencer.categories.slice(0, 2).map((category) => (
-                    <Badge key={category} variant="outline" className="text-xs">
-                      {category}
-                    </Badge>
-                  ))}
-                  {influencer.categories.length > 2 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{influencer.categories.length - 2}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="text-xs">
+                    {influencer.category}
+                  </Badge>
                 </div>
 
                 <div className="flex space-x-2 mt-4">
@@ -305,13 +300,21 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
       {selectedInfluencer && (
         selectedInfluencer.platform === 'xiaohongshu' ? (
           <XiaohongshuInfluencerDetailModal
-            influencer={selectedInfluencer}
+            influencer={{
+              ...selectedInfluencer,
+              nickname: selectedInfluencer.name,
+              category: [selectedInfluencer.category]
+            }}
             isOpen={isDetailModalOpen}
             onClose={handleCloseDetailModal}
           />
         ) : (
           <InfluencerDetailModal
-            influencer={selectedInfluencer}
+            influencer={{
+              ...selectedInfluencer,
+              nickname: selectedInfluencer.name,
+              category: [selectedInfluencer.category]
+            }}
             isOpen={isDetailModalOpen}
             onClose={handleCloseDetailModal}
           />
@@ -331,7 +334,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
       {/* 유사 인플루언서 모달 */}
       {similarInfluencerId && (
         <SimilarInfluencerModal
-          referenceInfluencerId={similarInfluencerId}
+          influencerId={similarInfluencerId}
           isOpen={isSimilarModalOpen}
           onClose={handleCloseSimilarModal}
           onAddInfluencer={handleAddSimilarInfluencer}
