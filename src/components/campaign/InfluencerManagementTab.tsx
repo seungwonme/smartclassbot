@@ -103,6 +103,42 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
     });
   };
 
+  const handleInfluencerApprovalWithAdFee = async (influencerId: string, approved: boolean) => {
+    console.log('=== 브랜드관리자 인플루언서 승인/거절 처리 ===');
+    console.log('인플루언서 ID:', influencerId);
+    console.log('승인 여부:', approved);
+    
+    const influencer = campaign.influencers.find(inf => inf.id === influencerId);
+    console.log('현재 인플루언서 정보:', influencer);
+    console.log('현재 광고비:', influencer?.adFee);
+    
+    const updatedInfluencers = campaign.influencers.map(inf => 
+      inf.id === influencerId 
+        ? { 
+            ...inf, 
+            status: approved ? 'confirmed' as const : 'rejected' as const,
+            // 광고비 정보 유지 - 기존 adFee 값을 그대로 보존
+            adFee: inf.adFee
+          }
+        : inf
+    );
+
+    const updatedInfluencer = updatedInfluencers.find(inf => inf.id === influencerId);
+    console.log('업데이트된 인플루언서 정보:', updatedInfluencer);
+    console.log('업데이트된 광고비:', updatedInfluencer?.adFee);
+
+    await onUpdateInfluencers(updatedInfluencers);
+    
+    toast({
+      title: approved ? "인플루언서 승인 완료" : "인플루언서 거절 완료",
+      description: approved 
+        ? `${influencer?.name}님이 승인되었습니다. (광고비: ${influencer?.adFee?.toLocaleString()}원)`
+        : `${influencer?.name}님이 거절되었습니다.`
+    });
+    
+    console.log('=== 승인/거절 처리 완료 ===');
+  };
+
   return (
     <>
       <Card>
@@ -267,7 +303,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => onInfluencerApproval(influencer.id, true)}
+                          onClick={() => handleInfluencerApprovalWithAdFee(influencer.id, true)}
                           className="bg-green-600 hover:bg-green-700"
                         >
                           <CheckCircle className="w-3 h-3 mr-1" />
@@ -276,7 +312,7 @@ const InfluencerManagementTab: React.FC<InfluencerManagementTabProps> = ({
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => onInfluencerApproval(influencer.id, false)}
+                          onClick={() => handleInfluencerApprovalWithAdFee(influencer.id, false)}
                         >
                           <XCircle className="w-3 h-3 mr-1" />
                           거절
