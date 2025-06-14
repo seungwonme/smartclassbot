@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -34,8 +33,7 @@ const BrandCampaigns = () => {
       case 'creating': return 'bg-yellow-100 text-yellow-800';
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -46,8 +44,7 @@ const BrandCampaigns = () => {
       case 'creating': return '생성중';
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
-      case 'approved': return '승인됨';
-      case 'rejected': return '거절됨';
+      case 'confirmed': return '확정됨';
       case 'completed': return '완료됨';
       default: return status;
     }

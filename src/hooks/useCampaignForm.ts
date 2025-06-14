@@ -209,6 +209,7 @@ export const useCampaignForm = () => {
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType,
         status: 'creating',
+        currentStage: 1,
         targetContent: formData.targetContent,
         influencers: selectedInfluencerData
       };

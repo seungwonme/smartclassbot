@@ -1,4 +1,3 @@
-
 import { Campaign, CampaignInfluencer, Persona } from "@/types/campaign";
 
 export const mockInfluencers: CampaignInfluencer[] = [
@@ -70,6 +69,7 @@ export const mockCampaigns: Campaign[] = [
     campaignEndDate: "2024-08-20",
     adType: "branding",
     status: "creating",
+    currentStage: 1,
     targetContent: {
       influencerCategories: ["뷰티", "라이프스타일"],
       targetAge: "20-35",

@@ -43,7 +43,7 @@ export interface CampaignInfluencer {
   profileImage: string;
   socialChannels: string[];
   isSelected: boolean;
-  status: 'pending' | 'accepted' | 'rejected' | 'replaced' | 'approved';
+  status: 'pending' | 'accepted' | 'rejected' | 'replaced' | 'confirmed';
   adFee?: number;
   platform?: 'douyin' | 'xiaohongshu';
   region?: string;

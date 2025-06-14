@@ -78,8 +78,7 @@ const CampaignDetail = () => {
       case 'creating': return 'bg-yellow-100 text-yellow-800';
       case 'recruiting': return 'bg-blue-100 text-blue-800';
       case 'proposing': return 'bg-purple-100 text-purple-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -90,8 +89,7 @@ const CampaignDetail = () => {
       case 'creating': return '생성중';
       case 'recruiting': return '섭외중';
       case 'proposing': return '제안중';
-      case 'approved': return '승인됨';
-      case 'rejected': return '거절됨';
+      case 'confirmed': return '확정됨';
       case 'completed': return '완료됨';
       default: return status;
     }
@@ -144,14 +142,14 @@ const CampaignDetail = () => {
     try {
       const updatedInfluencers = campaign.influencers.map(inf => 
         inf.id === influencerId 
-          ? { ...inf, status: approved ? 'approved' as const : 'rejected' as const }
+          ? { ...inf, status: approved ? 'confirmed' as const : 'rejected' as const }
           : inf
       );
 
       const updatedCampaign = { ...campaign, influencers: updatedInfluencers };
       
       // 모든 인플루언서에 대한 결정이 완료되었는지 확인
-      const allDecided = updatedInfluencers.every(inf => inf.status === 'approved' || inf.status === 'rejected');
+      const allDecided = updatedInfluencers.every(inf => inf.status === 'confirmed' || inf.status === 'rejected');
       const hasRejected = updatedInfluencers.some(inf => inf.status === 'rejected');
       
       let newStatus = campaign.status;
@@ -159,7 +157,7 @@ const CampaignDetail = () => {
         if (hasRejected) {
           newStatus = 'recruiting'; // 거절된 인플루언서가 있으면 다시 섭외중으로
         } else {
-          newStatus = 'approved'; // 모든 인플루언서가 승인되면 승인완료
+          newStatus = 'confirmed'; // 모든 인플루언서가 승인되면 확정완료
         }
       }
 
@@ -288,7 +286,7 @@ const CampaignDetail = () => {
 
   const isCreating = campaign.status === 'creating';
   const isProposing = campaign.status === 'proposing';
-  const isApproved = campaign.status === 'approved';
+  const isConfirmed = campaign.status === 'confirmed';
   const nextAction = getNextAction();
 
   return (
@@ -335,7 +333,7 @@ const CampaignDetail = () => {
                 </Button>
               </>
             )}
-            {isApproved && (
+            {isConfirmed && (
               <Button onClick={handleFinalConfirmation} className="bg-blue-600 hover:bg-blue-700">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 최종 확정
