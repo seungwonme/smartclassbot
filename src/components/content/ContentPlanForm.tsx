@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -246,7 +245,7 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
               value={videoData.scenario}
               onChange={(e) => setVideoData(prev => ({ ...prev, scenario: e.target.value }))}
               placeholder="영상 시나리오를 입력하세요"
-              rows={4}
+              rows={12}
             />
           </div>
 
