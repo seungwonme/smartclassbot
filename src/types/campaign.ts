@@ -1,4 +1,3 @@
-
 export interface Campaign {
   id: string;
   title: string;
@@ -16,8 +15,16 @@ export interface Campaign {
   influencers: CampaignInfluencer[];
   contentPlans?: ContentPlan[];
   currentStage: number;
+  quote?: CampaignQuote;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CampaignQuote {
+  subtotal: number;
+  agencyFee: number;
+  vat: number;
+  total: number;
 }
 
 export interface TargetContent {
