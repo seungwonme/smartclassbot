@@ -92,17 +92,17 @@ const AdminContentPlanning = () => {
         contentType,
         status: 'draft',
         planData: contentType === 'image' ? {
-          postTitle: planData.planData?.postTitle || '',
+          postTitle: (planData.planData as any)?.postTitle || '',
           thumbnailTitle: (planData.planData as any)?.thumbnailTitle || '',
           referenceImages: (planData.planData as any)?.referenceImages || [],
-          script: planData.planData?.script || '',
-          hashtags: planData.planData?.hashtags || []
+          script: (planData.planData as any)?.script || '',
+          hashtags: (planData.planData as any)?.hashtags || []
         } : {
-          postTitle: planData.planData?.postTitle || '',
+          postTitle: (planData.planData as any)?.postTitle || '',
           scenario: (planData.planData as any)?.scenario || '',
           scenarioFiles: (planData.planData as any)?.scenarioFiles || [],
-          script: planData.planData?.script || '',
-          hashtags: planData.planData?.hashtags || []
+          script: (planData.planData as any)?.script || '',
+          hashtags: (planData.planData as any)?.hashtags || []
         },
         revisions: [],
         currentRevisionNumber: 0,
@@ -140,7 +140,9 @@ const AdminContentPlanning = () => {
       await campaignService.updateCampaign(campaignId, {
         contentPlans: updatedContentPlans.map(plan => ({
           ...plan,
-          planDocument: 'postTitle' in plan.planData ? plan.planData.postTitle : plan.planData.postTitle
+          planDocument: plan.contentType === 'image' ? 
+            (plan.planData as any).postTitle : 
+            (plan.planData as any).postTitle
         }))
       });
 
