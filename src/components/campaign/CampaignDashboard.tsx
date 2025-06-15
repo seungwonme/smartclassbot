@@ -128,17 +128,13 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
       if (!plan) return false;
       
-      const hasPendingBrandRevision = plan.revisions?.some(r => 
-        r.requestedBy === 'brand' && r.status === 'pending'
-      );
-      
-      return plan.status === 'approved' || !hasPendingBrandRevision;
+      return plan.status === 'approved';
     });
     
     return allPlansApproved;
   };
 
-  // 수정요청 개수 및 정보 가져오기 (브랜드 관리자 승인 기준으로 수정)
+  // 수정요청 개수 및 정보 가져오기 (새로운 상태값 기준으로 수정)
   const getRevisionInfo = (campaign: Campaign) => {
     if (!campaign.contentPlans?.length) return { count: 0, hasRevisions: false };
     
@@ -151,19 +147,10 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
       if (!plan) return;
       
-      // 브랜드 관리자 승인 기준: pending 브랜드 수정요청이 있거나 approved가 아닌 경우만 수정요청으로 간주
-      const hasPendingBrandRevision = plan.revisions?.some(r => 
-        r.requestedBy === 'brand' && r.status === 'pending'
-      );
-      
-      // 브랜드 관리자가 승인하지 않은 상태만 수정요청으로 처리
-      if (plan.status !== 'approved' && hasPendingBrandRevision) {
-        // 브랜드가 요청한 수정요청 개수를 정확히 계산
-        const brandRevisionCount = plan.revisions?.filter(r => 
-          r.requestedBy === 'brand'
-        ).length || 0;
-        
-        revisionCount = Math.max(revisionCount, brandRevisionCount);
+      // 수정요청 상태인 기획안들을 확인
+      if (plan.status === 'revision-request' || plan.status === 'revision-feedback') {
+        const planRevisionCount = plan.revisions?.length || 0;
+        revisionCount = Math.max(revisionCount, planRevisionCount);
         hasRevisions = true;
       }
     });

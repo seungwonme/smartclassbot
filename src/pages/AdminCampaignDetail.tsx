@@ -113,6 +113,12 @@ const AdminCampaignDetail = () => {
       case 'live': return 'bg-green-100 text-green-800';
       case 'monitoring': return 'bg-teal-100 text-teal-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
+      // 콘텐츠 기획 상태
+      case 'waiting': return 'bg-gray-100 text-gray-800';
+      case 'draft': return 'bg-blue-100 text-blue-800';
+      case 'revision-request': return 'bg-orange-100 text-orange-800';
+      case 'revision-feedback': return 'bg-purple-100 text-purple-800';
+      case 'approved': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -135,6 +141,12 @@ const AdminCampaignDetail = () => {
       case 'live': return '라이브';
       case 'monitoring': return '모니터링';
       case 'completed': return '완료됨';
+      // 콘텐츠 기획 상태
+      case 'waiting': return '기획 대기중';
+      case 'draft': return '기획초안';
+      case 'revision-request': return '기획수정중';
+      case 'revision-feedback': return '기획수정중';
+      case 'approved': return '기획완료';
       default: return status;
     }
   };
@@ -151,7 +163,7 @@ const AdminCampaignDetail = () => {
       console.log('콘텐츠 타입:', contentType);
 
       await contentService.createContentPlan(id, {
-        campaignId: id, // 누락된 campaignId 추가
+        campaignId: id,
         influencerId: selectedInfluencer.id,
         influencerName: selectedInfluencer.name,
         contentType,
@@ -462,6 +474,8 @@ const AdminCampaignDetail = () => {
                         {confirmedInfluencers.map((influencer) => {
                           const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
                           const hasPendingRevision = existingPlan?.revisions?.some(rev => rev.status === 'pending');
+                          const isRevisionRequest = existingPlan?.status === 'revision-request';
+                          const isRevisionFeedback = existingPlan?.status === 'revision-feedback';
                           
                           return (
                             <div key={influencer.id} className="p-3 border rounded-lg hover:bg-gray-50">
@@ -471,24 +485,22 @@ const AdminCampaignDetail = () => {
                                   <p className="text-sm text-gray-500">{influencer.platform}</p>
                                   {existingPlan && (
                                     <div className="mt-1 space-y-1">
-                                      <Badge className={
-                                        existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                        existingPlan.status === 'revision-requested' ? 'bg-orange-100 text-orange-800' :
-                                        existingPlan.status === 'revision-feedback' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-green-100 text-green-800'
-                                      }>
-                                        {existingPlan.status === 'draft' ? '기획초안' :
-                                         existingPlan.status === 'revision-requested' ? '수정요청됨' :
-                                         existingPlan.status === 'revision-feedback' ? '수정완료' : '기획완료'}
+                                      <Badge className={getStatusColor(existingPlan.status)}>
+                                        {getStatusText(existingPlan.status)}
                                       </Badge>
-                                      {hasPendingRevision && (
+                                      {(isRevisionRequest || isRevisionFeedback) && existingPlan.revisions && existingPlan.revisions.length > 0 && (
                                         <Badge className="bg-red-100 text-red-800 ml-1">
+                                          {existingPlan.currentRevisionNumber}차 수정요청
+                                        </Badge>
+                                      )}
+                                      {hasPendingRevision && (
+                                        <Badge className="bg-orange-100 text-orange-800 ml-1">
                                           🔄 수정 대기
                                         </Badge>
                                       )}
                                       {existingPlan.revisions && existingPlan.revisions.length > 0 && (
                                         <p className="text-xs text-gray-500">
-                                          수정 요청 {existingPlan.revisions.length}회
+                                          총 수정 요청 {existingPlan.revisions.length}회
                                         </p>
                                       )}
                                     </div>
@@ -497,12 +509,12 @@ const AdminCampaignDetail = () => {
                                 {existingPlan ? (
                                   <Button
                                     size="sm"
-                                    variant={hasPendingRevision ? "default" : "outline"}
+                                    variant={hasPendingRevision || isRevisionRequest ? "default" : "outline"}
                                     onClick={() => handleEditPlan(influencer.id)}
-                                    className={hasPendingRevision ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-50 hover:bg-blue-100"}
+                                    className={hasPendingRevision || isRevisionRequest ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-50 hover:bg-blue-100"}
                                   >
                                     <Edit className="w-4 h-4 mr-1" />
-                                    {hasPendingRevision ? '수정 요청 확인' : '편집'}
+                                    {hasPendingRevision || isRevisionRequest ? '수정 요청 확인' : '편집'}
                                   </Button>
                                 ) : (
                                   <Button

@@ -186,7 +186,7 @@ const CampaignDetail = () => {
 
       const updatedPlan = {
         ...targetPlan!,
-        status: 'revision-requested' as const,
+        status: 'revision-request' as const,
         revisions: [...(targetPlan?.revisions || []), newRevision],
         currentRevisionNumber: revisionNumber,
         updatedAt: new Date().toISOString()

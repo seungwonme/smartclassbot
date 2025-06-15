@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,20 +24,24 @@ const ContentPlanList: React.FC<ContentPlanListProps> = ({
 }) => {
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      case 'revision-requested': return 'bg-orange-100 text-orange-800';
+      case 'waiting': return 'bg-gray-100 text-gray-800';
+      case 'draft': return 'bg-blue-100 text-blue-800';
+      case 'revision-request': return 'bg-orange-100 text-orange-800';
       case 'revision-feedback': return 'bg-purple-100 text-purple-800';
       case 'approved': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-emerald-100 text-emerald-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
+      case 'waiting': return '기획 대기중';
       case 'draft': return '기획초안';
-      case 'revision-requested': return '기획수정중';
+      case 'revision-request': return '기획수정중';
       case 'revision-feedback': return '기획수정중';
       case 'approved': return '기획완료';
+      case 'completed': return '콘텐츠 기획완료';
       default: return status;
     }
   };
