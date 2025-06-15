@@ -83,6 +83,11 @@ const AdminCampaignDetail = () => {
     if (!contentType) return;
 
     try {
+      console.log('=== 시스템 관리자 기획안 생성 시작 ===');
+      console.log('선택된 인플루언서:', selectedInfluencer.name);
+      console.log('콘텐츠 타입:', contentType);
+      console.log('기획안 데이터:', planData.planData);
+
       const newPlan: ContentPlanDetail = {
         id: `plan_${Date.now()}_${selectedInfluencer.id}`,
         campaignId: id,
@@ -109,8 +114,42 @@ const AdminCampaignDetail = () => {
         updatedAt: new Date().toISOString()
       };
 
+      console.log('생성할 기획안:', newPlan);
+
+      // 통합된 저장 방식 사용
+      let existingPlans: ContentPlanDetail[] = [];
+      try {
+        const data = localStorage.getItem('content_plans');
+        if (data && data !== 'null') {
+          existingPlans = JSON.parse(data);
+        }
+      } catch (error) {
+        console.log('기존 데이터 로딩 실패, 새로 시작');
+        existingPlans = [];
+      }
+
+      // 동일한 인플루언서의 기존 기획안 확인
+      const existingIndex = existingPlans.findIndex(
+        plan => plan.campaignId === id && plan.influencerId === selectedInfluencer.id
+      );
+
+      if (existingIndex !== -1) {
+        existingPlans[existingIndex] = newPlan;
+        console.log('기존 기획안 업데이트');
+      } else {
+        existingPlans.push(newPlan);
+        console.log('새 기획안 추가');
+      }
+
+      // localStorage에 저장
+      localStorage.setItem('content_plans', JSON.stringify(existingPlans));
+      console.log('localStorage 저장 완료. 총 기획안 수:', existingPlans.length);
+
       // 콘텐츠 기획 목록에 추가
-      setContentPlans(prev => [...prev, newPlan]);
+      setContentPlans(prev => {
+        const filtered = prev.filter(p => p.influencerId !== selectedInfluencer.id);
+        return [...filtered, newPlan];
+      });
       
       // 우측 상세 화면 숨기기
       setSelectedPlan(null);
@@ -118,6 +157,8 @@ const AdminCampaignDetail = () => {
       // 폼 닫기 및 선택된 인플루언서 초기화
       setShowCreateForm(false);
       setSelectedInfluencer(null);
+
+      console.log('=== 시스템 관리자 기획안 생성 완료 ===');
 
       toast({
         title: "콘텐츠 기획안 생성 완료",
@@ -137,11 +178,34 @@ const AdminCampaignDetail = () => {
     if (!selectedPlan) return;
 
     try {
+      console.log('=== 시스템 관리자 기획안 수정 시작 ===');
+      console.log('수정할 기획안:', selectedPlan.id);
+      console.log('업데이트 데이터:', planData);
+
       const updatedPlan: ContentPlanDetail = {
         ...selectedPlan,
         ...planData,
         updatedAt: new Date().toISOString()
       };
+
+      // localStorage에서 데이터 로딩 및 업데이트
+      let existingPlans: ContentPlanDetail[] = [];
+      try {
+        const data = localStorage.getItem('content_plans');
+        if (data && data !== 'null') {
+          existingPlans = JSON.parse(data);
+        }
+      } catch (error) {
+        console.error('기존 데이터 로딩 실패:', error);
+        existingPlans = [];
+      }
+
+      const index = existingPlans.findIndex(p => p.id === selectedPlan.id);
+      if (index !== -1) {
+        existingPlans[index] = updatedPlan;
+        localStorage.setItem('content_plans', JSON.stringify(existingPlans));
+        console.log('localStorage 업데이트 완료');
+      }
 
       // 콘텐츠 기획 목록 업데이트
       setContentPlans(prev => prev.map(plan => 
@@ -150,6 +214,8 @@ const AdminCampaignDetail = () => {
 
       // 우측 상세 화면 숨기기
       setSelectedPlan(null);
+
+      console.log('=== 시스템 관리자 기획안 수정 완료 ===');
 
       toast({
         title: "기획안 수정 완료",

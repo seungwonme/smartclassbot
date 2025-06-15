@@ -3,115 +3,113 @@ import { ContentPlanDetail, ContentRevision } from '@/types/content';
 import { storageService } from './storage.service';
 
 export const contentService = {
-  // 디버깅을 위한 전체 스토리지 상태 확인 함수 추가
+  // 통합된 localStorage 키 사용
+  STORAGE_KEY: 'content_plans',
+
+  // 디버깅을 위한 전체 스토리지 상태 확인 함수 
   debugContentPlanStorage: () => {
     console.log('=== 콘텐츠 기획안 스토리지 디버깅 시작 ===');
     
-    // localStorage에서 직접 확인
-    const rawContentPlans = localStorage.getItem('content_plans');
-    console.log('📁 localStorage content_plans 원본:', rawContentPlans);
+    // 모든 가능한 키들 확인
+    const possibleKeys = [
+      'content_plans',
+      'lovable_content_plans', 
+      'admin_content_plans',
+      'contentPlans',
+      'content-plans'
+    ];
     
-    if (rawContentPlans && rawContentPlans !== 'null') {
-      try {
-        const parsedPlans = JSON.parse(rawContentPlans);
-        console.log('📋 파싱된 기획안들:', parsedPlans);
-        console.log('📊 총 기획안 수:', Array.isArray(parsedPlans) ? parsedPlans.length : 0);
-        
-        if (Array.isArray(parsedPlans)) {
-          parsedPlans.forEach((plan, index) => {
-            console.log(`📝 기획안 ${index + 1}:`, {
-              id: plan.id,
-              campaignId: plan.campaignId,
-              influencerId: plan.influencerId,
-              influencerName: plan.influencerName,
-              contentType: plan.contentType,
-              status: plan.status,
-              hasContent: plan.planData ? 'YES' : 'NO',
-              createdAt: plan.createdAt
-            });
-            
-            if (plan.planData) {
-              console.log(`📄 기획안 ${index + 1} 상세 데이터:`, plan.planData);
-            }
-          });
+    console.log('🔍 모든 가능한 localStorage 키들 확인:');
+    possibleKeys.forEach(key => {
+      const data = localStorage.getItem(key);
+      console.log(`📋 ${key}: ${data ? `데이터 있음 (${data.length}자)` : 'null'}`);
+      if (data && data !== 'null') {
+        try {
+          const parsed = JSON.parse(data);
+          console.log(`📊 ${key} 파싱된 데이터:`, parsed);
+        } catch (e) {
+          console.log(`❌ ${key} 파싱 실패:`, e);
         }
-      } catch (error) {
-        console.error('❌ localStorage 파싱 실패:', error);
       }
-    } else {
-      console.log('⚠️ localStorage에 content_plans 데이터가 없습니다');
-    }
+    });
+    
+    // 전체 localStorage 키 목록
+    console.log('🗂️ localStorage 전체 키 목록:', Object.keys(localStorage));
     
     // storageService를 통한 확인
     const storageServicePlans = storageService.getContentPlans();
     console.log('🔧 storageService를 통한 기획안:', storageServicePlans);
     
-    // 전체 localStorage 키 확인
-    console.log('🗂️ localStorage 전체 키 목록:', Object.keys(localStorage));
-    
     console.log('=== 콘텐츠 기획안 스토리지 디버깅 완료 ===');
     
     return {
-      rawData: rawContentPlans,
-      parsedData: rawContentPlans ? JSON.parse(rawContentPlans) : null,
-      storageServiceData: storageServicePlans,
-      allKeys: Object.keys(localStorage)
+      allKeys: Object.keys(localStorage),
+      storageServiceData: storageServicePlans
     };
   },
 
-  // 콘텐츠 기획안 목록 조회 (강화된 디버깅 및 데이터 동기화)
+  // 콘텐츠 기획안 목록 조회 (통합된 로딩 방식)
   getContentPlans: async (campaignId: string): Promise<ContentPlanDetail[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
         console.log('=== contentService.getContentPlans 시작 ===');
         console.log('🎯 요청된 캠페인 ID:', campaignId);
         
-        // 전체 스토리지 디버깅 실행
-        const debugResult = contentService.debugContentPlanStorage();
+        let contentPlans: ContentPlanDetail[] = [];
         
-        let contentPlans = [];
-        
-        // 여러 방법으로 데이터 로딩 시도
+        // 1. 기본 키로 시도
         try {
-          // 1. storageService를 통한 로딩
-          contentPlans = storageService.getContentPlans();
-          console.log('🔧 storageService 로딩 결과:', contentPlans.length, '개');
-          
-          // 2. 만약 결과가 없다면 localStorage에서 직접 로딩
-          if (!contentPlans || contentPlans.length === 0) {
-            const rawPlans = localStorage.getItem('content_plans');
-            if (rawPlans && rawPlans !== 'null') {
-              const parsed = JSON.parse(rawPlans);
-              if (Array.isArray(parsed)) {
-                contentPlans = parsed;
-                console.log('📁 localStorage 직접 로딩 결과:', contentPlans.length, '개');
-              }
-            }
+          const data = localStorage.getItem(contentService.STORAGE_KEY);
+          if (data && data !== 'null') {
+            contentPlans = JSON.parse(data);
+            console.log('✅ 기본 키로 로딩 성공:', contentPlans.length, '개');
           }
+        } catch (error) {
+          console.error('❌ 기본 키 로딩 실패:', error);
+        }
+        
+        // 2. 결과가 없으면 다른 가능한 키들로 시도
+        if (!contentPlans || contentPlans.length === 0) {
+          const alternativeKeys = [
+            'lovable_content_plans',
+            'admin_content_plans', 
+            'contentPlans',
+            'content-plans'
+          ];
           
-          // 3. 다른 가능한 키들도 확인
-          const altKeys = ['contentPlans', 'content-plans', 'admin_content_plans'];
-          for (const key of altKeys) {
-            if (contentPlans.length === 0) {
-              const altData = localStorage.getItem(key);
-              if (altData && altData !== 'null') {
-                try {
-                  const parsed = JSON.parse(altData);
-                  if (Array.isArray(parsed) && parsed.length > 0) {
-                    contentPlans = parsed;
-                    console.log(`🔍 대체 키 '${key}'에서 발견:`, parsed.length, '개');
-                    break;
-                  }
-                } catch (e) {
-                  console.log(`⚠️ 키 '${key}' 파싱 실패:`, e);
+          for (const key of alternativeKeys) {
+            try {
+              const data = localStorage.getItem(key);
+              if (data && data !== 'null') {
+                const parsed = JSON.parse(data);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  contentPlans = parsed;
+                  console.log(`✅ 대체 키 '${key}'로 로딩 성공:`, parsed.length, '개');
+                  // 기본 키로 복사
+                  localStorage.setItem(contentService.STORAGE_KEY, JSON.stringify(parsed));
+                  console.log('📋 기본 키로 데이터 복사 완료');
+                  break;
                 }
               }
+            } catch (error) {
+              console.log(`⚠️ 키 '${key}' 시도 실패:`, error);
             }
           }
-          
-        } catch (error) {
-          console.error('❌ 데이터 로딩 중 오류:', error);
-          contentPlans = [];
+        }
+        
+        // 3. storageService로도 시도
+        if (!contentPlans || contentPlans.length === 0) {
+          try {
+            const storageData = storageService.getContentPlans();
+            if (storageData && storageData.length > 0) {
+              contentPlans = storageData;
+              console.log('✅ storageService로 로딩 성공:', storageData.length, '개');
+              // 기본 키로 저장
+              localStorage.setItem(contentService.STORAGE_KEY, JSON.stringify(storageData));
+            }
+          } catch (error) {
+            console.error('❌ storageService 로딩 실패:', error);
+          }
         }
         
         // 캠페인별 필터링
@@ -155,15 +153,20 @@ export const contentService = {
         console.log('📝 기획안 데이터:', planData);
         
         try {
-          // 현재 저장된 기획안들 가져오기
-          let contentPlans = storageService.getContentPlans();
-          console.log('📋 현재 저장된 기획안 수:', contentPlans.length);
+          // 현재 저장된 기획안들 가져오기 (통합된 방식)
+          let contentPlans: ContentPlanDetail[] = [];
           
-          // 만약 배열이 아니라면 빈 배열로 초기화
-          if (!Array.isArray(contentPlans)) {
-            console.log('⚠️ contentPlans가 배열이 아님, 빈 배열로 초기화');
+          try {
+            const data = localStorage.getItem(contentService.STORAGE_KEY);
+            if (data && data !== 'null') {
+              contentPlans = JSON.parse(data);
+            }
+          } catch (error) {
+            console.log('⚠️ 기존 데이터 로딩 실패, 빈 배열로 시작');
             contentPlans = [];
           }
+          
+          console.log('📋 현재 저장된 기획안 수:', contentPlans.length);
           
           const newPlan: ContentPlanDetail = {
             ...planData,
@@ -192,30 +195,20 @@ export const contentService = {
           
           console.log('📝 업데이트된 기획안 리스트:', contentPlans);
           
-          // localStorage에 직접 저장도 시도
-          try {
-            localStorage.setItem('content_plans', JSON.stringify(contentPlans));
-            console.log('💾 localStorage 직접 저장 성공');
-          } catch (localStorageError) {
-            console.error('❌ localStorage 직접 저장 실패:', localStorageError);
-          }
+          // 통합된 키로 저장
+          localStorage.setItem(contentService.STORAGE_KEY, JSON.stringify(contentPlans));
+          console.log('💾 localStorage 저장 완료 - 키:', contentService.STORAGE_KEY);
           
-          const success = storageService.setContentPlans(contentPlans);
+          // storageService에도 저장
+          const storageSuccess = storageService.setContentPlans(contentPlans);
+          console.log('💾 storageService 저장 결과:', storageSuccess);
           
-          if (success) {
-            console.log('💾 기획안 저장 완료 - 전체 기획안:', contentPlans.length);
-            
-            // 저장 후 즉시 검증
-            const verification = storageService.getContentPlans();
-            const directVerification = localStorage.getItem('content_plans');
-            console.log('🔍 storageService 저장 검증:', verification.length, '개');
-            console.log('🔍 localStorage 직접 검증:', directVerification ? JSON.parse(directVerification).length : 0, '개');
-            
-            console.log('=== contentService.createContentPlan 완료 ===');
-            resolve(newPlan);
-          } else {
-            throw new Error('기획안 저장 실패');
-          }
+          // 저장 후 즉시 검증
+          const verification = localStorage.getItem(contentService.STORAGE_KEY);
+          console.log('🔍 저장 검증:', verification ? JSON.parse(verification).length : 0, '개');
+          
+          console.log('=== contentService.createContentPlan 완료 ===');
+          resolve(newPlan);
         } catch (error) {
           console.error('=== contentService.createContentPlan 실패 ===', error);
           reject(error);
@@ -231,7 +224,13 @@ export const contentService = {
         console.log('업데이트 데이터:', updates);
         
         try {
-          const contentPlans = storageService.getContentPlans();
+          // 통합된 방식으로 데이터 로딩
+          let contentPlans: ContentPlanDetail[] = [];
+          const data = localStorage.getItem(contentService.STORAGE_KEY);
+          if (data && data !== 'null') {
+            contentPlans = JSON.parse(data);
+          }
+          
           const index = contentPlans.findIndex(p => p.id === planId && p.campaignId === campaignId);
           
           if (index !== -1) {
@@ -246,17 +245,12 @@ export const contentService = {
             
             console.log('업데이트된 기획안:', contentPlans[index].influencerName);
             
-            // localStorage에도 직접 저장
-            localStorage.setItem('content_plans', JSON.stringify(contentPlans));
+            // 통합된 키로 저장
+            localStorage.setItem(contentService.STORAGE_KEY, JSON.stringify(contentPlans));
+            storageService.setContentPlans(contentPlans);
             
-            const success = storageService.setContentPlans(contentPlans);
-            
-            if (success) {
-              console.log('=== contentService.updateContentPlan 완료 ===');
-              resolve(contentPlans[index]);
-            } else {
-              throw new Error('기획안 업데이트 저장 실패');
-            }
+            console.log('=== contentService.updateContentPlan 완료 ===');
+            resolve(contentPlans[index]);
           } else {
             throw new Error('기획안을 찾을 수 없음');
           }
@@ -274,25 +268,25 @@ export const contentService = {
         console.log('캠페인 ID:', campaignId, '기획안 ID:', planId);
         
         try {
-          const contentPlans = storageService.getContentPlans();
+          let contentPlans: ContentPlanDetail[] = [];
+          const data = localStorage.getItem(contentService.STORAGE_KEY);
+          if (data && data !== 'null') {
+            contentPlans = JSON.parse(data);
+          }
+          
           const index = contentPlans.findIndex(p => p.id === planId && p.campaignId === campaignId);
           
           if (index !== -1) {
             const deletedPlan = contentPlans[index];
             contentPlans.splice(index, 1);
             
-            // localStorage에도 직접 저장
-            localStorage.setItem('content_plans', JSON.stringify(contentPlans));
+            // 통합된 키로 저장
+            localStorage.setItem(contentService.STORAGE_KEY, JSON.stringify(contentPlans));
+            storageService.setContentPlans(contentPlans);
             
-            const success = storageService.setContentPlans(contentPlans);
-            
-            if (success) {
-              console.log('삭제된 기획안:', deletedPlan.influencerName);
-              console.log('=== contentService.deleteContentPlan 완료 ===');
-              resolve();
-            } else {
-              throw new Error('기획안 삭제 저장 실패');
-            }
+            console.log('삭제된 기획안:', deletedPlan.influencerName);
+            console.log('=== contentService.deleteContentPlan 완료 ===');
+            resolve();
           } else {
             throw new Error('삭제할 기획안을 찾을 수 없음');
           }
