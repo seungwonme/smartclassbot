@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -204,11 +203,6 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
                         <span className="text-sm font-medium text-gray-700">
                           {expectedContentType === 'image' ? '이미지 콘텐츠' : '영상 콘텐츠'}
                         </span>
-                        {influencer.deliverables && influencer.deliverables.length > 0 && (
-                          <span className="text-xs text-gray-500">
-                            ({influencer.deliverables.join(', ')})
-                          </span>
-                        )}
                       </div>
 
                       {/* 상태값 */}
@@ -253,21 +247,21 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
                     </div>
 
                     {/* 우측: 일정 정보 */}
-                    <div className="ml-6 text-right space-y-2 min-w-[180px]">
+                    <div className="ml-6 text-right space-y-1 min-w-[200px]">
                       {influencer.productionStartDate && influencer.productionDeadline ? (
                         <>
                           <div className="text-sm">
-                            <div className="text-gray-500">시작일</div>
-                            <div className="font-medium">{influencer.productionStartDate}</div>
+                            <span className="text-gray-500">시작일: </span>
+                            <span className="font-medium">{influencer.productionStartDate}</span>
                           </div>
                           <div className="text-sm">
-                            <div className="text-gray-500">마감일</div>
-                            <div className="font-medium">{influencer.productionDeadline}</div>
+                            <span className="text-gray-500">마감일: </span>
+                            <span className="font-medium">{influencer.productionDeadline}</span>
                           </div>
                           {scheduleInfo && (
                             <div className="text-sm">
-                              <div className="text-gray-500">잔여일</div>
-                              <div className={`font-bold ${
+                              <span className="text-gray-500">잔여일: </span>
+                              <span className={`font-bold ${
                                 scheduleInfo.status === 'deadline-exceeded' ? 'text-red-600' :
                                 scheduleInfo.isUrgent ? 'text-orange-600' :
                                 'text-blue-600'
@@ -280,13 +274,13 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
                                   ? '검수 대기중'
                                   : `${scheduleInfo.daysRemaining}일 남음`
                                 }
-                              </div>
+                              </span>
                             </div>
                           )}
                         </>
                       ) : (
                         <div className="text-sm text-gray-500">
-                          제작 일정<br />미설정
+                          제작 일정 미설정
                         </div>
                       )}
                     </div>
