@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit, Plus, Send } from 'lucide-react';
+import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit, Plus, Send, Save } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
@@ -38,6 +38,8 @@ const AdminCampaignDetail = () => {
   const [showRevisionFeedbackForm, setShowRevisionFeedbackForm] = useState(false);
   const [revisionFeedback, setRevisionFeedback] = useState('');
   const [isContentLoading, setIsContentLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [pendingPlanData, setPendingPlanData] = useState<Partial<ContentPlanDetail> | null>(null);
 
   // 콘텐츠 기획안 로딩 (강화된 로딩 및 실시간 업데이트)
   React.useEffect(() => {
@@ -202,45 +204,50 @@ const AdminCampaignDetail = () => {
     }
   };
 
-  const handleUpdatePlan = async (planData: Partial<ContentPlanDetail>) => {
-    if (!selectedPlan || !campaign) return;
+  // 새로운 기획안 수정 처리 함수 (저장 단계)
+  const handleSavePlanChanges = async () => {
+    if (!selectedPlan || !pendingPlanData || !campaign) return;
 
     try {
-      console.log('=== 시스템 관리자 기획안 업데이트 시작 ===');
+      console.log('=== 시스템 관리자 기획안 수정 저장 ===');
       console.log('기획안 ID:', selectedPlan.id);
-      console.log('업데이트 데이터:', planData);
+      console.log('수정 데이터:', pendingPlanData);
 
-      await contentService.updateContentPlan(campaign.id, selectedPlan.id, planData);
+      await contentService.updateContentPlan(campaign.id, selectedPlan.id, pendingPlanData);
 
-      // 기획안 목록 재로딩
       const updatedPlans = await contentService.getContentPlans(campaign.id);
       setContentPlans(updatedPlans);
 
-      // 선택된 기획안 업데이트
       const updatedPlan = updatedPlans.find(p => p.id === selectedPlan.id);
       if (updatedPlan) {
         setSelectedPlan(updatedPlan);
-        
-        // 수정요청이 있는 상태라면 수정피드백 폼 표시
-        if (updatedPlan.status === 'revision-request' || (updatedPlan.revisions && updatedPlan.revisions.some(rev => rev.status === 'pending'))) {
-          setShowRevisionFeedbackForm(true);
-        }
       }
 
-      console.log('=== 시스템 관리자 기획안 업데이트 완료 ===');
+      // 저장 후 상태 업데이트
+      setHasUnsavedChanges(false);
+      setPendingPlanData(null);
+      setShowRevisionFeedbackForm(true);
+
+      console.log('=== 시스템 관리자 기획안 수정 저장 완료 ===');
 
       toast({
-        title: "기획안 수정 완료",
-        description: "콘텐츠 기획안이 수정되었습니다."
+        title: "기획안 수정 저장 완료",
+        description: "콘텐츠 기획안 수정이 저장되었습니다."
       });
     } catch (error) {
-      console.error('기획안 수정 실패:', error);
+      console.error('기획안 수정 저장 실패:', error);
       toast({
-        title: "수정 실패",
-        description: "기획안 수정에 실패했습니다.",
+        title: "저장 실패",
+        description: "기획안 수정 저장에 실패했습니다.",
         variant: "destructive"
       });
     }
+  };
+
+  // 기획안 데이터 변경 감지
+  const handlePlanDataChange = (planData: Partial<ContentPlanDetail>) => {
+    setPendingPlanData(planData);
+    setHasUnsavedChanges(true);
   };
 
   const handleRevisionFeedback = async (feedback: string) => {
@@ -311,6 +318,8 @@ const AdminCampaignDetail = () => {
       setShowCreateForm(false);
       setShowRevisionForm(false);
       setShowRevisionFeedbackForm(false);
+      setHasUnsavedChanges(false);
+      setPendingPlanData(null);
     }
   };
 
@@ -574,6 +583,8 @@ const AdminCampaignDetail = () => {
                               setSelectedPlan(null);
                               setShowRevisionFeedbackForm(false);
                               setRevisionFeedback('');
+                              setHasUnsavedChanges(false);
+                              setPendingPlanData(null);
                             }}
                           >
                             목록으로
@@ -604,13 +615,36 @@ const AdminCampaignDetail = () => {
 
                           {/* 기획안 편집 폼 */}
                           <div>
-                            <h3 className="text-lg font-medium mb-3">기획안 편집</h3>
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-lg font-medium">기획안 편집</h3>
+                              {hasUnsavedChanges && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={handleSavePlanChanges}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <Save className="w-4 h-4 mr-2" />
+                                    저장
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setHasUnsavedChanges(false);
+                                      setPendingPlanData(null);
+                                    }}
+                                  >
+                                    수정
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                             <ContentPlanForm
                               influencer={confirmedInfluencers.find(inf => inf.id === selectedPlan.influencerId)!}
                               campaignId={id!}
                               existingPlan={selectedPlan}
-                              onSave={handleUpdatePlan}
+                              onSave={handlePlanDataChange}
                               onCancel={() => setSelectedPlan(null)}
+                              disabled={hasUnsavedChanges}
                             />
                           </div>
 
