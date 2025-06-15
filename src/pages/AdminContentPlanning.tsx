@@ -1,441 +1,206 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, FileText, Clock, Users, CheckCircle } from 'lucide-react';
-import AdminSidebar from '@/components/AdminSidebar';
-import ContentPlanList from '@/components/content/ContentPlanList';
-import ContentPlanForm from '@/components/content/ContentPlanForm';
-import ProductionScheduleModal from '@/components/content/ProductionScheduleModal';
-import { Campaign } from '@/types/campaign';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ContentPlanDetail } from '@/types/content';
-import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { contentService } from '@/services/content.service';
-import { campaignService } from '@/services/campaign.service';
 import { useToast } from '@/hooks/use-toast';
+import { Edit, Eye, FileText, VideoIcon, ImageIcon, Trash2 } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 const AdminContentPlanning = () => {
-  const { campaignId } = useParams<{ campaignId: string }>();
+  const [plans, setPlans] = useState<ContentPlanDetail[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { data: campaign, isLoading: campaignLoading } = useCampaignDetail(campaignId);
-  
-  const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('plans');
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-
-  console.log('=== AdminContentPlanning 렌더링 시작 ===');
-  console.log('URL params:', { campaignId });
-  console.log('추출된 캠페인 ID:', campaignId);
-  console.log('현재 URL:', window.location.pathname);
-
-  console.log('=== AdminContentPlanning 데이터 상태 ===');
-  console.log('캠페인 로딩중:', campaignLoading);
-  console.log('캠페인 데이터:', campaign);
-  console.log('콘텐츠 기획안 개수:', contentPlans.length);
-  console.log('캠페인 에러:', null);
 
   useEffect(() => {
-    const loadContentPlans = async () => {
-      if (!campaignId) return;
-      
-      try {
-        const plans = await contentService.getContentPlans(campaignId);
-        setContentPlans(plans);
-      } catch (error) {
-        console.error('콘텐츠 기획안 로딩 실패:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadContentPlans();
-  }, [campaignId]);
+  }, []);
 
-  const getStageInfo = (status: Campaign['status']) => {
-    console.log('=== getStageInfo 호출 ===');
-    console.log('캠페인 상태:', status);
-    
+  const loadContentPlans = async () => {
+    setIsLoading(true);
+    try {
+      const allPlans = await contentService.getAllContentPlans();
+      setPlans(allPlans);
+    } catch (error) {
+      console.error('Error loading content plans:', error);
+      toast({
+        title: "Failed to load content plans",
+        description: "There was an error loading the content plans. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
-      case 'planning':
-        return { stage: 2, title: '콘텐츠 기획', description: '인플루언서별 콘텐츠 기획안을 작성하고 검토합니다.' };
-      case 'plan-review':
-        return { stage: 2, title: '기획 검토', description: '브랜드 관리자의 기획안 검토가 진행중입니다.' };
-      case 'plan-approved':
-        return { stage: 2, title: '기획 승인완료', description: '모든 기획안이 승인되었습니다. 제작 일정을 설정하세요.' };
-      case 'producing':
-        return { stage: 3, title: '콘텐츠 제작', description: '콘텐츠 제작이 진행중입니다.' };
-      case 'content-review':
-        return { stage: 3, title: '콘텐츠 검수', description: '제작된 콘텐츠의 검수가 진행중입니다.' };
-      default:
-        return { stage: 3, title: '콘텐츠 제작', description: '콘텐츠 제작 단계입니다.' };
+      case 'waiting': return 'bg-gray-100 text-gray-800';
+      case 'draft': return 'bg-blue-100 text-blue-800';
+      case 'revision-request': return 'bg-orange-100 text-orange-800';
+      case 'revision-feedback': return 'bg-purple-100 text-purple-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-emerald-100 text-emerald-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleCreateContentPlan = async (planData: Partial<ContentPlanDetail>) => {
-    if (!campaign || !campaignId || !selectedInfluencer) return;
-
-    const { contentType } = planData;
-    if (!contentType) return;
-
-    try {
-      const newPlan: ContentPlanDetail = {
-        id: `plan_${Date.now()}_${selectedInfluencer.id}`,
-        campaignId,
-        influencerId: selectedInfluencer.id,
-        influencerName: selectedInfluencer.name,
-        contentType,
-        status: 'draft',
-        planData: contentType === 'image' ? {
-          postTitle: (planData.planData as any)?.postTitle || '',
-          thumbnailTitle: (planData.planData as any)?.thumbnailTitle || '',
-          referenceImages: (planData.planData as any)?.referenceImages || [],
-          script: (planData.planData as any)?.script || '',
-          hashtags: (planData.planData as any)?.hashtags || []
-        } : {
-          postTitle: (planData.planData as any)?.postTitle || '',
-          scenario: (planData.planData as any)?.scenario || '',
-          scenarioFiles: (planData.planData as any)?.scenarioFiles || [],
-          script: (planData.planData as any)?.script || '',
-          hashtags: (planData.planData as any)?.hashtags || []
-        },
-        revisions: [],
-        currentRevisionNumber: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      // 캠페인의 contentPlans 배열에 추가
-      const existingPlans = (campaign.contentPlans || []).map(plan => {
-        if ('planDocument' in plan) {
-          return {
-            ...plan,
-            planData: plan.contentType === 'image' ? {
-              postTitle: plan.planDocument,
-              thumbnailTitle: '',
-              referenceImages: [],
-              script: '',
-              hashtags: []
-            } : {
-              postTitle: plan.planDocument,
-              scenario: '',
-              scenarioFiles: [],
-              script: '',
-              hashtags: []
-            },
-            currentRevisionNumber: 0,
-            revisions: []
-          } as ContentPlanDetail;
-        }
-        return plan as ContentPlanDetail;
-      });
-
-      const updatedContentPlans = [...existingPlans, newPlan];
-      
-      // Campaign의 contentPlans 배열 형식으로 변환
-      const campaignContentPlans = updatedContentPlans.map(plan => ({
-        id: plan.id,
-        campaignId: plan.campaignId,
-        influencerId: plan.influencerId,
-        influencerName: plan.influencerName,
-        contentType: plan.contentType,
-        status: plan.status === 'revision-requested' ? 'revision' as const : 
-                plan.status === 'revision-feedback' ? 'revision' as const :
-                plan.status as 'draft' | 'submitted' | 'approved' | 'revision',
-        planDocument: plan.contentType === 'image' ? 
-          (plan.planData as any).postTitle : 
-          (plan.planData as any).postTitle,
-        revisions: plan.revisions,
-        createdAt: plan.createdAt,
-        updatedAt: plan.updatedAt
-      }));
-      
-      await campaignService.updateCampaign(campaignId, {
-        contentPlans: campaignContentPlans
-      });
-
-      setContentPlans(prev => [...prev, newPlan]);
-      setShowCreateForm(false);
-      setSelectedInfluencer(null);
-
-      toast({
-        title: "콘텐츠 기획안 생성 완료",
-        description: `${selectedInfluencer.name}의 ${contentType === 'image' ? '이미지' : '동영상'} 기획안이 생성되었습니다.`
-      });
-    } catch (error) {
-      console.error('콘텐츠 기획안 생성 실패:', error);
-      toast({
-        title: "생성 실패",
-        description: "콘텐츠 기획안 생성에 실패했습니다.",
-        variant: "destructive"
-      });
+  const getStatusText = (status: ContentPlanDetail['status']) => {
+    switch (status) {
+      case 'waiting': return '기획 대기중';
+      case 'draft': return '기획초안';
+      case 'revision-request': return '기획수정중';
+      case 'revision-feedback': return '기획수정중';
+      case 'approved': return '기획완료';
+      case 'completed': return '콘텐츠 기획완료';
+      default: return status;
     }
   };
 
-  const handlePlanUpdate = async (planId: string, updates: any) => {
-    if (!campaignId) return;
-
-    try {
-      const updatedPlan = await contentService.updateContentPlan(campaignId, planId, updates);
-      setContentPlans(prev => prev.map(plan => 
-        plan.id === planId ? updatedPlan : plan
-      ));
-
-      toast({
-        title: "기획안 수정 완료",
-        description: "콘텐츠 기획안이 수정되었습니다."
-      });
-    } catch (error) {
-      console.error('기획안 수정 실패:', error);
-      toast({
-        title: "수정 실패",
-        description: "기획안 수정에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSetProductionSchedule = async (scheduleData: any) => {
-    if (!campaign || !campaignId) return;
-
-    try {
-      await campaignService.updateCampaign(campaignId, {
-        status: 'producing',
-        currentStage: 3,
-        productionSchedule: scheduleData
-      });
-
-      toast({
-        title: "제작 일정 설정 완료",
-        description: "콘텐츠 제작 단계로 전환되었습니다."
-      });
-
-      // 페이지 새로고침으로 최신 상태 반영
-      window.location.reload();
-    } catch (error) {
-      console.error('제작 일정 설정 실패:', error);
-      toast({
-        title: "설정 실패",
-        description: "제작 일정 설정에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  if (campaignLoading || isLoading) {
+  const filteredPlans = plans.filter(plan => {
+    const searchTerm = searchQuery.toLowerCase();
     return (
-      <div className="flex min-h-screen w-full">
-        <AdminSidebar />
-        <div className="flex-1 p-8">
-          <div className="text-center">로딩 중...</div>
-        </div>
-      </div>
+      plan.influencerName.toLowerCase().includes(searchTerm) ||
+      plan.campaignId.toLowerCase().includes(searchTerm) ||
+      ('postTitle' in plan.planData && plan.planData.postTitle.toLowerCase().includes(searchTerm))
     );
-  }
+  });
 
-  if (!campaign) {
+  const handleDeletePlan = async (planId: string) => {
+    try {
+      await contentService.deleteContentPlan(planId);
+      setPlans(prevPlans => prevPlans.filter(plan => plan.id !== planId));
+      toast({
+        title: "Content plan deleted",
+        description: "The content plan has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error("Error deleting content plan:", error);
+      toast({
+        title: "Failed to delete content plan",
+        description: "There was an error deleting the content plan. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderPlanCard = (plan: ContentPlanDetail) => {
+    const hasRevisions = plan.revisions && plan.revisions.length > 0;
+    const hasPendingRevision = plan.status === 'revision-request';
+
     return (
-      <div className="flex min-h-screen w-full">
-        <AdminSidebar />
-        <div className="flex-1 p-8">
-          <div className="text-center">캠페인을 찾을 수 없습니다.</div>
-        </div>
-      </div>
+      <TableRow key={plan.id} className="hover:bg-gray-50">
+        <TableCell>
+          <div className="flex justify-center">
+            {plan.contentType === 'image' ? (
+              <ImageIcon className="w-5 h-5 text-blue-600" />
+            ) : (
+              <VideoIcon className="w-5 h-5 text-red-600" />
+            )}
+          </div>
+        </TableCell>
+        <TableCell>{plan.campaignId}</TableCell>
+        <TableCell>{plan.influencerName}</TableCell>
+        <TableCell>
+          {'postTitle' in plan.planData ? plan.planData.postTitle : '제목 없음'}
+        </TableCell>
+        <TableCell className="text-center">
+          <Badge className={getStatusColor(plan.status)}>
+            {getStatusText(plan.status)}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-center">
+          {hasRevisions ? `${plan.revisions.length}회` : '없음'}
+        </TableCell>
+        <TableCell className="text-center">
+          {new Date(plan.updatedAt).toLocaleDateString()}
+        </TableCell>
+        <TableCell className="text-center">
+          <div className="flex justify-center gap-2">
+            <Button size="sm" variant="ghost">
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="ghost">
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => handleDeletePlan(plan.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
     );
-  }
-
-  const stageInfo = getStageInfo(campaign.status);
-  const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
-  const allPlansApproved = contentPlans.length > 0 && contentPlans.every(plan => plan.status === 'approved');
-
-  console.log('=== 최종 렌더링 정보 ===');
-  console.log('스테이지 정보:', stageInfo);
-  console.log('캠페인 제목:', campaign.title);
-  console.log('인플루언서 수:', confirmedInfluencers.length);
+  };
 
   return (
-    <div className="flex min-h-screen w-full">
-      <AdminSidebar />
-      <div className="flex-1 p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-4">
-            <Link to={`/admin/campaigns/${campaignId}`}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                캠페인 상세로
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold">{campaign.title}</h1>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className="bg-blue-100 text-blue-800">
-                  {stageInfo.title}
-                </Badge>
-                <Badge variant="outline" className="text-purple-600">
-                  시스템 관리자
-                </Badge>
-              </div>
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">콘텐츠 기획 관리</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="search">검색:</Label>
+              <Input
+                type="text"
+                id="search"
+                placeholder="캠페인 ID, 인플루언서 이름, 제목 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">타입</TableHead>
+                    <TableHead>캠페인 ID</TableHead>
+                    <TableHead>인플루언서</TableHead>
+                    <TableHead>제목</TableHead>
+                    <TableHead className="text-center">상태</TableHead>
+                    <TableHead className="text-center">수정 횟수</TableHead>
+                    <TableHead className="text-center">수정일</TableHead>
+                    <TableHead className="text-center w-32">액션</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-4">
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredPlans.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-4">
+                        No content plans found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredPlans.map(renderPlanCard)
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </div>
-          
-          {campaign.status === 'plan-approved' && (
-            <Button 
-              onClick={() => setShowScheduleModal(true)}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              제작 일정 설정
-            </Button>
-          )}
-        </div>
-
-        <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="w-5 h-5 mr-2" />
-                현재 진행 단계
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-medium">{stageInfo.title}</p>
-                  <p className="text-sm text-gray-600">{stageInfo.description}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">캠페인 ID</div>
-                  <div className="font-mono text-sm">{campaignId}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="plans">📝 콘텐츠 기획</TabsTrigger>
-            <TabsTrigger value="upload">📤 콘텐츠 업로드</TabsTrigger>
-            <TabsTrigger value="review">🔍 콘텐츠 검수</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="plans" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Users className="w-5 h-5 mr-2" />
-                    콘텐츠 기획안 관리
-                  </div>
-                  <div className="flex gap-2">
-                    {confirmedInfluencers.map(influencer => {
-                      const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
-                      if (existingPlan) return null;
-                      
-                      return (
-                        <Button
-                          key={influencer.id}
-                          size="sm"
-                          onClick={() => {
-                            setSelectedInfluencer(influencer);
-                            setShowCreateForm(true);
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          {influencer.name} 기획안 생성
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {contentPlans.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 콘텐츠 기획안이 없습니다</h3>
-                    <p className="text-gray-500 mb-4">인플루언서가 콘텐츠 기획안을 제출할 때까지 기다리거나 직접 생성하세요.</p>
-                    <p className="text-sm text-gray-400">
-                      참고: 캠페인이 '기획' 단계에 있어야 인플루언서가 기획안을 작성할 수 있습니다.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <ContentPlanList
-                      plans={contentPlans}
-                      onPlanUpdate={handlePlanUpdate}
-                      userType="admin"
-                    />
-                    {allPlansApproved && campaign.status === 'planning' && (
-                      <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-center">
-                          <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                          <div>
-                            <h4 className="font-medium text-green-800">모든 기획안이 승인되었습니다</h4>
-                            <p className="text-sm text-green-600">제작 일정을 설정하여 다음 단계로 진행하세요.</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="upload" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>콘텐츠 업로드</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  콘텐츠 업로드 기능이 곧 추가될 예정입니다.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="review" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>콘텐츠 검수</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  콘텐츠 검수 기능이 곧 추가될 예정입니다.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {showCreateForm && selectedInfluencer && (
-          <ContentPlanForm
-            influencer={selectedInfluencer}
-            campaignId={campaignId!}
-            onSave={handleCreateContentPlan}
-            onCancel={() => {
-              setShowCreateForm(false);
-              setSelectedInfluencer(null);
-            }}
-          />
-        )}
-
-        <ProductionScheduleModal
-          isOpen={showScheduleModal}
-          onClose={() => setShowScheduleModal(false)}
-          onSave={handleSetProductionSchedule}
-          campaign={campaign}
-          contentPlans={contentPlans}
-        />
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

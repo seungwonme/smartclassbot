@@ -39,7 +39,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return 'bg-blue-100 text-blue-800';
-      case 'revision-requested': return 'bg-orange-100 text-orange-800';
+      case 'revision-request': return 'bg-orange-100 text-orange-800';
       case 'revision-feedback': return 'bg-purple-100 text-purple-800';
       case 'approved': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -49,7 +49,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return '기획초안';
-      case 'revision-requested': return '기획수정중';
+      case 'revision-request': return '기획수정중';
       case 'revision-feedback': return '기획수정중';
       case 'approved': return '기획완료';
       default: return status;
@@ -57,7 +57,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   };
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
-    return plan.status === 'draft' || plan.status === 'revision-requested' || plan.status === 'revision-feedback';
+    return plan.status === 'draft' || plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
 
   const hasPlanContent = (plan: ContentPlanDetail) => {
@@ -105,7 +105,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       return `${pendingAdminFeedback[0].revisionNumber}차 수정피드백`;
     }
     
-    if (plan.status === 'revision-requested') {
+    if (plan.status === 'revision-request') {
       return `${completedBrandRevisions + 1}차 수정요청`;
     } else if (plan.status === 'revision-feedback') {
       return `${completedBrandRevisions}차 수정피드백`;
