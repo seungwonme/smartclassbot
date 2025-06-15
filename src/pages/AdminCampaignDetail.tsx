@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit, Plus } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Calendar, Users, DollarSign, FileText, Video, Edit, Plus, Send } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
@@ -33,6 +35,8 @@ const AdminCampaignDetail = () => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [showRevisionFeedbackForm, setShowRevisionFeedbackForm] = useState(false);
+  const [revisionFeedback, setRevisionFeedback] = useState('');
   const [isContentLoading, setIsContentLoading] = useState(false);
 
   // 콘텐츠 기획안 로딩 (강화된 로딩 및 실시간 업데이트)
@@ -216,6 +220,11 @@ const AdminCampaignDetail = () => {
       const updatedPlan = updatedPlans.find(p => p.id === selectedPlan.id);
       if (updatedPlan) {
         setSelectedPlan(updatedPlan);
+        
+        // 수정요청이 있는 상태라면 수정피드백 폼 표시
+        if (updatedPlan.status === 'revision-request' || (updatedPlan.revisions && updatedPlan.revisions.some(rev => rev.status === 'pending'))) {
+          setShowRevisionFeedbackForm(true);
+        }
       }
 
       console.log('=== 시스템 관리자 기획안 업데이트 완료 ===');
@@ -238,31 +247,42 @@ const AdminCampaignDetail = () => {
     if (!selectedPlan) return;
 
     try {
-      const revisionNumber = (selectedPlan.currentRevisionNumber || 0) + 1;
-      const newRevision = {
-        id: `revision_${Date.now()}`,
-        revisionNumber,
-        feedback,
-        requestedBy: 'admin' as const,
-        requestedByName: '시스템 관리자',
-        requestedAt: new Date().toISOString(),
-        status: 'pending' as const
-      };
+      const revisionNumber = (selectedPlan.currentRevisionNumber || 0);
+      
+      // 현재 pending 상태인 revision을 찾아서 완료 처리
+      const updatedRevisions = selectedPlan.revisions?.map(revision => {
+        if (revision.status === 'pending') {
+          return {
+            ...revision,
+            status: 'completed' as const,
+            response: feedback,
+            respondedAt: new Date().toISOString(),
+            respondedBy: '시스템 관리자'
+          };
+        }
+        return revision;
+      }) || [];
 
       const updatedPlan: ContentPlanDetail = {
         ...selectedPlan,
         status: 'revision-feedback',
-        revisions: [...(selectedPlan.revisions || []), newRevision],
-        currentRevisionNumber: revisionNumber,
+        revisions: updatedRevisions,
         updatedAt: new Date().toISOString()
       };
+
+      await contentService.updateContentPlan(selectedPlan.campaignId, selectedPlan.id, {
+        status: 'revision-feedback',
+        revisions: updatedRevisions,
+        updatedAt: new Date().toISOString()
+      });
 
       setContentPlans(prev => prev.map(plan => 
         plan.id === selectedPlan.id ? updatedPlan : plan
       ));
 
       setSelectedPlan(updatedPlan);
-      setShowRevisionForm(false);
+      setShowRevisionFeedbackForm(false);
+      setRevisionFeedback('');
 
       toast({
         title: "수정피드백 전송 완료",
@@ -290,6 +310,7 @@ const AdminCampaignDetail = () => {
       setSelectedPlan(plan);
       setShowCreateForm(false);
       setShowRevisionForm(false);
+      setShowRevisionFeedbackForm(false);
     }
   };
 
@@ -298,6 +319,7 @@ const AdminCampaignDetail = () => {
     setSelectedPlan(null);
     setShowCreateForm(true);
     setShowRevisionForm(false);
+    setShowRevisionFeedbackForm(false);
   };
 
   if (isLoading) {
@@ -548,7 +570,11 @@ const AdminCampaignDetail = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedPlan(null)}
+                            onClick={() => {
+                              setSelectedPlan(null);
+                              setShowRevisionFeedbackForm(false);
+                              setRevisionFeedback('');
+                            }}
                           >
                             목록으로
                           </Button>
@@ -587,6 +613,52 @@ const AdminCampaignDetail = () => {
                               onCancel={() => setSelectedPlan(null)}
                             />
                           </div>
+
+                          {/* N차 수정피드백 섹션 */}
+                          {showRevisionFeedbackForm && (
+                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Send className="w-5 h-5 text-blue-600" />
+                                <h4 className="font-medium text-blue-800">
+                                  {selectedPlan.currentRevisionNumber}차 수정피드백
+                                </h4>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                <Label htmlFor="revision-feedback" className="text-sm font-medium">
+                                  수정피드백 내용
+                                </Label>
+                                <Textarea
+                                  id="revision-feedback"
+                                  value={revisionFeedback}
+                                  onChange={(e) => setRevisionFeedback(e.target.value)}
+                                  placeholder="수정사항에 대한 피드백을 작성해주세요..."
+                                  rows={4}
+                                  className="text-sm"
+                                />
+                                
+                                <div className="flex gap-2 pt-2">
+                                  <Button
+                                    onClick={() => handleRevisionFeedback(revisionFeedback)}
+                                    disabled={!revisionFeedback.trim()}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    <Send className="w-4 h-4 mr-2" />
+                                    {selectedPlan.currentRevisionNumber}차 수정피드백 전송
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setShowRevisionFeedbackForm(false);
+                                      setRevisionFeedback('');
+                                    }}
+                                  >
+                                    취소
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-full text-gray-500">
