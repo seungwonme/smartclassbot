@@ -17,6 +17,7 @@ interface ContentPlanFormProps {
   onSave: (planData: Partial<ContentPlanDetail>) => void;
   onCancel: () => void;
   onContentUpdated?: () => void;
+  disabled?: boolean;
 }
 
 const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
@@ -25,7 +26,8 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   existingPlan,
   onSave,
   onCancel,
-  onContentUpdated
+  onContentUpdated,
+  disabled = false
 }) => {
   const [contentType, setContentType] = useState<'image' | 'video'>(
     existingPlan?.contentType || 'image'
@@ -209,22 +211,26 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
       {/* 콘텐츠 타입 선택 */}
       <div>
         <Label className="text-base font-medium mb-3 block">콘텐츠 타입</Label>
-        <RadioGroup value={contentType} onValueChange={(value) => {
-          console.log('콘텐츠 타입 변경:', value);
-          setContentType(value as 'image' | 'video');
-          if (onContentUpdated) {
-            onContentUpdated();
-          }
-        }}>
+        <RadioGroup 
+          value={contentType} 
+          onValueChange={(value) => {
+            console.log('콘텐츠 타입 변경:', value);
+            setContentType(value as 'image' | 'video');
+            if (onContentUpdated) {
+              onContentUpdated();
+            }
+          }}
+          disabled={disabled}
+        >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="image" id="image" />
+            <RadioGroupItem value="image" id="image" disabled={disabled} />
             <Label htmlFor="image" className="flex items-center gap-2 cursor-pointer">
               <ImageIcon className="w-4 h-4" />
               이미지 포스팅
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="video" id="video" />
+            <RadioGroupItem value="video" id="video" disabled={disabled} />
             <Label htmlFor="video" className="flex items-center gap-2 cursor-pointer">
               <VideoIcon className="w-4 h-4" />
               영상 포스팅
@@ -254,10 +260,10 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
 
       {/* 액션 버튼 */}
       <div className="flex justify-end gap-2 pt-4">
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} disabled={disabled}>
           취소
         </Button>
-        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700" disabled={disabled}>
           {hasPendingRevision ? '수정 완료' : '저장'}
         </Button>
       </div>
