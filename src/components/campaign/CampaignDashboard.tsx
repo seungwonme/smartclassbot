@@ -147,7 +147,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
       if (!plan) return;
       
-      // 수정요청 상태인 기획안들을 확인
+      // 수정요청 상태인 기획안들을 확인 (새로운 status 값 사용)
       if (plan.status === 'revision-request' || plan.status === 'revision-feedback') {
         const planRevisionCount = plan.revisions?.length || 0;
         revisionCount = Math.max(revisionCount, planRevisionCount);
