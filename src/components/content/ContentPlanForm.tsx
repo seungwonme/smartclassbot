@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -18,7 +17,8 @@ interface ContentPlanFormProps {
   onCancel: () => void;
   onContentUpdated?: () => void;
   disabled?: boolean;
-  hideActionButtons?: boolean; // 새로 추가된 prop
+  hideActionButtons?: boolean;
+  isRevisionEditMode?: boolean; // 수정 요청 편집 모드인지 구분하는 prop 추가
 }
 
 const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
@@ -29,7 +29,8 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   onCancel,
   onContentUpdated,
   disabled = false,
-  hideActionButtons = false // 기본값은 false
+  hideActionButtons = false,
+  isRevisionEditMode = false // 기본값은 false
 }) => {
   const [contentType, setContentType] = useState<'image' | 'video'>(
     existingPlan?.contentType || 'image'
@@ -135,15 +136,31 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   const handleSave = () => {
     console.log('=== 기획안 저장 시작 ===');
     console.log('contentType:', contentType);
-    console.log('현재 imageData:', imageData);
-    console.log('현재 videoData:', videoData);
+    console.log('isRevisionEditMode:', isRevisionEditMode);
     console.log('기존 기획안 존재 여부:', !!existingPlan);
     console.log('수정 요청 대기 중:', hasPendingRevision);
     
     const currentPlanData = contentType === 'image' ? imageData : videoData;
     console.log('저장할 planData:', currentPlanData);
     
-    // 상태 결정 로직
+    // 수정 요청 편집 모드인 경우에는 revision 상태를 변경하지 않음
+    if (isRevisionEditMode) {
+      console.log('🔄 수정 요청 편집 모드 - revision 상태 변경하지 않음');
+      const planData: Partial<ContentPlanDetail> = {
+        campaignId,
+        influencerId: influencer.id,
+        influencerName: influencer.name,
+        contentType,
+        planData: currentPlanData,
+        // revision 관련 필드는 변경하지 않음
+      };
+      
+      console.log('수정 요청 편집 모드 저장 데이터:', planData);
+      onSave(planData);
+      return;
+    }
+    
+    // 일반 모드에서의 기존 로직
     let newStatus: 'draft' | 'revision-feedback' = 'draft';
     let updatedRevisions = existingPlan?.revisions || [];
     

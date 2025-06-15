@@ -220,7 +220,17 @@ const AdminCampaignDetail = () => {
 
       console.log('수정 요청 대기 중:', hasPendingRevision);
 
-      await contentService.updateContentPlan(campaign.id, selectedPlan.id, pendingPlanData);
+      // 수정 요청 편집 모드에서는 revision 상태를 변경하지 않고 기획안 데이터만 업데이트
+      const updateData = {
+        ...pendingPlanData,
+        updatedAt: new Date().toISOString()
+      };
+
+      // revision 관련 필드 제거 (수정 요청 편집 모드에서는 변경하지 않음)
+      delete updateData.status;
+      delete updateData.revisions;
+
+      await contentService.updateContentPlan(campaign.id, selectedPlan.id, updateData);
 
       const updatedPlans = await contentService.getContentPlans(campaign.id);
       setContentPlans(updatedPlans);
@@ -660,6 +670,7 @@ const AdminCampaignDetail = () => {
                               onCancel={() => setSelectedPlan(null)}
                               disabled={hasUnsavedChanges}
                               hideActionButtons={true}
+                              isRevisionEditMode={true} // 수정 요청 편집 모드임을 명시
                             />
                           </div>
 
