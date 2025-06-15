@@ -54,20 +54,11 @@ const ProductionRangeCalendar: React.FC<ProductionRangeCalendarProps> = ({
 
   // Calculate remaining days
   const remainingDays = Math.max(0, Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-  const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   const progressPercentage = Math.min(100, Math.max(0, ((today.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * 100));
 
   return (
     <div className={`${className}`}>
-      {/* 제목 */}
-      <div className="mb-3">
-        <h4 className="text-sm font-medium text-gray-700 mb-1">제작 일정</h4>
-        <div className="text-xs text-gray-500">
-          총 {totalDays}일간
-        </div>
-      </div>
-
-      {/* 달력 */}
+      {/* 달력 - 헤더 제거하고 크기 확대 */}
       <Calendar
         mode="single"
         month={displayMonth}
@@ -77,18 +68,18 @@ const ProductionRangeCalendar: React.FC<ProductionRangeCalendarProps> = ({
         classNames={{
           months: "flex w-full",
           month: "space-y-2 w-full",
-          caption: "flex justify-center pt-1 relative items-center text-xs",
-          caption_label: "text-xs font-medium",
+          caption: "flex justify-center pt-1 relative items-center text-sm",
+          caption_label: "text-sm font-medium",
           nav: "space-x-1 flex items-center",
-          nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100 text-xs",
+          nav_button: "h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100 text-sm",
           nav_button_previous: "absolute left-1",
           nav_button_next: "absolute right-1",
           table: "w-full border-collapse space-y-1",
           head_row: "flex",
-          head_cell: "text-muted-foreground rounded-md w-6 font-normal text-[0.6rem]",
+          head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.7rem] flex-1",
           row: "flex w-full mt-1",
-          cell: "h-6 w-6 text-center text-[0.6rem] p-0 relative focus-within:relative focus-within:z-20",
-          day: "h-6 w-6 p-0 font-normal aria-selected:opacity-100 text-[0.6rem]",
+          cell: "h-8 w-8 text-center text-[0.7rem] p-0 relative focus-within:relative focus-within:z-20 flex-1",
+          day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-[0.7rem] w-full",
           day_today: "bg-orange-500 text-white rounded-full",
           day_outside: "text-muted-foreground opacity-50",
           day_disabled: "text-muted-foreground opacity-50"

@@ -50,6 +50,13 @@ const InfluencerDetailPanel: React.FC<InfluencerDetailPanelProps> = ({
     }
   };
 
+  // Calculate total days between start and deadline
+  const calculateTotalDays = (startDate: string, deadline: string) => {
+    const start = new Date(startDate);
+    const end = new Date(deadline);
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   const expectedContentType = getExpectedContentType();
   const ContentIcon = expectedContentType === 'image' ? FileImage : FileVideo;
 
@@ -97,26 +104,13 @@ const InfluencerDetailPanel: React.FC<InfluencerDetailPanelProps> = ({
                   {expectedContentType === 'image' ? '이미지 콘텐츠' : '영상 콘텐츠'}
                 </span>
               </div>
-              
-              {influencer.deliverables && influencer.deliverables.length > 0 && (
-                <div className="ml-7">
-                  <div className="text-sm text-gray-600 mb-1">산출물</div>
-                  <div className="flex flex-wrap gap-1">
-                    {influencer.deliverables.map((deliverable, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {deliverable}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* 제작 기간 정보 */}
+              {/* 제작 기간 정보 with total days */}
               {influencer.productionStartDate && influencer.productionDeadline && (
                 <div className="ml-7">
                   <div className="text-sm text-gray-600 mb-1">제작 기간</div>
                   <div className="text-sm text-gray-800">
-                    {influencer.productionStartDate} ~ {influencer.productionDeadline}
+                    {influencer.productionStartDate} ~ {influencer.productionDeadline} (총 {calculateTotalDays(influencer.productionStartDate, influencer.productionDeadline)}일간)
                   </div>
                 </div>
               )}
