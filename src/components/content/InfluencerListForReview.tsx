@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -124,6 +125,9 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
           {confirmedInfluencers.map((influencer) => {
             const existingPlan = plans.find(plan => plan.influencerId === influencer.id);
             const revisionStatus = existingPlan ? getDetailedRevisionStatus(existingPlan) : null;
+            
+            console.log(`인플루언서 ${influencer.name}의 기획안:`, existingPlan);
+            console.log(`Revision 상태:`, revisionStatus);
             
             return (
               <div 
