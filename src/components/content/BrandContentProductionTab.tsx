@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, User, CheckCircle, FileImage, FileVideo } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, FileImage, FileVideo, AlertTriangle } from 'lucide-react';
 import { CampaignInfluencer, ContentSubmission } from '@/types/campaign';
 import { contentSubmissionService } from '@/services/contentSubmission.service';
 import ProductionScheduleStatus from './ProductionScheduleStatus';
@@ -77,33 +77,6 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
     }
   };
 
-  const getContentTypeIcon = (contentType: 'image' | 'video') => {
-    return contentType === 'image' ? FileImage : FileVideo;
-  };
-
-  const getContentTypeInfo = (contentType: 'image' | 'video') => {
-    if (contentType === 'image') {
-      return {
-        icon: FileImage,
-        label: '이미지 콘텐츠',
-        description: '피드용 이미지 포스팅',
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        borderColor: 'border-blue-200'
-      };
-    } else {
-      return {
-        icon: FileVideo,
-        label: '영상 콘텐츠',
-        description: '동영상 포스팅',
-        bgColor: 'bg-purple-50',
-        textColor: 'text-purple-700',
-        borderColor: 'border-purple-200'
-      };
-    }
-  };
-
-  // 인플루언서의 예상 콘텐츠 타입 결정
   const getExpectedContentType = (influencer: CampaignInfluencer): 'image' | 'video' => {
     const deliverables = influencer.deliverables || [];
     const hasVideo = deliverables.some(d => 
@@ -115,7 +88,6 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
     return hasVideo ? 'video' : 'image';
   };
 
-  // 일정별로 인플루언서 정렬 (새로운 상태값 기준)
   const sortInfluencersBySchedule = (influencers: CampaignInfluencer[]) => {
     return [...influencers].sort((a, b) => {
       if (!a.productionStartDate || !a.productionDeadline) return 1;
@@ -130,7 +102,6 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
       const scheduleA = calculateScheduleStatus(a.productionStartDate, a.productionDeadline, false, !!hasContentA);
       const scheduleB = calculateScheduleStatus(b.productionStartDate, b.productionDeadline, false, !!hasContentB);
 
-      // 우선순위: 마감초과 > 제작중(긴급) > 제작중 > 제작대기중 > 검수중
       const urgencyOrder = { 
         'deadline-exceeded': 0, 
         '긴급-production-in-progress': 1,
@@ -151,6 +122,19 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
     });
   };
 
+  const getScheduleInfo = (influencer: CampaignInfluencer) => {
+    if (!influencer.productionStartDate || !influencer.productionDeadline) return null;
+    
+    const submission = getInfluencerSubmission(influencer.id);
+    const hasContentSubmission = submission && ['submitted', 'approved'].includes(submission.status);
+    return calculateScheduleStatus(
+      influencer.productionStartDate,
+      influencer.productionDeadline,
+      false,
+      !!hasContentSubmission
+    );
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -166,7 +150,6 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 제작 일정 현황 대시보드 */}
       <ProductionTimeline 
         confirmedInfluencers={confirmedInfluencers}
         contentSubmissions={contentSubmissions}
@@ -192,92 +175,120 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {sortedInfluencers.map((influencer) => {
               const submission = getInfluencerSubmission(influencer.id);
               const expectedContentType = getExpectedContentType(influencer);
-              const contentTypeInfo = getContentTypeInfo(submission?.contentType || expectedContentType);
-              const ContentTypeIcon = contentTypeInfo.icon;
+              const scheduleInfo = getScheduleInfo(influencer);
+              const ContentIcon = expectedContentType === 'image' ? FileImage : FileVideo;
 
               return (
-                <div key={influencer.id} className="p-4 border rounded-lg bg-gray-50">
+                <div key={influencer.id} className="border rounded-lg p-4 bg-white shadow-sm">
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <User className="w-8 h-8 p-1 bg-gray-100 rounded-full" />
+                    {/* 좌측: 인플루언서 정보, 콘텐츠 정보, 상태값 */}
+                    <div className="flex-1 space-y-3">
+                      {/* 인플루언서 정보 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-gray-600" />
+                        </div>
                         <div>
-                          <h4 className="font-medium">{influencer.name}</h4>
+                          <h4 className="font-medium text-gray-900">{influencer.name}</h4>
                           <p className="text-sm text-gray-500">{influencer.platform}</p>
                         </div>
                       </div>
 
-                      {/* 예상 콘텐츠 유형 표시 */}
-                      <div className={`p-2 rounded-lg border ${contentTypeInfo.bgColor} ${contentTypeInfo.borderColor} mb-3`}>
-                        <div className="flex items-center gap-2">
-                          <ContentTypeIcon className={`w-4 h-4 ${contentTypeInfo.textColor}`} />
-                          <span className={`text-sm font-medium ${contentTypeInfo.textColor}`}>
-                            제작 예정: {contentTypeInfo.label}
-                          </span>
-                        </div>
-                        <p className={`text-xs ${contentTypeInfo.textColor} opacity-80 mt-1`}>
-                          {contentTypeInfo.description}
-                        </p>
+                      {/* 제작예정 콘텐츠 정보 */}
+                      <div className="flex items-center gap-2">
+                        <ContentIcon className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {expectedContentType === 'image' ? '이미지 콘텐츠' : '영상 콘텐츠'}
+                        </span>
                         {influencer.deliverables && influencer.deliverables.length > 0 && (
-                          <div className="mt-1">
-                            <span className={`text-xs ${contentTypeInfo.textColor} opacity-60`}>
-                              산출물: {influencer.deliverables.join(', ')}
-                            </span>
-                          </div>
+                          <span className="text-xs text-gray-500">
+                            ({influencer.deliverables.join(', ')})
+                          </span>
                         )}
                       </div>
 
-                      {/* 제작 일정 상태 표시 */}
-                      {influencer.productionStartDate && influencer.productionDeadline ? (
-                        <ProductionScheduleStatus
-                          startDate={influencer.productionStartDate}
-                          deadline={influencer.productionDeadline}
-                          submission={submission}
-                          className="mb-3"
-                        />
-                      ) : (
-                        <div className="mb-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <div className="flex items-center gap-1 text-yellow-700">
-                            <Clock className="w-4 h-4" />
-                            <span className="text-sm">제작 일정이 설정되지 않았습니다.</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="space-y-2">
-                        {submission ? (
-                          <div className="flex items-center gap-2">
-                            <Badge className={getStatusColor(submission.status)}>
-                              {(() => {
-                                const SubmissionIcon = getContentTypeIcon(submission.contentType);
-                                return <SubmissionIcon className="w-3 h-3 mr-1" />;
-                              })()}
-                              {getStatusText(submission.status)}
-                            </Badge>
-                            {submission.contentFiles && submission.contentFiles.length > 0 && (
-                              <span className="text-sm text-gray-500">
-                                파일 {submission.contentFiles.length}개 업로드됨
-                              </span>
-                            )}
-                          </div>
+                      {/* 상태값 */}
+                      <div className="flex items-center gap-2">
+                        {scheduleInfo ? (
+                          <Badge className={`${
+                            scheduleInfo.status === 'deadline-exceeded' ? 'bg-red-100 text-red-800 border-red-200' :
+                            scheduleInfo.status === 'production-in-progress' && scheduleInfo.isUrgent ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                            scheduleInfo.status === 'production-in-progress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                            scheduleInfo.status === 'production-waiting' ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                            'bg-green-100 text-green-800 border-green-200'
+                          }`}>
+                            {scheduleInfo.status === 'deadline-exceeded' && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {scheduleInfo.status === 'production-in-progress' && scheduleInfo.isUrgent && <AlertTriangle className="w-3 h-3 mr-1" />}
+                            {scheduleInfo.status === 'production-in-progress' && !scheduleInfo.isUrgent && <Clock className="w-3 h-3 mr-1" />}
+                            {scheduleInfo.status === 'production-waiting' && <Calendar className="w-3 h-3 mr-1" />}
+                            {scheduleInfo.status === 'content-review' && <CheckCircle className="w-3 h-3 mr-1" />}
+                            {scheduleInfo.status === 'deadline-exceeded' ? '마감초과' :
+                             scheduleInfo.status === 'production-in-progress' ? '콘텐츠 제작중' :
+                             scheduleInfo.status === 'production-waiting' ? '콘텐츠 제작대기중' :
+                             '콘텐츠 검수'}
+                          </Badge>
                         ) : (
-                          <Badge variant="outline">콘텐츠 미제출</Badge>
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            <Clock className="w-3 h-3 mr-1" />
+                            일정 미설정
+                          </Badge>
+                        )}
+
+                        {/* 콘텐츠 제출 상태 */}
+                        {submission ? (
+                          <Badge className={getStatusColor(submission.status)}>
+                            {submission.contentType === 'image' ? <FileImage className="w-3 h-3 mr-1" /> : <FileVideo className="w-3 h-3 mr-1" />}
+                            {getStatusText(submission.status)}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                            콘텐츠 미제출
+                          </Badge>
                         )}
                       </div>
                     </div>
 
-                    <div className="ml-4">
-                      <Badge 
-                        variant="outline" 
-                        className="bg-blue-50 text-blue-700 border-blue-200"
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        일정 확인됨
-                      </Badge>
+                    {/* 우측: 일정 정보 */}
+                    <div className="ml-6 text-right space-y-2 min-w-[180px]">
+                      {influencer.productionStartDate && influencer.productionDeadline ? (
+                        <>
+                          <div className="text-sm">
+                            <div className="text-gray-500">시작일</div>
+                            <div className="font-medium">{influencer.productionStartDate}</div>
+                          </div>
+                          <div className="text-sm">
+                            <div className="text-gray-500">마감일</div>
+                            <div className="font-medium">{influencer.productionDeadline}</div>
+                          </div>
+                          {scheduleInfo && (
+                            <div className="text-sm">
+                              <div className="text-gray-500">잔여일</div>
+                              <div className={`font-bold ${
+                                scheduleInfo.status === 'deadline-exceeded' ? 'text-red-600' :
+                                scheduleInfo.isUrgent ? 'text-orange-600' :
+                                'text-blue-600'
+                              }`}>
+                                {scheduleInfo.status === 'deadline-exceeded' 
+                                  ? `${Math.abs(scheduleInfo.daysRemaining)}일 초과`
+                                  : scheduleInfo.status === 'production-waiting'
+                                  ? `${Math.abs(scheduleInfo.daysRemaining)}일 후 시작`
+                                  : scheduleInfo.status === 'content-review'
+                                  ? '검수 대기중'
+                                  : `${scheduleInfo.daysRemaining}일 남음`
+                                }
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          제작 일정<br />미설정
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
