@@ -2,10 +2,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, Save, X } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon, Clock, Save, X } from 'lucide-react';
 import { CampaignInfluencer } from '@/types/campaign';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface ProductionScheduleInputProps {
   influencer: CampaignInfluencer;
@@ -18,8 +22,12 @@ const ProductionScheduleInput: React.FC<ProductionScheduleInputProps> = ({
   onSave,
   onCancel
 }) => {
-  const [startDate, setStartDate] = useState(influencer.productionStartDate || '');
-  const [deadline, setDeadline] = useState(influencer.productionDeadline || '');
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    influencer.productionStartDate ? new Date(influencer.productionStartDate) : undefined
+  );
+  const [deadline, setDeadline] = useState<Date | undefined>(
+    influencer.productionDeadline ? new Date(influencer.productionDeadline) : undefined
+  );
 
   const handleSave = () => {
     if (!startDate || !deadline) {
@@ -27,12 +35,15 @@ const ProductionScheduleInput: React.FC<ProductionScheduleInputProps> = ({
       return;
     }
 
-    if (new Date(startDate) >= new Date(deadline)) {
+    if (startDate >= deadline) {
       alert('마감일은 시작일보다 늦어야 합니다.');
       return;
     }
 
-    onSave(influencer.id, startDate, deadline);
+    const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+    const formattedDeadline = format(deadline, 'yyyy-MM-dd');
+
+    onSave(influencer.id, formattedStartDate, formattedDeadline);
   };
 
   return (
@@ -47,24 +58,63 @@ const ProductionScheduleInput: React.FC<ProductionScheduleInputProps> = ({
         <div className="space-y-4">
           <div>
             <Label htmlFor="start-date">제작 시작일</Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal mt-1",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "yyyy년 MM월 dd일", { locale: ko }) : "날짜를 선택하세요"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  disabled={(date) => date < new Date()}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>
             <Label htmlFor="deadline">제작 마감일</Label>
-            <Input
-              id="deadline"
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="mt-1"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal mt-1",
+                    !deadline && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {deadline ? format(deadline, "yyyy년 MM월 dd일", { locale: ko }) : "날짜를 선택하세요"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={deadline}
+                  onSelect={setDeadline}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  disabled={(date) => {
+                    if (startDate) {
+                      return date <= startDate;
+                    }
+                    return date < new Date();
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="flex gap-2 pt-4">
