@@ -334,6 +334,25 @@ const AdminCampaignDetail = () => {
     );
   };
 
+  // 제작 단계 전환 가능 여부 확인 (캠페인 단계 고려)
+  const canStartProduction = () => {
+    return isAllPlansApproved() && isAllSchedulesSet() && campaign.currentStage < 3;
+  };
+
+  // 제작 단계 전환 불가 이유 확인
+  const getProductionDisableReason = () => {
+    if (campaign.currentStage >= 3) {
+      return '이미 제작 단계 진행 중';
+    }
+    if (!isAllPlansApproved()) {
+      return '모든 기획안이 승인되지 않음';
+    }
+    if (!isAllSchedulesSet()) {
+      return '모든 제작 일정이 설정되지 않음';
+    }
+    return '';
+  };
+
   // 제작 일정 업데이트
   const handleUpdateProductionSchedule = async (influencerId: string, startDate: string, deadline: string) => {
     if (!campaign) return;
@@ -588,7 +607,8 @@ const AdminCampaignDetail = () => {
                     confirmedInfluencers={confirmedInfluencers}
                     onUpdateSchedule={handleUpdateProductionSchedule}
                     onStartProduction={handleStartProduction}
-                    canStartProduction={isAllSchedulesSet()}
+                    canStartProduction={canStartProduction()}
+                    disableReason={getProductionDisableReason()}
                   />
                 </div>
               </div>

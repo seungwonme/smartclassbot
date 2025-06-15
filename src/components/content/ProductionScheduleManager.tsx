@@ -12,13 +12,15 @@ interface ProductionScheduleManagerProps {
   onUpdateSchedule: (influencerId: string, startDate: string, deadline: string) => void;
   onStartProduction: () => void;
   canStartProduction: boolean;
+  disableReason?: string;
 }
 
 const ProductionScheduleManager: React.FC<ProductionScheduleManagerProps> = ({
   confirmedInfluencers,
   onUpdateSchedule,
   onStartProduction,
-  canStartProduction
+  canStartProduction,
+  disableReason = ''
 }) => {
   const [selectedInfluencer, setSelectedInfluencer] = useState<CampaignInfluencer | null>(null);
 
@@ -102,17 +104,26 @@ const ProductionScheduleManager: React.FC<ProductionScheduleManagerProps> = ({
             </div>
           ))}
 
-          {canStartProduction && (
-            <div className="pt-4 border-t">
-              <Button 
-                onClick={onStartProduction}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                콘텐츠 제작 단계로 전환
-              </Button>
-            </div>
-          )}
+          <div className="pt-4 border-t">
+            <Button 
+              onClick={onStartProduction}
+              disabled={!canStartProduction}
+              className={`w-full ${
+                canStartProduction 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-gray-400 opacity-50 cursor-not-allowed'
+              }`}
+              title={disableReason || undefined}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {disableReason === '이미 제작 단계 진행 중' ? '제작 단계 진행 중' : '콘텐츠 제작 단계로 전환'}
+            </Button>
+            {disableReason && (
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                {disableReason}
+              </p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
