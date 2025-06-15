@@ -39,6 +39,9 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
 }) => {
   const [revisionFeedback, setRevisionFeedback] = React.useState('');
 
+  // 시스템 관리자인지 확인 (URL 기반)
+  const isAdminView = window.location.pathname.includes('/admin/');
+
   const handleSubmitRevision = () => {
     if (!selectedPlan) return;
 
@@ -80,7 +83,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
             onSubmit={onSubmitRevision}
             onCancel={onCancelRevision}
-            requestType="brand-request"
+            requestType={isAdminView ? "admin-feedback" : "brand-request"}
           />
         </div>
       );
@@ -89,6 +92,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
     if (selectedPlan) {
       const savedComments = inlineComments.filter(c => c.planId === selectedPlan.id);
       const hasComments = savedComments.length > 0;
+      const hasPendingRevision = selectedPlan.revisions?.some(rev => rev.status === 'pending');
 
       return (
         <div className="space-y-6">
@@ -109,8 +113,43 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             <ContentRevisionTimeline revisions={selectedPlan.revisions} />
           )}
 
-          {/* N차 수정요청 섹션 - 저장된 코멘트가 있을 때만 표시 */}
-          {hasComments && canReviewPlan(selectedPlan) && !showRevisionForm && (
+          {/* 시스템 관리자용: 수정피드백 섹션 */}
+          {isAdminView && hasComments && hasPendingRevision && !showRevisionForm && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                <h4 className="font-medium text-blue-800">
+                  {(selectedPlan.currentRevisionNumber || 0)}차 수정피드백
+                </h4>
+              </div>
+              
+              <div className="mb-3 p-2 bg-white rounded border">
+                <p className="text-sm font-medium text-gray-700 mb-2">저장된 필드별 코멘트:</p>
+                {savedComments.map((comment, index) => (
+                  <div key={index} className="text-sm text-gray-600 mb-1">
+                    <strong>{comment.fieldName}:</strong> {comment.comment}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="revision-feedback" className="text-sm font-medium">
+                  전체 수정피드백 내용 (선택사항)
+                </Label>
+                <Textarea
+                  id="revision-feedback"
+                  value={revisionFeedback}
+                  onChange={(e) => setRevisionFeedback(e.target.value)}
+                  placeholder="필드별 코멘트 외에 추가적인 피드백이 있다면 작성해주세요..."
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 브랜드 관리자용: N차 수정요청 섹션 */}
+          {!isAdminView && hasComments && canReviewPlan(selectedPlan) && !showRevisionForm && (
             <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <MessageSquare className="w-5 h-5 text-orange-600" />
@@ -144,40 +183,54 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             </div>
           )}
 
-          {/* 승인/수정요청 버튼을 하단으로 이동 */}
-          {!showRevisionForm && canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
+          {/* 하단 액션 버튼 */}
+          {!showRevisionForm && (
             <div className="pt-6 border-t bg-gray-50 -mx-6 px-6 pb-4 rounded-b-lg">
               <div className="flex justify-center gap-4">
-                <Button
-                  onClick={() => onApprove(selectedPlan.id)}
-                  className="bg-green-600 hover:bg-green-700 px-8"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  승인
-                </Button>
+                {/* 브랜드 관리자만 승인 버튼 표시 */}
+                {!isAdminView && canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
+                  <Button
+                    onClick={() => onApprove(selectedPlan.id)}
+                    className="bg-green-600 hover:bg-green-700 px-8"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    승인
+                  </Button>
+                )}
+                
+                {/* 수정요청/피드백 버튼 */}
                 {hasComments ? (
                   <Button
                     onClick={handleSubmitRevision}
-                    className="bg-orange-600 hover:bg-orange-700 px-8"
+                    className={isAdminView ? "bg-blue-600 hover:bg-blue-700 px-8" : "bg-orange-600 hover:bg-orange-700 px-8"}
                   >
                     <Send className="w-4 h-4 mr-2" />
-                    {(selectedPlan.currentRevisionNumber || 0) + 1}차 수정요청 전송
+                    {isAdminView 
+                      ? `${(selectedPlan.currentRevisionNumber || 0)}차 수정피드백 전송`
+                      : `${(selectedPlan.currentRevisionNumber || 0) + 1}차 수정요청 전송`
+                    }
                   </Button>
                 ) : (
-                  <Button
-                    variant="outline"
-                    onClick={onRequestRevision}
-                    className="px-8"
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    수정요청
-                  </Button>
+                  canReviewPlan(selectedPlan) && (
+                    <Button
+                      variant="outline"
+                      onClick={onRequestRevision}
+                      className="px-8"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      {isAdminView ? '수정피드백' : '수정요청'}
+                    </Button>
+                  )
                 )}
               </div>
               <p className="text-xs text-gray-500 text-center mt-3">
                 {hasComments 
-                  ? "저장된 코멘트와 함께 수정요청을 전송하거나 승인을 진행해주세요."
-                  : "기획안 내용을 충분히 검토한 후 승인 또는 수정요청을 진행해주세요."
+                  ? isAdminView 
+                    ? "저장된 코멘트와 함께 수정피드백을 전송해주세요."
+                    : "저장된 코멘트와 함께 수정요청을 전송하거나 승인을 진행해주세요."
+                  : isAdminView
+                    ? "기획안 내용을 충분히 검토한 후 피드백을 진행해주세요."
+                    : "기획안 내용을 충분히 검토한 후 승인 또는 수정요청을 진행해주세요."
                 }
               </p>
             </div>
@@ -192,7 +245,12 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
           <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p>좌측에서 인플루언서를 선택하여 기획안을 확인하세요.</p>
           {plans.length === 0 && (
-            <p className="text-sm mt-2">시스템 관리자가 기획안을 작성하면 여기에 표시됩니다.</p>
+            <p className="text-sm mt-2">
+              {isAdminView 
+                ? "기획안을 생성하거나 브랜드의 수정요청에 응답하세요."
+                : "시스템 관리자가 기획안을 작성하면 여기에 표시됩니다."
+              }
+            </p>
           )}
         </div>
       </div>

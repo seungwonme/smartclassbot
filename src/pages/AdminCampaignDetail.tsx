@@ -13,9 +13,12 @@ import InfluencerManagementTab from '@/components/campaign/InfluencerManagementT
 import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
 import RevisionRequestForm from '@/components/content/RevisionRequestForm';
+import ContentPlanDetailView from '@/components/content/ContentPlanDetailView';
 import { ContentPlanDetail } from '@/types/content';
 import { contentService } from '@/services/content.service';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
+import { useInlineComments } from '@/hooks/useInlineComments';
+import { useFieldFeedback } from '@/hooks/useFieldFeedback';
 
 const AdminCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,12 +38,20 @@ const AdminCampaignDetail = () => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showRevisionFeedbackForm, setShowRevisionFeedbackForm] = useState(false);
-  const [revisionFeedback, setRevisionFeedback] = useState('');
   const [isContentLoading, setIsContentLoading] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedPlanData, setEditedPlanData] = useState<Partial<ContentPlanDetail> | null>(null);
 
-  React.useEffect(() => {
+  const {
+    activeCommentField,
+    inlineComments,
+    currentComment,
+    handleInlineComment,
+    handleSaveInlineComment,
+    handleCancelInlineComment,
+    getFieldComment,
+    resetComments
+  } = useInlineComments();
+
+  useEffect(() => {
     const loadContentPlans = async () => {
       if (!campaign?.id) return;
 
@@ -86,7 +97,7 @@ const AdminCampaignDetail = () => {
   }, [campaign?.id, toast]);
 
   // 탭 변경 시 데이터 리로드
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeTab === 'planning' && campaign?.id) {
       const reloadPlans = async () => {
         console.log('🔄 탭 변경 - 기획안 재로딩');
@@ -202,77 +213,30 @@ const AdminCampaignDetail = () => {
     }
   };
 
-  // 기획안 저장 처리 (브랜드 관리자 방식 참고)
-  const handleSavePlan = async () => {
-    if (!selectedPlan || !editedPlanData || !campaign) return;
-
-    try {
-      console.log('=== 시스템 관리자 기획안 수정 저장 ===');
-      console.log('기획안 ID:', selectedPlan.id);
-      console.log('수정 데이터:', editedPlanData);
-
-      const updateData = {
-        ...editedPlanData,
-        updatedAt: new Date().toISOString()
-      };
-
-      await contentService.updateContentPlan(campaign.id, selectedPlan.id, updateData);
-
-      const updatedPlans = await contentService.getContentPlans(campaign.id);
-      setContentPlans(updatedPlans);
-
-      const updatedPlan = updatedPlans.find(p => p.id === selectedPlan.id);
-      if (updatedPlan) {
-        setSelectedPlan(updatedPlan);
-      }
-
-      // 저장 후 상태 초기화
-      setIsEditMode(false);
-      setEditedPlanData(null);
-      
-      // 수정 요청이 있었던 경우 피드백 섹션 활성화
-      const hasPendingRevision = selectedPlan?.revisions?.some(
-        revision => revision.status === 'pending'
-      );
-      
-      if (hasPendingRevision) {
-        setShowRevisionFeedbackForm(true);
-      }
-
-      toast({
-        title: "기획안 저장 완료",
-        description: hasPendingRevision ? 
-          "콘텐츠 기획안이 저장되었습니다. 아래에서 피드백을 작성해주세요." :
-          "콘텐츠 기획안이 저장되었습니다."
-      });
-    } catch (error) {
-      console.error('기획안 저장 실패:', error);
-      toast({
-        title: "저장 실패",
-        description: "기획안 저장에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // 기획안 데이터 변경 감지 (브랜드 관리자 방식 참고)
-  const handlePlanDataChange = (planData: Partial<ContentPlanDetail>) => {
-    setEditedPlanData(planData);
-  };
-
   const handleRevisionFeedback = async (feedback: string) => {
     if (!selectedPlan) return;
 
     try {
-      const revisionNumber = (selectedPlan.currentRevisionNumber || 0);
-      
+      const planComments = inlineComments.filter(comment => comment.planId === selectedPlan.id);
+      let finalFeedback = feedback.trim();
+
+      if (planComments.length > 0) {
+        const commentsFeedback = planComments.map(comment => 
+          `[${comment.fieldName}] ${comment.comment}`
+        ).join('\n');
+        
+        finalFeedback = finalFeedback 
+          ? `${finalFeedback}\n\n${commentsFeedback}`
+          : commentsFeedback;
+      }
+
       // 현재 pending 상태인 revision을 찾아서 완료 처리
       const updatedRevisions = selectedPlan.revisions?.map(revision => {
         if (revision.status === 'pending') {
           return {
             ...revision,
             status: 'completed' as const,
-            response: feedback,
+            response: finalFeedback,
             respondedAt: new Date().toISOString(),
             respondedBy: '시스템 관리자'
           };
@@ -299,7 +263,7 @@ const AdminCampaignDetail = () => {
 
       setSelectedPlan(updatedPlan);
       setShowRevisionFeedbackForm(false);
-      setRevisionFeedback('');
+      resetComments();
 
       toast({
         title: "수정피드백 전송 완료",
@@ -326,8 +290,6 @@ const AdminCampaignDetail = () => {
       setSelectedPlan(plan);
       setShowCreateForm(false);
       setShowRevisionFeedbackForm(false);
-      setIsEditMode(false);
-      setEditedPlanData(null);
     }
   };
 
@@ -336,17 +298,24 @@ const AdminCampaignDetail = () => {
     setSelectedPlan(null);
     setShowCreateForm(true);
     setShowRevisionFeedbackForm(false);
-    setIsEditMode(false);
   };
 
-  const handleEnterEditMode = () => {
-    setIsEditMode(true);
-    setEditedPlanData(null);
+  const { renderFieldWithFeedback } = useFieldFeedback({
+    activeCommentField,
+    currentComment,
+    handleInlineComment,
+    handleSaveInlineComment,
+    handleCancelInlineComment,
+    getFieldComment,
+    canReviewPlan: () => true // 시스템 관리자는 항상 코멘트 가능
+  });
+
+  const canReviewPlan = (plan: ContentPlanDetail) => {
+    return plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
 
-  const handleCancelEdit = () => {
-    setIsEditMode(false);
-    setEditedPlanData(null);
+  const hasPlanContent = (plan: ContentPlanDetail) => {
+    return true; // 시스템 관리자는 항상 피드백 가능
   };
 
   if (isLoading) {
@@ -586,61 +555,15 @@ const AdminCampaignDetail = () => {
 
                 {/* 우측: 콘텐츠 기획 상세 */}
                 <div className="lg:col-span-2">
-                  <Card className="h-full">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <div className="flex items-center">
+                  {showCreateForm && selectedInfluencer ? (
+                    <Card className="h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
                           <FileText className="w-5 h-5 mr-2" />
-                          콘텐츠 기획 상세
-                        </div>
-                        {selectedPlan && (
-                          <div className="flex gap-2">
-                            {!isEditMode ? (
-                              <Button
-                                variant="outline"
-                                onClick={handleEnterEditMode}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                수정
-                              </Button>
-                            ) : (
-                              <>
-                                {editedPlanData && (
-                                  <Button
-                                    onClick={handleSavePlan}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    <Save className="w-4 h-4 mr-2" />
-                                    저장
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="outline"
-                                  onClick={handleCancelEdit}
-                                >
-                                  취소
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPlan(null);
-                                setShowRevisionFeedbackForm(false);
-                                setRevisionFeedback('');
-                                setIsEditMode(false);
-                                setEditedPlanData(null);
-                              }}
-                            >
-                              목록으로
-                            </Button>
-                          </div>
-                        )}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-full overflow-auto">
-                      {showCreateForm && selectedInfluencer ? (
+                          콘텐츠 기획안 생성
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="h-full overflow-auto">
                         <ContentPlanForm
                           influencer={selectedInfluencer}
                           campaignId={id!}
@@ -650,99 +573,26 @@ const AdminCampaignDetail = () => {
                             setSelectedInfluencer(null);
                           }}
                         />
-                      ) : selectedPlan ? (
-                        <div className="space-y-6">
-                          {/* 수정요청 히스토리 */}
-                          {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
-                            <div className="border-b pb-4">
-                              <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
-                              <ContentRevisionTimeline revisions={selectedPlan.revisions} />
-                            </div>
-                          )}
-
-                          {/* 기획안 편집 폼 */}
-                          <div>
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="text-lg font-medium">기획안 편집</h3>
-                            </div>
-                            <ContentPlanForm
-                              influencer={confirmedInfluencers.find(inf => inf.id === selectedPlan.influencerId)!}
-                              campaignId={id!}
-                              existingPlan={selectedPlan}
-                              onSave={handlePlanDataChange}
-                              onCancel={() => setSelectedPlan(null)}
-                              disabled={!isEditMode}
-                              hideActionButtons={true}
-                              isRevisionEditMode={true}
-                            />
-                          </div>
-
-                          {/* N차 수정피드백 섹션 */}
-                          {showRevisionFeedbackForm && (
-                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                              <div className="flex items-center gap-2 mb-3">
-                                <Send className="w-5 h-5 text-blue-600" />
-                                <h4 className="font-medium text-blue-800">
-                                  {selectedPlan.currentRevisionNumber}차 수정피드백
-                                </h4>
-                              </div>
-                              
-                              <div className="space-y-3">
-                                <Label htmlFor="revision-feedback" className="text-sm font-medium">
-                                  수정피드백 내용
-                                </Label>
-                                <Textarea
-                                  id="revision-feedback"
-                                  value={revisionFeedback}
-                                  onChange={(e) => setRevisionFeedback(e.target.value)}
-                                  placeholder="수정사항에 대한 피드백을 작성해주세요..."
-                                  rows={4}
-                                  className="text-sm"
-                                />
-                                
-                                <div className="flex gap-2 pt-2">
-                                  <Button
-                                    onClick={() => handleRevisionFeedback(revisionFeedback)}
-                                    disabled={!revisionFeedback.trim()}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                  >
-                                    <Send className="w-4 h-4 mr-2" />
-                                    {selectedPlan.currentRevisionNumber}차 수정피드백 전송
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                      setShowRevisionFeedbackForm(false);
-                                      setRevisionFeedback('');
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          <div className="text-center">
-                            <p className="mb-4">좌측에서 인플루언서를 선택하여 기획안을 생성하거나 편집하세요.</p>
-                            {contentPlans.length > 0 && (
-                              <div className="text-sm">
-                                <p className="text-green-600">✅ 총 {contentPlans.length}개의 기획안이 로딩되었습니다.</p>
-                                <button 
-                                  onClick={() => contentService.debugContentPlanStorage()}
-                                  className="mt-2 px-3 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200"
-                                >
-                                  🔍 디버깅 정보 확인
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <ContentPlanDetailView
+                      selectedPlan={selectedPlan}
+                      showRevisionForm={showRevisionFeedbackForm}
+                      inlineComments={inlineComments}
+                      onApprove={() => {}} // 시스템 관리자는 승인하지 않음
+                      onRequestRevision={() => setShowRevisionFeedbackForm(true)}
+                      onSubmitRevision={handleRevisionFeedback}
+                      onCancelRevision={() => {
+                        setShowRevisionFeedbackForm(false);
+                        resetComments();
+                      }}
+                      canReviewPlan={canReviewPlan}
+                      hasPlanContent={hasPlanContent}
+                      renderFieldWithFeedback={renderFieldWithFeedback}
+                      plans={contentPlans}
+                    />
+                  )}
                 </div>
               </div>
             )}
