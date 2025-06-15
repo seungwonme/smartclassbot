@@ -274,6 +274,11 @@ const AdminCampaignDetail = () => {
     setHasUnsavedChanges(true);
   };
 
+  // 콘텐츠 업데이트 감지 (새로 추가)
+  const handleContentUpdated = () => {
+    setHasUnsavedChanges(true);
+  };
+
   const handleRevisionFeedback = async (feedback: string) => {
     if (!selectedPlan) return;
 
@@ -685,6 +690,7 @@ const AdminCampaignDetail = () => {
                               existingPlan={selectedPlan}
                               onSave={handlePlanDataChange}
                               onCancel={() => setSelectedPlan(null)}
+                              onContentUpdated={handleContentUpdated}
                               disabled={!isEditingRevision}
                               hideActionButtons={true}
                               isRevisionEditMode={true}
