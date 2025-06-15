@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,19 +30,24 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
   getCurrentRevisionInfo,
   canReviewPlan
 }) => {
+  // 더 정확한 revision 상태 확인 로직
   const getDetailedRevisionStatus = (plan: ContentPlanDetail) => {
     if (!plan.revisions || plan.revisions.length === 0) {
+      // revision이 없을 때는 plan.status만 확인
+      if (plan.status === 'revision-feedback') {
+        return {
+          text: `1차 피드백 완료`,
+          color: 'bg-purple-100 text-purple-800'
+        };
+      }
       return null;
     }
 
+    // 브랜드가 요청한 pending 수정사항이 있는지 확인
     const pendingBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
     );
     
-    const pendingAdminRevisions = plan.revisions.filter(r => 
-      r.requestedBy === 'admin' && r.status === 'pending'
-    );
-
     if (pendingBrandRevisions.length > 0) {
       return {
         text: `${pendingBrandRevisions[0].revisionNumber}차 수정요청`,
@@ -51,10 +55,35 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
       };
     }
 
+    // 관리자가 피드백한 pending 상태 확인 (브랜드 관점에서는 "피드백 완료")
+    const pendingAdminRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'admin' && r.status === 'pending'
+    );
+
     if (pendingAdminRevisions.length > 0) {
       return {
         text: `${pendingAdminRevisions[0].revisionNumber}차 피드백 완료`,
         color: 'bg-purple-100 text-purple-800'
+      };
+    }
+
+    // plan.status 기반 fallback
+    const completedBrandRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'brand' && r.status === 'completed'
+    ).length;
+
+    if (plan.status === 'revision-feedback') {
+      const revisionNumber = Math.max(completedBrandRevisions, 1);
+      return {
+        text: `${revisionNumber}차 피드백 완료`,
+        color: 'bg-purple-100 text-purple-800'
+      };
+    }
+
+    if (plan.status === 'revision-request') {
+      return {
+        text: `${completedBrandRevisions + 1}차 수정요청`,
+        color: 'bg-orange-100 text-orange-800'
       };
     }
 

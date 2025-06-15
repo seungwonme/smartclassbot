@@ -60,19 +60,22 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     return plan.status === 'draft' || plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
 
+  // 수정된 revision 상태 확인 로직
   const getCurrentRevisionInfo = (plan: ContentPlanDetail) => {
-    const pendingRevisions = plan.revisions.filter(r => 
+    if (!plan.revisions || plan.revisions.length === 0) {
+      return null;
+    }
+
+    // 브랜드가 요청한 pending 수정사항이 있는지 확인
+    const pendingBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
     );
     
-    if (pendingRevisions.length > 0) {
-      return `${pendingRevisions[0].revisionNumber}차 수정요청`;
+    if (pendingBrandRevisions.length > 0) {
+      return `${pendingBrandRevisions[0].revisionNumber}차 수정요청`;
     }
-    
-    const completedBrandRevisions = plan.revisions.filter(r => 
-      r.requestedBy === 'brand' && r.status === 'completed'
-    ).length;
-    
+
+    // 관리자가 피드백한 pending 상태 확인 (브랜드 관점에서는 "피드백 완료")
     const pendingAdminFeedback = plan.revisions.filter(r =>
       r.requestedBy === 'admin' && r.status === 'pending'
     );
@@ -80,11 +83,16 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     if (pendingAdminFeedback.length > 0) {
       return `${pendingAdminFeedback[0].revisionNumber}차 피드백 완료`;
     }
+
+    // plan.status 기반 fallback 로직
+    const completedBrandRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'brand' && r.status === 'completed'
+    ).length;
     
     if (plan.status === 'revision-request') {
       return `${completedBrandRevisions + 1}차 수정요청`;
     } else if (plan.status === 'revision-feedback') {
-      return `${completedBrandRevisions}차 피드백 완료`;
+      return `${Math.max(completedBrandRevisions, 1)}차 피드백 완료`;
     }
     
     return completedBrandRevisions > 0 ? `${completedBrandRevisions}차 완료` : null;
