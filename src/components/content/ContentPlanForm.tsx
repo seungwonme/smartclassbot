@@ -18,6 +18,7 @@ interface ContentPlanFormProps {
   onCancel: () => void;
   onContentUpdated?: () => void;
   disabled?: boolean;
+  hideActionButtons?: boolean; // 새로 추가된 prop
 }
 
 const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
@@ -27,7 +28,8 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
   onSave,
   onCancel,
   onContentUpdated,
-  disabled = false
+  disabled = false,
+  hideActionButtons = false // 기본값은 false
 }) => {
   const [contentType, setContentType] = useState<'image' | 'video'>(
     existingPlan?.contentType || 'image'
@@ -258,15 +260,17 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
         onUpdate={handleHashtagUpdate}
       />
 
-      {/* 액션 버튼 */}
-      <div className="flex justify-end gap-2 pt-4">
-        <Button variant="outline" onClick={onCancel} disabled={disabled}>
-          취소
-        </Button>
-        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700" disabled={disabled}>
-          {hasPendingRevision ? '수정 완료' : '저장'}
-        </Button>
-      </div>
+      {/* 액션 버튼 - hideActionButtons가 true일 때는 숨김 */}
+      {!hideActionButtons && (
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={onCancel} disabled={disabled}>
+            취소
+          </Button>
+          <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700" disabled={disabled}>
+            {hasPendingRevision ? '수정 완료' : '저장'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

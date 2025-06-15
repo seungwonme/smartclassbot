@@ -647,7 +647,7 @@ const AdminCampaignDetail = () => {
                                       setPendingPlanData(null);
                                     }}
                                   >
-                                    수정
+                                    취소
                                   </Button>
                                 </div>
                               )}
@@ -659,6 +659,7 @@ const AdminCampaignDetail = () => {
                               onSave={handlePlanDataChange}
                               onCancel={() => setSelectedPlan(null)}
                               disabled={hasUnsavedChanges}
+                              hideActionButtons={true}
                             />
                           </div>
 
