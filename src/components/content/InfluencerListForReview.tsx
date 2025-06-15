@@ -17,7 +17,6 @@ interface InfluencerListForReviewProps {
   getStatusText: (status: ContentPlanDetail['status']) => string;
   getCurrentRevisionInfo: (plan: ContentPlanDetail) => string | null;
   canReviewPlan: (plan: ContentPlanDetail) => boolean;
-  hasPlanContent: (plan: ContentPlanDetail) => boolean;
 }
 
 const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
@@ -30,8 +29,7 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
   getStatusColor,
   getStatusText,
   getCurrentRevisionInfo,
-  canReviewPlan,
-  hasPlanContent
+  canReviewPlan
 }) => {
   if (confirmedInfluencers.length === 0) {
     return (
@@ -57,7 +55,6 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
           {confirmedInfluencers.map((influencer) => {
             const existingPlan = plans.find(plan => plan.influencerId === influencer.id);
             const revisionInfo = existingPlan ? getCurrentRevisionInfo(existingPlan) : null;
-            const hasContent = existingPlan ? hasPlanContent(existingPlan) : false;
             
             return (
               <div 
@@ -90,17 +87,7 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
                 
                 {existingPlan ? (
                   <div className="mt-2">
-                    {hasContent ? (
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        기획안 작성완료
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-gray-500 border-gray-200">
-                        기획안 미작성
-                      </Badge>
-                    )}
-                    
-                    {canReviewPlan(existingPlan) && hasContent && (
+                    {canReviewPlan(existingPlan) && (
                       <div className="flex gap-2 mt-2">
                         <Button
                           size="sm"
