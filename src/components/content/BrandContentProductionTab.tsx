@@ -115,7 +115,7 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
     return hasVideo ? 'video' : 'image';
   };
 
-  // 일정별로 인플루언서 정렬
+  // 일정별로 인플루언서 정렬 (새로운 상태값 기준)
   const sortInfluencersBySchedule = (influencers: CampaignInfluencer[]) => {
     return [...influencers].sort((a, b) => {
       if (!a.productionStartDate || !a.productionDeadline) return 1;
@@ -124,19 +124,27 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
       const submissionA = getInfluencerSubmission(a.id);
       const submissionB = getInfluencerSubmission(b.id);
       
-      const isCompletedA = submissionA && ['submitted', 'approved'].includes(submissionA.status);
-      const isCompletedB = submissionB && ['submitted', 'approved'].includes(submissionB.status);
+      const hasContentA = submissionA && ['submitted', 'approved'].includes(submissionA.status);
+      const hasContentB = submissionB && ['submitted', 'approved'].includes(submissionB.status);
 
-      if (isCompletedA && !isCompletedB) return 1;
-      if (!isCompletedA && isCompletedB) return -1;
-      if (isCompletedA && isCompletedB) return 0;
+      const scheduleA = calculateScheduleStatus(a.productionStartDate, a.productionDeadline, false, !!hasContentA);
+      const scheduleB = calculateScheduleStatus(b.productionStartDate, b.productionDeadline, false, !!hasContentB);
 
-      const scheduleA = calculateScheduleStatus(a.productionStartDate, a.productionDeadline, false);
-      const scheduleB = calculateScheduleStatus(b.productionStartDate, b.productionDeadline, false);
-
-      const urgencyOrder = { 'overdue': 0, 'deadline-approaching': 1, 'in-progress': 2, 'not-started': 3 };
-      const urgencyA = urgencyOrder[scheduleA.status] ?? 4;
-      const urgencyB = urgencyOrder[scheduleB.status] ?? 4;
+      // 우선순위: 마감초과 > 제작중(긴급) > 제작중 > 제작대기중 > 검수중
+      const urgencyOrder = { 
+        'deadline-exceeded': 0, 
+        '긴급-production-in-progress': 1,
+        'production-in-progress': 2, 
+        'production-waiting': 3, 
+        'content-review': 4 
+      };
+      
+      const urgencyA = scheduleA.status === 'production-in-progress' && scheduleA.isUrgent 
+        ? urgencyOrder['긴급-production-in-progress'] 
+        : urgencyOrder[scheduleA.status] ?? 5;
+      const urgencyB = scheduleB.status === 'production-in-progress' && scheduleB.isUrgent 
+        ? urgencyOrder['긴급-production-in-progress'] 
+        : urgencyOrder[scheduleB.status] ?? 5;
 
       if (urgencyA !== urgencyB) return urgencyA - urgencyB;
       return new Date(a.productionDeadline).getTime() - new Date(b.productionDeadline).getTime();

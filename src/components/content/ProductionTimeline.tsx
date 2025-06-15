@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, AlertTriangle, CheckCircle, Users } from 'lucide-react';
+import { Calendar, Clock, AlertTriangle, CheckCircle, Users, Eye } from 'lucide-react';
 import { CampaignInfluencer, ContentSubmission } from '@/types/campaign';
 import { calculateScheduleStatus } from '@/utils/scheduleUtils';
 
@@ -27,46 +27,47 @@ const ProductionTimeline: React.FC<ProductionTimelineProps> = ({
     }
 
     const submission = getInfluencerSubmission(influencer.id);
-    const isCompleted = submission && ['submitted', 'approved'].includes(submission.status);
+    const hasContentSubmission = submission && ['submitted', 'approved'].includes(submission.status);
     const scheduleInfo = calculateScheduleStatus(
       influencer.productionStartDate,
       influencer.productionDeadline,
-      isCompleted
+      false,
+      !!hasContentSubmission
     );
 
     stats[scheduleInfo.status]++;
-    if (scheduleInfo.isUrgent && !isCompleted) {
+    if (scheduleInfo.isUrgent && scheduleInfo.status !== 'content-review') {
       stats.urgent++;
     }
     
     return stats;
   }, {
-    'not-started': 0,
-    'in-progress': 0,
-    'deadline-approaching': 0,
-    'overdue': 0,
-    'completed': 0,
+    'production-waiting': 0,
+    'production-in-progress': 0,
+    'deadline-exceeded': 0,
+    'content-review': 0,
     'urgent': 0,
     'noSchedule': 0
   });
 
   const totalScheduled = confirmedInfluencers.length - scheduleStats.noSchedule;
-  const completionRate = totalScheduled > 0 ? Math.round((scheduleStats.completed / totalScheduled) * 100) : 0;
+  const completionRate = totalScheduled > 0 ? Math.round((scheduleStats['content-review'] / totalScheduled) * 100) : 0;
 
-  // 긴급 상황 인플루언서 목록
+  // 긴급 상황 인플루언서 목록 (마감초과 + 마감임박)
   const urgentInfluencers = confirmedInfluencers.filter(influencer => {
     if (!influencer.productionStartDate || !influencer.productionDeadline) return false;
     
     const submission = getInfluencerSubmission(influencer.id);
-    const isCompleted = submission && ['submitted', 'approved'].includes(submission.status);
-    if (isCompleted) return false;
+    const hasContentSubmission = submission && ['submitted', 'approved'].includes(submission.status);
+    if (hasContentSubmission) return false;
 
     const scheduleInfo = calculateScheduleStatus(
       influencer.productionStartDate,
       influencer.productionDeadline,
+      false,
       false
     );
-    return scheduleInfo.isUrgent;
+    return scheduleInfo.status === 'deadline-exceeded' || scheduleInfo.isUrgent;
   });
 
   return (
@@ -82,31 +83,31 @@ const ProductionTimeline: React.FC<ProductionTimelineProps> = ({
         <CardContent>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{scheduleStats.completed}</div>
-              <div className="text-sm text-green-600">제작 완료</div>
+              <div className="text-2xl font-bold text-green-600">{scheduleStats['content-review']}</div>
+              <div className="text-sm text-green-600">콘텐츠 검수</div>
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{scheduleStats['in-progress']}</div>
-              <div className="text-sm text-blue-600">제작 진행중</div>
+              <div className="text-2xl font-bold text-blue-600">{scheduleStats['production-in-progress']}</div>
+              <div className="text-sm text-blue-600">제작중</div>
             </div>
-            <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{scheduleStats['deadline-approaching']}</div>
-              <div className="text-sm text-orange-600">마감 임박</div>
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-gray-600">{scheduleStats['production-waiting']}</div>
+              <div className="text-sm text-gray-600">제작대기중</div>
             </div>
             <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{scheduleStats.overdue}</div>
-              <div className="text-sm text-red-600">마감 초과</div>
+              <div className="text-2xl font-bold text-red-600">{scheduleStats['deadline-exceeded']}</div>
+              <div className="text-sm text-red-600">마감초과</div>
             </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm">전체 완료율: {completionRate}%</span>
+              <span className="text-sm">검수 진행률: {completionRate}%</span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-gray-600" />
-              <span className="text-sm">총 {totalScheduled}명 중 {scheduleStats.completed}명 완료</span>
+              <span className="text-sm">총 {totalScheduled}명 중 {scheduleStats['content-review']}명 검수 대기</span>
             </div>
           </div>
         </CardContent>
@@ -132,6 +133,7 @@ const ProductionTimeline: React.FC<ProductionTimelineProps> = ({
                   const scheduleInfo = calculateScheduleStatus(
                     influencer.productionStartDate!,
                     influencer.productionDeadline!,
+                    false,
                     false
                   );
                   
@@ -139,12 +141,12 @@ const ProductionTimeline: React.FC<ProductionTimelineProps> = ({
                     <Badge
                       key={influencer.id}
                       className={`${
-                        scheduleInfo.status === 'overdue' 
+                        scheduleInfo.status === 'deadline-exceeded' 
                           ? 'bg-red-500 text-white' 
                           : 'bg-orange-500 text-white'
                       }`}
                     >
-                      {influencer.name} ({scheduleInfo.status === 'overdue' 
+                      {influencer.name} ({scheduleInfo.status === 'deadline-exceeded' 
                         ? `${Math.abs(scheduleInfo.daysRemaining)}일 초과`
                         : `${scheduleInfo.daysRemaining}일 남음`
                       })
