@@ -31,10 +31,19 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
   getCurrentRevisionInfo,
   canReviewPlan
 }) => {
-  // 더 정확한 revision 상태 확인 로직
+  // 개선된 revision 상태 확인 로직
   const getDetailedRevisionStatus = (plan: ContentPlanDetail) => {
+    console.log(`🔍 ${plan.influencerName}의 기획안 상세 분석:`, {
+      status: plan.status,
+      revisions: plan.revisions,
+      currentRevisionNumber: plan.currentRevisionNumber
+    });
+
+    // 1. revision 배열이 없거나 비어있는 경우
     if (!plan.revisions || plan.revisions.length === 0) {
-      // revision이 없을 때는 plan.status만 확인
+      console.log(`📝 ${plan.influencerName}: revision 배열이 없음`);
+      
+      // plan.status 기반으로 판단
       if (plan.status === 'revision-feedback') {
         return {
           text: `1차 피드백 완료`,
@@ -44,37 +53,46 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
       return null;
     }
 
-    // 브랜드가 요청한 pending 수정사항이 있는지 확인
+    console.log(`📋 ${plan.influencerName}: revision 목록:`, plan.revisions);
+
+    // 2. 브랜드가 요청한 pending 수정사항 확인
     const pendingBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
     );
     
     if (pendingBrandRevisions.length > 0) {
+      const revision = pendingBrandRevisions[0];
+      console.log(`🔄 ${plan.influencerName}: 브랜드 요청 pending 수정사항 발견:`, revision);
       return {
-        text: `${pendingBrandRevisions[0].revisionNumber}차 수정요청`,
+        text: `${revision.revisionNumber}차 수정요청`,
         color: 'bg-orange-100 text-orange-800'
       };
     }
 
-    // 관리자가 피드백한 pending 상태 확인 (브랜드 관점에서는 "피드백 완료")
+    // 3. 관리자가 피드백한 pending 상태 확인
     const pendingAdminRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'admin' && r.status === 'pending'
     );
 
     if (pendingAdminRevisions.length > 0) {
+      const revision = pendingAdminRevisions[0];
+      console.log(`💬 ${plan.influencerName}: 관리자 피드백 pending 발견:`, revision);
       return {
-        text: `${pendingAdminRevisions[0].revisionNumber}차 피드백 완료`,
+        text: `${revision.revisionNumber}차 피드백 완료`,
         color: 'bg-purple-100 text-purple-800'
       };
     }
 
-    // plan.status 기반 fallback
+    // 4. plan.status 기반 fallback 로직
     const completedBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'completed'
     ).length;
 
+    console.log(`📊 ${plan.influencerName}: 완료된 브랜드 수정요청 수:`, completedBrandRevisions);
+
     if (plan.status === 'revision-feedback') {
-      const revisionNumber = Math.max(completedBrandRevisions, 1);
+      const revisionNumber = Math.max(completedBrandRevisions, plan.currentRevisionNumber || 1);
+      console.log(`✅ ${plan.influencerName}: revision-feedback 상태, ${revisionNumber}차 피드백 완료`);
       return {
         text: `${revisionNumber}차 피드백 완료`,
         color: 'bg-purple-100 text-purple-800'
@@ -82,22 +100,26 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
     }
 
     if (plan.status === 'revision-request') {
+      const revisionNumber = completedBrandRevisions + 1;
+      console.log(`📝 ${plan.influencerName}: revision-request 상태, ${revisionNumber}차 수정요청`);
       return {
-        text: `${completedBrandRevisions + 1}차 수정요청`,
+        text: `${revisionNumber}차 수정요청`,
         color: 'bg-orange-100 text-orange-800'
       };
     }
 
-    // 최근 완료된 수정 요청이 있다면
+    // 5. 최근 완료된 수정 요청 표시
     const completedRevisions = plan.revisions.filter(r => r.status === 'completed');
     if (completedRevisions.length > 0) {
       const latestRevision = completedRevisions[completedRevisions.length - 1];
+      console.log(`🎯 ${plan.influencerName}: 최근 완료된 수정사항:`, latestRevision);
       return {
         text: `${latestRevision.revisionNumber}차 완료`,
         color: 'bg-gray-100 text-gray-600'
       };
     }
 
+    console.log(`❌ ${plan.influencerName}: 해당하는 revision 상태 없음`);
     return null;
   };
 
