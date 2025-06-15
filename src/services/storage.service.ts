@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
   BRANDS: 'lovable_brands',
   PRODUCTS: 'lovable_products',
   CONTENT_PLANS: 'lovable_content_plans',
-  INITIALIZED: 'lovable_initialized'
+  INITIALIZED: 'lovable_initialized',
+  BACKUP: 'lovable_data_backup'
 };
 
 export const storageService = {
@@ -27,11 +28,15 @@ export const storageService = {
 
   setCampaigns: (campaigns: Campaign[]): boolean => {
     try {
+      // 백업 생성
+      storageService.createBackup();
       localStorage.setItem(STORAGE_KEYS.CAMPAIGNS, JSON.stringify(campaigns));
       console.log('캠페인 데이터 저장 완료:', campaigns.length, '개');
       return true;
     } catch (error) {
       console.error('캠페인 데이터 저장 실패:', error);
+      // 실패 시 백업에서 복원
+      storageService.restoreFromBackup();
       return false;
     }
   },
@@ -51,11 +56,13 @@ export const storageService = {
 
   setBrands: (brands: Brand[]): boolean => {
     try {
+      storageService.createBackup();
       localStorage.setItem(STORAGE_KEYS.BRANDS, JSON.stringify(brands));
       console.log('브랜드 데이터 저장 완료:', brands.length, '개');
       return true;
     } catch (error) {
       console.error('브랜드 데이터 저장 실패:', error);
+      storageService.restoreFromBackup();
       return false;
     }
   },
@@ -75,11 +82,13 @@ export const storageService = {
 
   setProducts: (products: Product[]): boolean => {
     try {
+      storageService.createBackup();
       localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
       console.log('제품 데이터 저장 완료:', products.length, '개');
       return true;
     } catch (error) {
       console.error('제품 데이터 저장 실패:', error);
+      storageService.restoreFromBackup();
       return false;
     }
   },
@@ -117,6 +126,7 @@ export const storageService = {
       console.log('💾 콘텐츠 기획안 저장 시작:', plans.length, '개');
       console.log('💾 저장할 데이터:', plans);
       
+      storageService.createBackup();
       localStorage.setItem(STORAGE_KEYS.CONTENT_PLANS, JSON.stringify(plans));
       
       // 저장 후 즉시 검증
@@ -127,6 +137,7 @@ export const storageService = {
       return true;
     } catch (error) {
       console.error('❌ 콘텐츠 기획안 저장 실패:', error);
+      storageService.restoreFromBackup();
       return false;
     }
   },
@@ -143,7 +154,64 @@ export const storageService = {
     console.log('초기화 상태 설정 완료');
   },
 
-  // 데이터 검증
+  // 데이터 백업 및 복원 기능 (신규)
+  createBackup: (): boolean => {
+    try {
+      const currentTime = new Date().toISOString();
+      const backupData = {
+        timestamp: currentTime,
+        campaigns: storageService.getCampaigns(),
+        brands: storageService.getBrands(),
+        products: storageService.getProducts(),
+        contentPlans: storageService.getContentPlans(),
+        initialized: storageService.isInitialized()
+      };
+      
+      localStorage.setItem(STORAGE_KEYS.BACKUP, JSON.stringify(backupData));
+      console.log('🔄 데이터 백업 생성 완료:', currentTime);
+      console.log('🔄 백업된 데이터:', {
+        campaigns: backupData.campaigns.length,
+        brands: backupData.brands.length,
+        products: backupData.products.length,
+        contentPlans: backupData.contentPlans.length
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('❌ 백업 생성 실패:', error);
+      return false;
+    }
+  },
+
+  restoreFromBackup: (): boolean => {
+    try {
+      const backupData = localStorage.getItem(STORAGE_KEYS.BACKUP);
+      if (!backupData) {
+        console.warn('⚠️ 백업 데이터가 존재하지 않습니다');
+        return false;
+      }
+
+      const backup = JSON.parse(backupData);
+      console.log('🔄 백업에서 데이터 복원 시작:', backup.timestamp);
+
+      localStorage.setItem(STORAGE_KEYS.CAMPAIGNS, JSON.stringify(backup.campaigns));
+      localStorage.setItem(STORAGE_KEYS.BRANDS, JSON.stringify(backup.brands));
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(backup.products));
+      localStorage.setItem(STORAGE_KEYS.CONTENT_PLANS, JSON.stringify(backup.contentPlans));
+      
+      if (backup.initialized) {
+        localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+      }
+
+      console.log('✅ 백업에서 데이터 복원 완료');
+      return true;
+    } catch (error) {
+      console.error('❌ 백업 복원 실패:', error);
+      return false;
+    }
+  },
+
+  // 데이터 검증 (강화)
   validateAllData: (): boolean => {
     try {
       const campaigns = storageService.getCampaigns();
@@ -151,27 +219,39 @@ export const storageService = {
       const products = storageService.getProducts();
       const contentPlans = storageService.getContentPlans();
       
-      console.log('데이터 무결성 검사 결과:', {
+      console.log('🔍 데이터 무결성 검사 결과:', {
         campaigns: campaigns?.length || 0,
         brands: brands?.length || 0,
         products: products?.length || 0,
         contentPlans: contentPlans?.length || 0
       });
       
-      return Array.isArray(campaigns) && Array.isArray(brands) && Array.isArray(products) && Array.isArray(contentPlans);
+      const isValid = Array.isArray(campaigns) && Array.isArray(brands) && 
+                     Array.isArray(products) && Array.isArray(contentPlans);
+      
+      if (!isValid) {
+        console.error('❌ 데이터 무결성 검사 실패 - 백업에서 복원 시도');
+        return storageService.restoreFromBackup();
+      }
+      
+      return true;
     } catch (error) {
-      console.error('데이터 검증 실패:', error);
-      return false;
+      console.error('❌ 데이터 검증 실패:', error);
+      return storageService.restoreFromBackup();
     }
   },
 
   // 전체 데이터 삭제
   clearAllData: (): void => {
-    console.log('전체 데이터 삭제 시작');
+    console.log('⚠️ 전체 데이터 삭제 시작 - 백업 생성');
+    storageService.createBackup();
+    
     Object.values(STORAGE_KEYS).forEach(key => {
-      localStorage.removeItem(key);
+      if (key !== STORAGE_KEYS.BACKUP) {
+        localStorage.removeItem(key);
+      }
     });
-    console.log('전체 데이터 삭제 완료');
+    console.log('🗑️ 전체 데이터 삭제 완료 (백업 유지)');
   },
 
   // 디버그용 로컬스토리지 전체 조회
@@ -182,5 +262,27 @@ export const storageService = {
       console.log(`${key}:`, data ? JSON.parse(data) : null);
     });
     console.log('🔍 === 로컬스토리지 디버그 완료 ===');
+  },
+
+  // 데이터 안전성 체크
+  performSafetyCheck: (): boolean => {
+    console.log('🛡️ === 데이터 안전성 체크 시작 ===');
+    
+    // 1. 백업 생성
+    const backupSuccess = storageService.createBackup();
+    if (!backupSuccess) {
+      console.error('❌ 백업 생성 실패');
+      return false;
+    }
+    
+    // 2. 데이터 검증
+    const validationSuccess = storageService.validateAllData();
+    if (!validationSuccess) {
+      console.error('❌ 데이터 검증 실패');
+      return false;
+    }
+    
+    console.log('✅ 데이터 안전성 체크 완료 - 모든 데이터가 안전합니다');
+    return true;
   }
 };
