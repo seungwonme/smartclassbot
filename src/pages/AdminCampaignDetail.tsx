@@ -151,6 +151,7 @@ const AdminCampaignDetail = () => {
       console.log('콘텐츠 타입:', contentType);
 
       await contentService.createContentPlan(id, {
+        campaignId: id, // 누락된 campaignId 추가
         influencerId: selectedInfluencer.id,
         influencerName: selectedInfluencer.name,
         contentType,
