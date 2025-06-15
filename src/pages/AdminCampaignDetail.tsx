@@ -20,6 +20,7 @@ import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { useInlineComments } from '@/hooks/useInlineComments';
 import { useFieldFeedback } from '@/hooks/useFieldFeedback';
 import ProductionScheduleManager from '@/components/content/ProductionScheduleManager';
+import ContentProductionTab from '@/components/content/ContentProductionTab';
 
 const AdminCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -714,19 +715,33 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="production" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Video className="w-5 h-5 mr-2" />
-                  콘텐츠 제작
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  콘텐츠 제작 기능이 곧 추가될 예정입니다.
-                </div>
-              </CardContent>
-            </Card>
+            <ContentProductionTab
+              campaignId={id!}
+              confirmedInfluencers={confirmedInfluencers}
+              onContentReviewReady={async () => {
+                try {
+                  const { campaignService } = await import('@/services/campaign.service');
+                  await campaignService.updateCampaign(campaign.id, { 
+                    status: 'content-review',
+                    currentStage: 4
+                  });
+
+                  toast({
+                    title: "콘텐츠 검수 단계로 전환",
+                    description: "캠페인이 콘텐츠 검수 단계로 전환되었습니다."
+                  });
+
+                  // 페이지 새로고침하여 최신 상태 반영
+                  window.location.reload();
+                } catch (error) {
+                  console.error('검수 단계 전환 실패:', error);
+                  toast({
+                    title: "전환 실패",
+                    description: "콘텐츠 검수 단계 전환에 실패했습니다."
+                  });
+                }
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="content" className="mt-6">
