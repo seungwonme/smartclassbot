@@ -96,7 +96,9 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
       case 'draft': return 'bg-gray-100 text-gray-800';
       case 'submitted': return 'bg-blue-100 text-blue-800';
       case 'revision-request': return 'bg-orange-100 text-orange-800';
+      case 'revision-feedback': return 'bg-yellow-100 text-yellow-800';
       case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -106,7 +108,9 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
       case 'draft': return '임시저장';
       case 'submitted': return '제출완료';
       case 'revision-request': return '수정요청';
+      case 'revision-feedback': return '수정완료';
       case 'approved': return '승인완료';
+      case 'rejected': return '반려';
       default: return status;
     }
   };

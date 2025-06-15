@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, FileImage, FileVideo, X } from 'lucide-react';
-import { ContentSubmission, ContentFile } from '@/types/contentSubmission';
+import { ContentSubmission, ContentFile } from '@/types/campaign';
 import { useToast } from '@/hooks/use-toast';
 
 interface ContentUploadFormProps {
@@ -81,7 +81,7 @@ const ContentUploadForm: React.FC<ContentUploadFormProps> = ({
             id: `file_${Date.now()}_${index}`,
             name: file.name,
             url: base64,
-            type: file.type,
+            type: file.type.startsWith('image/') ? 'image' : 'video',
             size: file.size,
             uploadedAt: new Date().toISOString()
           };
@@ -94,7 +94,7 @@ const ContentUploadForm: React.FC<ContentUploadFormProps> = ({
         influencerId: influencer.id,
         influencerName: influencer.name,
         contentType,
-        status: 'draft',
+        status: 'submitted',
         contentFiles,
         revisions: existingSubmission?.revisions || [],
         currentRevisionNumber: existingSubmission?.currentRevisionNumber || 0

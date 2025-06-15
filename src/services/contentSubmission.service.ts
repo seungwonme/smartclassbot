@@ -43,7 +43,7 @@ export const contentSubmissionService = {
             influencerId: submissionData.influencerId!,
             influencerName: submissionData.influencerName!,
             contentType: submissionData.contentType!,
-            status: 'draft',
+            status: 'submitted',
             contentFiles: submissionData.contentFiles || [],
             revisions: [],
             currentRevisionNumber: 0,
