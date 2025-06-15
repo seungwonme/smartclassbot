@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { addDays, isAfter, isBefore, isSameDay, isWithinInterval } from 'date-fns';
 
 interface ProductionRangeCalendarProps {
@@ -59,73 +58,75 @@ const ProductionRangeCalendar: React.FC<ProductionRangeCalendarProps> = ({
   const progressPercentage = Math.min(100, Math.max(0, ((today.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * 100));
 
   return (
-    <Card className={`${className}`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-gray-700">제작 일정</CardTitle>
+    <div className={`${className}`}>
+      {/* 제목 */}
+      <div className="mb-3">
+        <h4 className="text-sm font-medium text-gray-700 mb-1">제작 일정</h4>
         <div className="text-xs text-gray-500">
-          {startDate} ~ {deadline} ({totalDays}일간)
+          총 {totalDays}일간
         </div>
-      </CardHeader>
-      <CardContent className="p-3">
-        <Calendar
-          mode="single"
-          month={displayMonth}
-          className="w-full"
-          modifiers={modifiers}
-          modifiersStyles={modifiersStyles}
-          classNames={{
-            months: "flex w-full",
-            month: "space-y-2 w-full",
-            caption: "flex justify-center pt-1 relative items-center text-xs",
-            caption_label: "text-xs font-medium",
-            nav: "space-x-1 flex items-center",
-            nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100 text-xs",
-            nav_button_previous: "absolute left-1",
-            nav_button_next: "absolute right-1",
-            table: "w-full border-collapse space-y-1",
-            head_row: "flex",
-            head_cell: "text-muted-foreground rounded-md w-6 font-normal text-[0.6rem]",
-            row: "flex w-full mt-1",
-            cell: "h-6 w-6 text-center text-[0.6rem] p-0 relative focus-within:relative focus-within:z-20",
-            day: "h-6 w-6 p-0 font-normal aria-selected:opacity-100 text-[0.6rem]",
-            day_today: "bg-orange-500 text-white rounded-full",
-            day_outside: "text-muted-foreground opacity-50",
-            day_disabled: "text-muted-foreground opacity-50"
-          }}
-          disabled={() => false}
-        />
+      </div>
+
+      {/* 달력 */}
+      <Calendar
+        mode="single"
+        month={displayMonth}
+        className="w-full"
+        modifiers={modifiers}
+        modifiersStyles={modifiersStyles}
+        classNames={{
+          months: "flex w-full",
+          month: "space-y-2 w-full",
+          caption: "flex justify-center pt-1 relative items-center text-xs",
+          caption_label: "text-xs font-medium",
+          nav: "space-x-1 flex items-center",
+          nav_button: "h-5 w-5 bg-transparent p-0 opacity-50 hover:opacity-100 text-xs",
+          nav_button_previous: "absolute left-1",
+          nav_button_next: "absolute right-1",
+          table: "w-full border-collapse space-y-1",
+          head_row: "flex",
+          head_cell: "text-muted-foreground rounded-md w-6 font-normal text-[0.6rem]",
+          row: "flex w-full mt-1",
+          cell: "h-6 w-6 text-center text-[0.6rem] p-0 relative focus-within:relative focus-within:z-20",
+          day: "h-6 w-6 p-0 font-normal aria-selected:opacity-100 text-[0.6rem]",
+          day_today: "bg-orange-500 text-white rounded-full",
+          day_outside: "text-muted-foreground opacity-50",
+          day_disabled: "text-muted-foreground opacity-50"
+        }}
+        disabled={() => false}
+      />
+      
+      {/* 범례 및 진행 정보 */}
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <div className="text-gray-600">
+            {remainingDays > 0 ? `D-${remainingDays}` : remainingDays === 0 ? 'D-Day' : '마감완료'}
+          </div>
+        </div>
         
-        {/* 범례 및 진행 정보 */}
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>시작일</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-blue-100 border border-blue-200"></div>
-                <span>진행중</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span>마감일</span>
-              </div>
-            </div>
-            <div className="text-gray-600">
-              {remainingDays > 0 ? `D-${remainingDays}` : remainingDays === 0 ? 'D-Day' : '마감완료'}
-            </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>시작</span>
           </div>
-          
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
-            <div 
-              className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-100 border border-blue-200"></div>
+            <span>진행</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+            <span>마감</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        
+        <div className="w-full bg-gray-200 rounded-full h-1">
+          <div 
+            className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+      </div>
+    </div>
   );
 };
 
