@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -549,17 +548,7 @@ const AdminCampaignDetail = () => {
               </Card>
             ) : isAllPlansApproved() ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[700px]">
-                {/* 좌측: 제작 일정 관리 */}
-                <div className="lg:col-span-1">
-                  <ProductionScheduleManager
-                    confirmedInfluencers={confirmedInfluencers}
-                    onUpdateSchedule={handleUpdateProductionSchedule}
-                    onStartProduction={handleStartProduction}
-                    canStartProduction={isAllSchedulesSet()}
-                  />
-                </div>
-
-                {/* 우측: 기획안 완료 현황 */}
+                {/* 좌측: 기획안 완료 현황 */}
                 <div className="lg:col-span-1">
                   <Card className="h-full">
                     <CardHeader>
@@ -590,6 +579,16 @@ const AdminCampaignDetail = () => {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+
+                {/* 우측: 제작 일정 관리 */}
+                <div className="lg:col-span-1">
+                  <ProductionScheduleManager
+                    confirmedInfluencers={confirmedInfluencers}
+                    onUpdateSchedule={handleUpdateProductionSchedule}
+                    onStartProduction={handleStartProduction}
+                    canStartProduction={isAllSchedulesSet()}
+                  />
                 </div>
               </div>
             ) : (
