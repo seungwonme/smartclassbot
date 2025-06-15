@@ -2,18 +2,23 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileImage, FileVideo, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileImage, FileVideo, User, Upload } from 'lucide-react';
 import { CampaignInfluencer, ContentSubmission } from '@/types/campaign';
 import ProductionRangeCalendar from './ProductionRangeCalendar';
 
 interface InfluencerDetailPanelProps {
   influencer: CampaignInfluencer;
   submission?: ContentSubmission;
+  showUploadButton?: boolean;
+  onUploadClick?: (influencer: CampaignInfluencer) => void;
 }
 
 const InfluencerDetailPanel: React.FC<InfluencerDetailPanelProps> = ({
   influencer,
-  submission
+  submission,
+  showUploadButton = false,
+  onUploadClick
 }) => {
   const getExpectedContentType = (): 'image' | 'video' => {
     const deliverables = influencer.deliverables || [];
@@ -115,6 +120,25 @@ const InfluencerDetailPanel: React.FC<InfluencerDetailPanelProps> = ({
                 </div>
               )}
             </div>
+
+            {/* 업로드 버튼 (시스템 관리자용) */}
+            {showUploadButton && onUploadClick && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <Button
+                  onClick={() => onUploadClick(influencer)}
+                  variant={submission ? "outline" : "default"}
+                  className={submission ? "" : "bg-blue-600 hover:bg-blue-700"}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {submission ? '재업로드' : '콘텐츠 업로드'}
+                </Button>
+                {submission && submission.contentFiles && submission.contentFiles.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    업로드된 파일: {submission.contentFiles.length}개
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 구분선 */}
