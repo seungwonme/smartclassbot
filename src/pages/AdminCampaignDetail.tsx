@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,13 +34,11 @@ const AdminCampaignDetail = () => {
   const [selectedInfluencer, setSelectedInfluencer] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showRevisionForm, setShowRevisionForm] = useState(false);
   const [showRevisionFeedbackForm, setShowRevisionFeedbackForm] = useState(false);
   const [revisionFeedback, setRevisionFeedback] = useState('');
   const [isContentLoading, setIsContentLoading] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [pendingPlanData, setPendingPlanData] = useState<Partial<ContentPlanDetail> | null>(null);
-  const [isEditingRevision, setIsEditingRevision] = useState(false); // 수정 요청 편집 상태
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedPlanData, setEditedPlanData] = useState<Partial<ContentPlanDetail> | null>(null);
 
   React.useEffect(() => {
     const loadContentPlans = async () => {
@@ -204,31 +202,19 @@ const AdminCampaignDetail = () => {
     }
   };
 
-  // 새로운 기획안 수정 처리 함수 (저장 단계)
-  const handleSavePlanChanges = async () => {
-    if (!selectedPlan || !pendingPlanData || !campaign) return;
+  // 기획안 저장 처리 (브랜드 관리자 방식 참고)
+  const handleSavePlan = async () => {
+    if (!selectedPlan || !editedPlanData || !campaign) return;
 
     try {
       console.log('=== 시스템 관리자 기획안 수정 저장 ===');
       console.log('기획안 ID:', selectedPlan.id);
-      console.log('수정 데이터:', pendingPlanData);
+      console.log('수정 데이터:', editedPlanData);
 
-      // 수정 요청이 있는지 확인
-      const hasPendingRevision = selectedPlan?.revisions?.some(
-        revision => revision.status === 'pending'
-      );
-
-      console.log('수정 요청 대기 중:', hasPendingRevision);
-
-      // 수정 요청 편집 모드에서는 revision 상태를 변경하지 않고 기획안 데이터만 업데이트
       const updateData = {
-        ...pendingPlanData,
+        ...editedPlanData,
         updatedAt: new Date().toISOString()
       };
-
-      // revision 관련 필드 제거 (수정 요청 편집 모드에서는 변경하지 않음)
-      delete updateData.status;
-      delete updateData.revisions;
 
       await contentService.updateContentPlan(campaign.id, selectedPlan.id, updateData);
 
@@ -240,43 +226,38 @@ const AdminCampaignDetail = () => {
         setSelectedPlan(updatedPlan);
       }
 
-      // 저장 후 상태 업데이트
-      setHasUnsavedChanges(false);
-      setPendingPlanData(null);
+      // 저장 후 상태 초기화
+      setIsEditMode(false);
+      setEditedPlanData(null);
       
-      // 수정 요청이 있었던 경우에만 피드백 섹션 활성화
+      // 수정 요청이 있었던 경우 피드백 섹션 활성화
+      const hasPendingRevision = selectedPlan?.revisions?.some(
+        revision => revision.status === 'pending'
+      );
+      
       if (hasPendingRevision) {
-        console.log('🔄 수정 요청 완료 - 피드백 섹션 활성화');
         setShowRevisionFeedbackForm(true);
       }
 
-      console.log('=== 시스템 관리자 기획안 수정 저장 완료 ===');
-
       toast({
-        title: "기획안 수정 저장 완료",
+        title: "기획안 저장 완료",
         description: hasPendingRevision ? 
-          "콘텐츠 기획안 수정이 저장되었습니다. 아래에서 피드백을 작성해주세요." :
+          "콘텐츠 기획안이 저장되었습니다. 아래에서 피드백을 작성해주세요." :
           "콘텐츠 기획안이 저장되었습니다."
       });
     } catch (error) {
-      console.error('기획안 수정 저장 실패:', error);
+      console.error('기획안 저장 실패:', error);
       toast({
         title: "저장 실패",
-        description: "기획안 수정 저장에 실패했습니다.",
+        description: "기획안 저장에 실패했습니다.",
         variant: "destructive"
       });
     }
   };
 
-  // 기획안 데이터 변경 감지
+  // 기획안 데이터 변경 감지 (브랜드 관리자 방식 참고)
   const handlePlanDataChange = (planData: Partial<ContentPlanDetail>) => {
-    setPendingPlanData(planData);
-    setHasUnsavedChanges(true);
-  };
-
-  // 콘텐츠 업데이트 감지 (새로 추가)
-  const handleContentUpdated = () => {
-    setHasUnsavedChanges(true);
+    setEditedPlanData(planData);
   };
 
   const handleRevisionFeedback = async (feedback: string) => {
@@ -319,7 +300,6 @@ const AdminCampaignDetail = () => {
       setSelectedPlan(updatedPlan);
       setShowRevisionFeedbackForm(false);
       setRevisionFeedback('');
-      setIsEditingRevision(false); // 편집 상태 해제
 
       toast({
         title: "수정피드백 전송 완료",
@@ -342,23 +322,12 @@ const AdminCampaignDetail = () => {
       console.log('선택된 기획안:', plan.id);
       console.log('인플루언서:', plan.influencerName);
       console.log('현재 상태:', plan.status);
-      console.log('수정 요청 개수:', plan.revisions?.length || 0);
       
       setSelectedPlan(plan);
       setShowCreateForm(false);
-      setShowRevisionForm(false);
       setShowRevisionFeedbackForm(false);
-      setHasUnsavedChanges(false);
-      setPendingPlanData(null);
-      
-      // 수정 요청이 있는 경우 편집 상태로 설정
-      const hasPendingRevision = plan.revisions?.some(rev => rev.status === 'pending');
-      if (hasPendingRevision || plan.status === 'revision-request') {
-        setIsEditingRevision(true);
-        console.log('🔄 수정 요청 편집 모드 활성화');
-      } else {
-        setIsEditingRevision(false);
-      }
+      setIsEditMode(false);
+      setEditedPlanData(null);
     }
   };
 
@@ -366,23 +335,18 @@ const AdminCampaignDetail = () => {
     setSelectedInfluencer(influencer);
     setSelectedPlan(null);
     setShowCreateForm(true);
-    setShowRevisionForm(false);
     setShowRevisionFeedbackForm(false);
-    setIsEditingRevision(false);
+    setIsEditMode(false);
   };
 
-  // 수정 모드 활성화/비활성화
-  const handleToggleEditMode = () => {
-    if (hasUnsavedChanges) {
-      // 저장되지 않은 변경사항이 있으면 확인
-      if (confirm('저장되지 않은 변경사항이 있습니다. 수정 모드를 종료하시겠습니까?')) {
-        setHasUnsavedChanges(false);
-        setPendingPlanData(null);
-        setIsEditingRevision(false);
-      }
-    } else {
-      setIsEditingRevision(!isEditingRevision);
-    }
+  const handleEnterEditMode = () => {
+    setIsEditMode(true);
+    setEditedPlanData(null);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedPlanData(null);
   };
 
   if (isLoading) {
@@ -631,14 +595,32 @@ const AdminCampaignDetail = () => {
                         </div>
                         {selectedPlan && (
                           <div className="flex gap-2">
-                            {/* 상단 수정 버튼 */}
-                            {!isEditingRevision && (
+                            {!isEditMode ? (
                               <Button
                                 variant="outline"
-                                onClick={() => setIsEditingRevision(true)}
+                                onClick={handleEnterEditMode}
                               >
+                                <Edit className="w-4 h-4 mr-2" />
                                 수정
                               </Button>
+                            ) : (
+                              <>
+                                {editedPlanData && (
+                                  <Button
+                                    onClick={handleSavePlan}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <Save className="w-4 h-4 mr-2" />
+                                    저장
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  onClick={handleCancelEdit}
+                                >
+                                  취소
+                                </Button>
+                              </>
                             )}
                             <Button
                               variant="outline"
@@ -647,9 +629,8 @@ const AdminCampaignDetail = () => {
                                 setSelectedPlan(null);
                                 setShowRevisionFeedbackForm(false);
                                 setRevisionFeedback('');
-                                setHasUnsavedChanges(false);
-                                setPendingPlanData(null);
-                                setIsEditingRevision(false);
+                                setIsEditMode(false);
+                                setEditedPlanData(null);
                               }}
                             >
                               목록으로
@@ -690,33 +671,11 @@ const AdminCampaignDetail = () => {
                               existingPlan={selectedPlan}
                               onSave={handlePlanDataChange}
                               onCancel={() => setSelectedPlan(null)}
-                              onContentUpdated={handleContentUpdated}
-                              disabled={!isEditingRevision}
+                              disabled={!isEditMode}
                               hideActionButtons={true}
                               isRevisionEditMode={true}
                             />
                           </div>
-
-                          {/* 하단 저장, 수정 버튼 */}
-                          {isEditingRevision && (
-                            <div className="flex justify-end gap-2 pt-4 border-t">
-                              {hasUnsavedChanges && (
-                                <Button
-                                  onClick={handleSavePlanChanges}
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  <Save className="w-4 h-4 mr-2" />
-                                  저장
-                                </Button>
-                              )}
-                              <Button
-                                variant="outline"
-                                onClick={handleToggleEditMode}
-                              >
-                                수정
-                              </Button>
-                            </div>
-                          )}
 
                           {/* N차 수정피드백 섹션 */}
                           {showRevisionFeedbackForm && (
