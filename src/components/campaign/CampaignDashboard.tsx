@@ -197,9 +197,17 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg">{campaign.title}</CardTitle>
             <div className="flex items-center space-x-2">
-              <Badge className={getStatusColor(campaign.status)}>
-                {getStatusText(campaign.status)}
-              </Badge>
+              {/* revision-feedback 상태일 때 수정요청 배지를 우선 표시 */}
+              {campaign.status === 'revision-feedback' && revisionInfo.hasRevisions && revisionInfo.count > 0 ? (
+                <Badge className="bg-orange-100 text-orange-800 px-2 py-1">
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  {revisionInfo.count}차 피드백완료
+                </Badge>
+              ) : (
+                <Badge className={getStatusColor(campaign.status)}>
+                  {getStatusText(campaign.status)}
+                </Badge>
+              )}
               
               {/* 기획 완료 배지 */}
               {isPlanningCompleted && (
@@ -208,8 +216,8 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
                 </Badge>
               )}
               
-              {/* 수정요청 배지 */}
-              {revisionInfo.hasRevisions && revisionInfo.count > 0 && (
+              {/* 일반 수정요청 배지 (revision-feedback가 아닌 경우에만) */}
+              {campaign.status !== 'revision-feedback' && revisionInfo.hasRevisions && revisionInfo.count > 0 && (
                 <Badge className="bg-orange-100 text-orange-800 px-2 py-1">
                   <MessageSquare className="w-3 h-3 mr-1" />
                   {revisionInfo.count}차 수정요청
