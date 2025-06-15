@@ -113,7 +113,7 @@ const AdminCampaignDetail = () => {
       case 'live': return 'bg-green-100 text-green-800';
       case 'monitoring': return 'bg-teal-100 text-teal-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
-      // 콘텐츠 기획 상태
+      // 콘텐츠 기획 상태 (통일된 상태값)
       case 'waiting': return 'bg-gray-100 text-gray-800';
       case 'draft': return 'bg-blue-100 text-blue-800';
       case 'revision-request': return 'bg-orange-100 text-orange-800';
@@ -141,7 +141,7 @@ const AdminCampaignDetail = () => {
       case 'live': return '라이브';
       case 'monitoring': return '모니터링';
       case 'completed': return '완료됨';
-      // 콘텐츠 기획 상태
+      // 콘텐츠 기획 상태 (통일된 상태값)
       case 'waiting': return '기획 대기중';
       case 'draft': return '기획초안';
       case 'revision-request': return '기획수정중';
