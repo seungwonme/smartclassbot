@@ -119,6 +119,40 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
     return contentType === 'image' ? FileImage : FileVideo;
   };
 
+  const getContentTypeInfo = (contentType: 'image' | 'video') => {
+    if (contentType === 'image') {
+      return {
+        icon: FileImage,
+        label: '이미지 콘텐츠',
+        description: '피드용 이미지 포스팅',
+        bgColor: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        borderColor: 'border-blue-200'
+      };
+    } else {
+      return {
+        icon: FileVideo,
+        label: '영상 콘텐츠',
+        description: '동영상 포스팅',
+        bgColor: 'bg-purple-50',
+        textColor: 'text-purple-700',
+        borderColor: 'border-purple-200'
+      };
+    }
+  };
+
+  // 인플루언서의 예상 콘텐츠 타입 결정 (deliverables를 기반으로)
+  const getExpectedContentType = (influencer: CampaignInfluencer): 'image' | 'video' => {
+    const deliverables = influencer.deliverables || [];
+    const hasVideo = deliverables.some(d => 
+      d.toLowerCase().includes('영상') || 
+      d.toLowerCase().includes('video') || 
+      d.toLowerCase().includes('릴스') ||
+      d.toLowerCase().includes('쇼츠')
+    );
+    return hasVideo ? 'video' : 'image';
+  };
+
   const allContentSubmitted = confirmedInfluencers.every(inf => {
     const submission = getInfluencerSubmission(inf.id);
     return submission && submission.status !== 'draft';
@@ -154,13 +188,15 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
             <div className="space-y-4">
               {confirmedInfluencers.map((influencer) => {
                 const submission = getInfluencerSubmission(influencer.id);
-                const ContentTypeIcon = submission ? getContentTypeIcon(submission.contentType) : Upload;
+                const expectedContentType = getExpectedContentType(influencer);
+                const contentTypeInfo = getContentTypeInfo(submission?.contentType || expectedContentType);
+                const ContentTypeIcon = contentTypeInfo.icon;
 
                 return (
                   <div key={influencer.id} className="p-4 border rounded-lg hover:bg-gray-50">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-3">
                           <User className="w-8 h-8 p-1 bg-gray-100 rounded-full" />
                           <div>
                             <h4 className="font-medium">{influencer.name}</h4>
@@ -168,7 +204,27 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
                           </div>
                         </div>
 
-                        <div className="mt-3 space-y-2">
+                        {/* 예상 콘텐츠 유형 표시 */}
+                        <div className={`p-2 rounded-lg border ${contentTypeInfo.bgColor} ${contentTypeInfo.borderColor} mb-3`}>
+                          <div className="flex items-center gap-2">
+                            <ContentTypeIcon className={`w-4 h-4 ${contentTypeInfo.textColor}`} />
+                            <span className={`text-sm font-medium ${contentTypeInfo.textColor}`}>
+                              제작 예정: {contentTypeInfo.label}
+                            </span>
+                          </div>
+                          <p className={`text-xs ${contentTypeInfo.textColor} opacity-80 mt-1`}>
+                            {contentTypeInfo.description}
+                          </p>
+                          {influencer.deliverables && influencer.deliverables.length > 0 && (
+                            <div className="mt-1">
+                              <span className={`text-xs ${contentTypeInfo.textColor} opacity-60`}>
+                                산출물: {influencer.deliverables.join(', ')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
                           {influencer.productionStartDate && influencer.productionDeadline && (
                             <div className="flex items-center gap-4 text-sm text-gray-600">
                               <div className="flex items-center gap-1">
@@ -185,7 +241,10 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
                           {submission ? (
                             <div className="flex items-center gap-2">
                               <Badge className={getStatusColor(submission.status)}>
-                                <ContentTypeIcon className="w-3 h-3 mr-1" />
+                                {(() => {
+                                  const SubmissionIcon = getContentTypeIcon(submission.contentType);
+                                  return <SubmissionIcon className="w-3 h-3 mr-1" />;
+                                })()}
                                 {getStatusText(submission.status)}
                               </Badge>
                               {submission.contentFiles && submission.contentFiles.length > 0 && (

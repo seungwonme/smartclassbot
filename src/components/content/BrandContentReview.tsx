@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,28 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
       case 'approved': return '콘텐츠 승인';
       case 'rejected': return '반려';
       default: return status;
+    }
+  };
+
+  const getContentTypeInfo = (contentType: 'image' | 'video') => {
+    if (contentType === 'image') {
+      return {
+        icon: FileImage,
+        label: '이미지 콘텐츠',
+        description: '피드용 이미지 포스팅',
+        bgColor: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        borderColor: 'border-blue-200'
+      };
+    } else {
+      return {
+        icon: FileVideo,
+        label: '영상 콘텐츠',
+        description: '동영상 포스팅',
+        bgColor: 'bg-purple-50',
+        textColor: 'text-purple-700',
+        borderColor: 'border-purple-200'
+      };
     }
   };
 
@@ -163,66 +186,84 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {submissions.map((submission) => (
-          <Card key={submission.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedSubmission(submission)}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="flex items-center gap-2">
-                  {submission.contentType === 'image' ? (
-                    <FileImage className="w-5 h-5" />
-                  ) : (
-                    <FileVideo className="w-5 h-5" />
-                  )}
-                  {submission.influencerName}
-                </CardTitle>
-                <Badge className={getStatusColor(submission.status)}>
-                  {getStatusText(submission.status)}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  콘텐츠 타입: {submission.contentType === 'image' ? '이미지 콘텐츠' : '영상 콘텐츠'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  파일 수: {submission.contentFiles.length}개
-                </p>
-                <p className="text-sm text-gray-600">
-                  제출일: {new Date(submission.createdAt).toLocaleDateString()}
-                </p>
+        {submissions.map((submission) => {
+          const contentTypeInfo = getContentTypeInfo(submission.contentType);
+          const ContentTypeIcon = contentTypeInfo.icon;
 
-                {canReviewSubmission(submission) && (
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApprove(submission.id);
-                      }}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      승인
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedSubmission(submission);
-                        setShowRevisionForm(true);
-                      }}
-                    >
-                      <MessageSquare className="w-4 h-4 mr-1" />
-                      수정요청
-                    </Button>
+          return (
+            <Card key={submission.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedSubmission(submission)}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="flex items-center gap-2">
+                    <ContentTypeIcon className="w-5 h-5" />
+                    {submission.influencerName}
+                  </CardTitle>
+                  <Badge className={getStatusColor(submission.status)}>
+                    {getStatusText(submission.status)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {/* 콘텐츠 유형 정보 카드 */}
+                  <div className={`p-3 rounded-lg border ${contentTypeInfo.bgColor} ${contentTypeInfo.borderColor}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <ContentTypeIcon className={`w-4 h-4 ${contentTypeInfo.textColor}`} />
+                      <span className={`text-sm font-medium ${contentTypeInfo.textColor}`}>
+                        {contentTypeInfo.label}
+                      </span>
+                    </div>
+                    <p className={`text-xs ${contentTypeInfo.textColor} opacity-80`}>
+                      {contentTypeInfo.description}
+                    </p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      파일 수: {submission.contentFiles.length}개
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      제출일: {new Date(submission.createdAt).toLocaleDateString()}
+                    </p>
+                    {submission.revisions && submission.revisions.length > 0 && (
+                      <p className="text-sm text-gray-600">
+                        수정 차수: {submission.currentRevisionNumber}차
+                      </p>
+                    )}
+                  </div>
+
+                  {canReviewSubmission(submission) && (
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApprove(submission.id);
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        승인
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSubmission(submission);
+                          setShowRevisionForm(true);
+                        }}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        수정요청
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {selectedSubmission && !showRevisionForm && (
@@ -244,6 +285,29 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
               </div>
             </CardHeader>
             <CardContent>
+              {/* 콘텐츠 유형 정보 */}
+              <div className="mb-6">
+                {(() => {
+                  const contentTypeInfo = getContentTypeInfo(selectedSubmission.contentType);
+                  const ContentTypeIcon = contentTypeInfo.icon;
+                  return (
+                    <div className={`p-4 rounded-lg border ${contentTypeInfo.bgColor} ${contentTypeInfo.borderColor}`}>
+                      <div className="flex items-center gap-3">
+                        <ContentTypeIcon className={`w-6 h-6 ${contentTypeInfo.textColor}`} />
+                        <div>
+                          <h3 className={`font-medium ${contentTypeInfo.textColor}`}>
+                            {contentTypeInfo.label}
+                          </h3>
+                          <p className={`text-sm ${contentTypeInfo.textColor} opacity-80`}>
+                            {contentTypeInfo.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
               {renderContentPreview(selectedSubmission)}
               
               {selectedSubmission.revisions && selectedSubmission.revisions.length > 0 && (
