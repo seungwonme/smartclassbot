@@ -1,3 +1,4 @@
+
 export interface Campaign {
   id: string;
   title: string;
@@ -9,7 +10,7 @@ export interface Campaign {
   proposalDeadline: string;
   adType: 'branding' | 'livecommerce';
   targetContent: TargetContent;
-  influencers: Influencer[];
+  influencers: CampaignInfluencer[];
   contentPlans?: ContentPlan[];
   status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-approved' | 'live' | 'monitoring' | 'completed';
   currentStage: number;
@@ -31,10 +32,35 @@ export interface Influencer {
   name: string;
   platform: string;
   followerCount: number;
-   প্রস্তাবAmount: number;
+  proposedAmount: number;
   status: 'pending' | 'confirmed' | 'rejected' | 'brand-rejected' | 'admin-rejected';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CampaignInfluencer {
+  id: string;
+  name: string;
+  category: string;
+  followers: number;
+  avgViews: number;
+  avgLikes: number;
+  avgComments: number;
+  engagementRate: number;
+  profileImageUrl?: string;
+  profileImage?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  xiaohongshuUrl?: string;
+  tiktokUrl?: string;
+  proposedFee: number;
+  adFee?: number;
+  deliverables: string[];
+  additionalTerms?: string;
+  status: 'pending' | 'confirmed' | 'rejected' | 'accepted' | 'admin-rejected' | 'brand-rejected';
+  proposalSubmittedAt?: string;
+  platform?: 'douyin' | 'xiaohongshu';
+  region?: string;
 }
 
 export interface ContentPlan {
@@ -59,4 +85,12 @@ export interface ContentPlan {
   currentRevisionNumber: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  age: string;
+  interests: string[];
+  productId?: string;
 }
