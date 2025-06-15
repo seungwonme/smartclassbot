@@ -257,7 +257,7 @@ export const useCampaignForm = (campaignId?: string) => {
         proposalDeadline: formData.proposalDeadline ? format(formData.proposalDeadline, 'yyyy-MM-dd') : '',
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
-        adType: formData.adType,
+        adType: formData.adType === 'live-commerce' ? 'live-commerce' : 'branding',
         status: 'creating',
         currentStage: 1,
         targetContent: formData.targetContent,

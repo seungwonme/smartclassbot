@@ -2,16 +2,25 @@
 export interface Campaign {
   id: string;
   title: string;
+  brandId: string;
   brandName: string;
+  productId: string;
   productName: string;
   budget: number;
   campaignStartDate: string;
   campaignEndDate: string;
   proposalDeadline: string;
-  adType: 'branding' | 'livecommerce';
+  adType: 'branding' | 'live-commerce';
   targetContent: TargetContent;
   influencers: CampaignInfluencer[];
   contentPlans?: ContentPlan[];
+  contentSubmissions?: ContentSubmission[];
+  quote?: {
+    subtotal: number;
+    agencyFee: number;
+    vat: number;
+    total: number;
+  };
   status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-approved' | 'live' | 'monitoring' | 'completed';
   currentStage: number;
   createdAt: string;
@@ -85,6 +94,42 @@ export interface ContentPlan {
   currentRevisionNumber: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ContentSubmission {
+  id: string;
+  campaignId: string;
+  influencerId: string;
+  influencerName: string;
+  contentType: 'image' | 'video';
+  status: 'draft' | 'submitted' | 'revision-request' | 'revision-feedback' | 'approved' | 'rejected';
+  contentFiles: ContentFile[];
+  revisions: ContentRevision[];
+  currentRevisionNumber: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContentFile {
+  id: string;
+  name: string;
+  url: string;
+  type: 'image' | 'video' | 'document';
+  size: number;
+  uploadedAt: string;
+}
+
+export interface ContentRevision {
+  id: string;
+  revisionNumber: number;
+  feedback: string;
+  requestedBy: 'brand' | 'admin';
+  requestedByName: string;
+  requestedAt: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  response?: string;
+  respondedAt?: string;
+  respondedBy?: string;
 }
 
 export interface Persona {
