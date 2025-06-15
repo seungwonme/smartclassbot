@@ -1,5 +1,5 @@
 
-import { ContentSubmission, ContentFile } from '@/types/contentSubmission';
+import { ContentSubmission, ContentFile } from '@/types/campaign';
 import { storageService } from './storage.service';
 
 export const contentSubmissionService = {
