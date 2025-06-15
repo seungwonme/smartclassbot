@@ -32,12 +32,14 @@ const CampaignDetail = () => {
   } = useCampaignDetail();
 
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
+  const [isContentLoading, setIsContentLoading] = useState(false);
 
   // Load content plans when campaign is loaded (강화된 로딩)
   React.useEffect(() => {
     const loadContentPlans = async () => {
       if (campaign?.id) {
         try {
+          setIsContentLoading(true);
           console.log('🎯 브랜드 관리자 - 콘텐츠 기획 로딩 시작');
           console.log('🎯 캠페인 정보:', {
             id: campaign.id,
@@ -50,6 +52,9 @@ const CampaignDetail = () => {
           const { storageService } = await import('@/services/storage.service');
           storageService.debugAllStorage();
           
+          // 강제 새로고침을 위해 약간의 지연 추가
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           const plans = await contentService.getContentPlans(campaign.id);
           console.log('📋 로딩된 콘텐츠 기획:', plans);
           console.log('📊 기획안 개수:', plans.length);
@@ -58,6 +63,10 @@ const CampaignDetail = () => {
           
           if (plans.length > 0) {
             console.log('✅ 콘텐츠 기획안 로딩 성공');
+            toast({
+              title: "콘텐츠 기획안 로딩 완료",
+              description: `${plans.length}개의 기획안을 불러왔습니다.`
+            });
           } else {
             console.log('⚠️ 해당 캠페인의 콘텐츠 기획안이 없습니다');
           }
@@ -68,12 +77,31 @@ const CampaignDetail = () => {
             description: "콘텐츠 기획안을 불러오는데 실패했습니다.",
             variant: "destructive"
           });
+        } finally {
+          setIsContentLoading(false);
         }
       }
     };
 
     loadContentPlans();
   }, [campaign?.id, toast]);
+
+  // 탭이 콘텐츠 기획으로 변경될 때 데이터 다시 로딩
+  React.useEffect(() => {
+    if (activeTab === 'planning' && campaign?.id) {
+      const reloadContentPlans = async () => {
+        try {
+          console.log('🔄 콘텐츠 기획 탭 활성화 - 데이터 재로딩');
+          const plans = await contentService.getContentPlans(campaign.id);
+          console.log('🔄 재로딩된 기획안:', plans.length, '개');
+          setContentPlans(plans);
+        } catch (error) {
+          console.error('🔄 재로딩 실패:', error);
+        }
+      };
+      reloadContentPlans();
+    }
+  }, [activeTab, campaign?.id]);
 
   const handleContentPlanApprove = async (planId: string) => {
     if (!campaign) return;
@@ -503,12 +531,21 @@ const CampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            <BrandContentPlanReview
-              plans={contentPlans}
-              confirmedInfluencers={confirmedInfluencers}
-              onApprove={handleContentPlanApprove}
-              onRequestRevision={handleContentPlanRevision}
-            />
+            {isContentLoading ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <div className="text-lg">콘텐츠 기획안을 불러오는 중...</div>
+                  <p className="text-sm text-gray-500 mt-2">데이터를 동기화하고 있습니다.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <BrandContentPlanReview
+                plans={contentPlans}
+                confirmedInfluencers={confirmedInfluencers}
+                onApprove={handleContentPlanApprove}
+                onRequestRevision={handleContentPlanRevision}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="production" className="mt-6">

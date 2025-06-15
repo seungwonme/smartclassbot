@@ -3,7 +3,7 @@ import { ContentPlanDetail, ContentRevision } from '@/types/content';
 import { storageService } from './storage.service';
 
 export const contentService = {
-  // 콘텐츠 기획안 목록 조회 (강화된 디버깅)
+  // 콘텐츠 기획안 목록 조회 (강화된 디버깅 및 데이터 동기화)
   getContentPlans: async (campaignId: string): Promise<ContentPlanDetail[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
@@ -13,16 +13,36 @@ export const contentService = {
         // 전체 스토리지 상태 확인
         storageService.debugAllStorage();
         
-        const contentPlans = storageService.getContentPlans();
-        console.log('📋 로드된 전체 기획안:', contentPlans);
+        // 강제로 localStorage에서 직접 읽기
+        const rawContentPlans = localStorage.getItem('content_plans');
+        console.log('🔍 localStorage 직접 읽기:', rawContentPlans);
         
-        const filtered = contentPlans.filter(plan => {
+        // storageService를 통한 데이터 가져오기
+        const contentPlans = storageService.getContentPlans();
+        console.log('📋 storageService를 통한 기획안:', contentPlans);
+        
+        // 만약 데이터가 없다면 localStorage에서 직접 파싱 시도
+        let finalPlans = contentPlans;
+        if (!contentPlans || contentPlans.length === 0) {
+          if (rawContentPlans) {
+            try {
+              const parsedPlans = JSON.parse(rawContentPlans);
+              console.log('🔧 직접 파싱한 기획안:', parsedPlans);
+              finalPlans = parsedPlans;
+            } catch (error) {
+              console.error('❌ localStorage 파싱 실패:', error);
+              finalPlans = [];
+            }
+          }
+        }
+        
+        const filtered = finalPlans.filter(plan => {
           const matches = plan.campaignId === campaignId;
           console.log(`🔍 기획안 ${plan.id} (${plan.influencerName}): campaignId=${plan.campaignId}, 매치=${matches}`);
           return matches;
         });
         
-        console.log('🎯 전체 기획안:', contentPlans.length);
+        console.log('🎯 전체 기획안:', finalPlans.length);
         console.log('✅ 해당 캠페인 기획안:', filtered.length);
         console.log('📝 필터링된 결과:', filtered);
         console.log('=== contentService.getContentPlans 완료 ===');
@@ -48,7 +68,6 @@ export const contentService = {
       }, 300);
     }),
 
-  // 콘텐츠 기획안 생성 (강화된 로깅)
   createContentPlan: async (campaignId: string, planData: Omit<ContentPlanDetail, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContentPlanDetail> =>
     new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -96,7 +115,6 @@ export const contentService = {
       }, 500);
     }),
 
-  // 콘텐츠 기획안 업데이트
   updateContentPlan: async (campaignId: string, planId: string, updates: Partial<ContentPlanDetail>): Promise<ContentPlanDetail> =>
     new Promise((resolve, reject) => {
       setTimeout(() => {
