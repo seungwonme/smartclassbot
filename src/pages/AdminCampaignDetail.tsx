@@ -213,6 +213,13 @@ const AdminCampaignDetail = () => {
       console.log('기획안 ID:', selectedPlan.id);
       console.log('수정 데이터:', pendingPlanData);
 
+      // 수정 요청이 있는지 확인
+      const hasPendingRevision = selectedPlan?.revisions?.some(
+        revision => revision.status === 'pending'
+      );
+
+      console.log('수정 요청 대기 중:', hasPendingRevision);
+
       await contentService.updateContentPlan(campaign.id, selectedPlan.id, pendingPlanData);
 
       const updatedPlans = await contentService.getContentPlans(campaign.id);
@@ -226,13 +233,20 @@ const AdminCampaignDetail = () => {
       // 저장 후 상태 업데이트
       setHasUnsavedChanges(false);
       setPendingPlanData(null);
-      setShowRevisionFeedbackForm(true);
+      
+      // 수정 요청이 있었던 경우에만 피드백 섹션 활성화
+      if (hasPendingRevision) {
+        console.log('🔄 수정 요청 완료 - 피드백 섹션 활성화');
+        setShowRevisionFeedbackForm(true);
+      }
 
       console.log('=== 시스템 관리자 기획안 수정 저장 완료 ===');
 
       toast({
         title: "기획안 수정 저장 완료",
-        description: "콘텐츠 기획안 수정이 저장되었습니다."
+        description: hasPendingRevision ? 
+          "콘텐츠 기획안 수정이 저장되었습니다. 아래에서 피드백을 작성해주세요." :
+          "콘텐츠 기획안이 저장되었습니다."
       });
     } catch (error) {
       console.error('기획안 수정 저장 실패:', error);
@@ -317,7 +331,7 @@ const AdminCampaignDetail = () => {
       setSelectedPlan(plan);
       setShowCreateForm(false);
       setShowRevisionForm(false);
-      setShowRevisionFeedbackForm(false);
+      setShowRevisionFeedbackForm(false); // 초기에는 숨김
       setHasUnsavedChanges(false);
       setPendingPlanData(null);
     }
