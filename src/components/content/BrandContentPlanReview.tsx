@@ -56,6 +56,18 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     }
   };
 
+  // 수정된 상태 텍스트 로직 - revisions가 있으면 "기획수정중"으로 표시
+  const getModifiedStatusText = (plan: ContentPlanDetail) => {
+    // revisions 배열이 존재하고 비어있지 않으면 "기획수정중"
+    if (plan.revisions && plan.revisions.length > 0) {
+      console.log(`🔄 ${plan.influencerName}: revisions 존재로 인해 "기획수정중" 표시`);
+      return "기획수정중";
+    }
+    
+    // revisions가 없으면 기본 status 텍스트 사용
+    return getStatusText(plan.status);
+  };
+
   const canReviewPlan = (plan: ContentPlanDetail) => {
     return plan.status === 'draft' || plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
@@ -180,7 +192,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           onApprove={handleApprove}
           onRequestRevision={handleRequestRevisionClick}
           getStatusColor={getStatusColor}
-          getStatusText={getStatusText}
+          getStatusText={getModifiedStatusText}
           getCurrentRevisionInfo={getCurrentRevisionInfo}
           canReviewPlan={canReviewPlan}
         />
