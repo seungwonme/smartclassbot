@@ -626,25 +626,14 @@ const AdminCampaignDetail = () => {
                         </div>
                         {selectedPlan && (
                           <div className="flex gap-2">
-                            {/* 저장, 수정 버튼 */}
-                            {isEditingRevision && (
-                              <>
-                                {hasUnsavedChanges && (
-                                  <Button
-                                    onClick={handleSavePlanChanges}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    <Save className="w-4 h-4 mr-2" />
-                                    저장
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="outline"
-                                  onClick={handleToggleEditMode}
-                                >
-                                  수정
-                                </Button>
-                              </>
+                            {/* 상단 수정 버튼 */}
+                            {!isEditingRevision && (
+                              <Button
+                                variant="outline"
+                                onClick={() => setIsEditingRevision(true)}
+                              >
+                                수정
+                              </Button>
                             )}
                             <Button
                               variant="outline"
@@ -701,6 +690,27 @@ const AdminCampaignDetail = () => {
                               isRevisionEditMode={true}
                             />
                           </div>
+
+                          {/* 하단 저장, 수정 버튼 */}
+                          {isEditingRevision && (
+                            <div className="flex justify-end gap-2 pt-4 border-t">
+                              {hasUnsavedChanges && (
+                                <Button
+                                  onClick={handleSavePlanChanges}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <Save className="w-4 h-4 mr-2" />
+                                  저장
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                onClick={handleToggleEditMode}
+                              >
+                                수정
+                              </Button>
+                            </div>
+                          )}
 
                           {/* N차 수정피드백 섹션 */}
                           {showRevisionFeedbackForm && (
