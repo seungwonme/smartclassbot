@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileImage, FileVideo, User } from 'lucide-react';
 import { CampaignInfluencer, ContentSubmission } from '@/types/campaign';
-import ProductionMiniCalendar from './ProductionMiniCalendar';
+import ProductionRangeCalendar from './ProductionRangeCalendar';
 
 interface InfluencerDetailPanelProps {
   influencer: CampaignInfluencer;
@@ -55,45 +55,50 @@ const InfluencerDetailPanel: React.FC<InfluencerDetailPanelProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 인플루언서 기본 정보 */}
+      {/* 통합된 인플루언서 및 콘텐츠 정보 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-600" />
+        <CardContent className="p-4">
+          {/* 상단: 인플루언서 정보 + 콘텐츠 상태 */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-gray-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">{influencer.name}</h3>
+                <p className="text-sm text-gray-500">{influencer.platform}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">{influencer.name}</h3>
-              <p className="text-sm text-gray-500">{influencer.platform}</p>
+            
+            <div className="flex items-center gap-2">
+              {submission ? (
+                <Badge className={getSubmissionStatusColor(submission.status)}>
+                  {submission.contentType === 'image' ? <FileImage className="w-3 h-3 mr-1" /> : <FileVideo className="w-3 h-3 mr-1" />}
+                  {getSubmissionStatusText(submission.status)}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                  콘텐츠 미제출
+                </Badge>
+              )}
             </div>
-          </CardTitle>
-        </CardHeader>
-      </Card>
-
-      {/* 콘텐츠 정보 요약 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">콘텐츠 정보</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <ContentIcon className="w-4 h-4 text-blue-600" />
-            <span className="font-medium">
-              {expectedContentType === 'image' ? '이미지 콘텐츠' : '영상 콘텐츠'}
-            </span>
           </div>
-          
-          <div>
-            <span className="text-sm text-gray-500">제출 상태: </span>
-            {submission ? (
-              <Badge className={getSubmissionStatusColor(submission.status)}>
-                {submission.contentType === 'image' ? <FileImage className="w-3 h-3 mr-1" /> : <FileVideo className="w-3 h-3 mr-1" />}
-                {getSubmissionStatusText(submission.status)}
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="bg-gray-50 text-gray-600">
-                콘텐츠 미제출
-              </Badge>
+
+          {/* 구분선 */}
+          <hr className="border-gray-200 mb-4" />
+
+          {/* 콘텐츠 타입 정보 */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ContentIcon className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-sm">
+                {expectedContentType === 'image' ? '이미지 콘텐츠' : '영상 콘텐츠'}
+              </span>
+            </div>
+            {influencer.deliverables && influencer.deliverables.length > 0 && (
+              <div className="text-xs text-gray-500">
+                산출물: {influencer.deliverables.join(', ')}
+              </div>
             )}
           </div>
         </CardContent>
@@ -101,16 +106,10 @@ const InfluencerDetailPanel: React.FC<InfluencerDetailPanelProps> = ({
 
       {/* 제작 일정 달력 */}
       {influencer.productionStartDate && influencer.productionDeadline ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ProductionMiniCalendar
-            title="제작 시작일"
-            selectedDate={influencer.productionStartDate}
-          />
-          <ProductionMiniCalendar
-            title="제작 마감일"
-            selectedDate={influencer.productionDeadline}
-          />
-        </div>
+        <ProductionRangeCalendar
+          startDate={influencer.productionStartDate}
+          deadline={influencer.productionDeadline}
+        />
       ) : (
         <Card>
           <CardContent className="text-center py-8">

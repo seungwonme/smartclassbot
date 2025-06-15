@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -87,7 +86,7 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              콘텐츠 제작 일정 현황
+              콘텐츠 제작 현황
             </div>
             <Badge variant="secondary">
               {contentSubmissions.length}/{confirmedInfluencers.length} 제출완료
@@ -123,9 +122,9 @@ const BrandContentProductionTab: React.FC<BrandContentProductionTabProps> = ({
               </div>
             </div>
 
-            {/* 우측: 상세 정보 패널 */}
+            {/* 우측: 통합된 상세 정보 패널 */}
             <div className="lg:col-span-2">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">상세 정보</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">인플루언서 정보</h3>
               {selectedInfluencer ? (
                 <InfluencerDetailPanel
                   influencer={selectedInfluencer}
