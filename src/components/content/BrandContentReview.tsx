@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, MessageSquare, Clock, FileImage, FileVideo } from 'lucide-react';
-import { ContentSubmission } from '@/types/contentSubmission';
+import { ContentSubmission } from '@/types/campaign';
 import { useToast } from '@/hooks/use-toast';
 import { useInlineComments } from '@/hooks/useInlineComments';
 import ContentRevisionTimeline from './ContentRevisionTimeline';
@@ -40,8 +39,11 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
   const getStatusColor = (status: ContentSubmission['status']) => {
     switch (status) {
       case 'draft': return 'bg-blue-100 text-blue-800';
-      case 'revision': return 'bg-orange-100 text-orange-800';
+      case 'submitted': return 'bg-blue-100 text-blue-800';
+      case 'revision-request': return 'bg-orange-100 text-orange-800';
+      case 'revision-feedback': return 'bg-yellow-100 text-yellow-800';
       case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -49,14 +51,17 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
   const getStatusText = (status: ContentSubmission['status']) => {
     switch (status) {
       case 'draft': return '콘텐츠 초안';
-      case 'revision': return '콘텐츠 수정중';
+      case 'submitted': return '제출완료';
+      case 'revision-request': return '수정요청';
+      case 'revision-feedback': return '수정완료';
       case 'approved': return '콘텐츠 승인';
+      case 'rejected': return '반려';
       default: return status;
     }
   };
 
   const canReviewSubmission = (submission: ContentSubmission) => {
-    return submission.status === 'draft' || submission.status === 'revision';
+    return submission.status === 'submitted' || submission.status === 'revision-feedback';
   };
 
   const handleApprove = (submissionId: string) => {
@@ -112,7 +117,7 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
           {submission.contentFiles.map((file, index) => (
             <div key={file.id} className="border rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
-                {file.type.startsWith('image/') ? (
+                {file.type === 'image' ? (
                   <FileImage className="w-4 h-4" />
                 ) : (
                   <FileVideo className="w-4 h-4" />
@@ -120,7 +125,7 @@ const BrandContentReview: React.FC<BrandContentReviewProps> = ({
                 <span className="text-sm font-medium">{file.name}</span>
               </div>
               
-              {file.type.startsWith('image/') ? (
+              {file.type === 'image' ? (
                 <img 
                   src={file.url} 
                   alt={file.name}
