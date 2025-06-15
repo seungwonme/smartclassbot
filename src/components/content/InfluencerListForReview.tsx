@@ -71,14 +71,15 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
         };
       }
 
-      // 3. 완료된 브랜드 수정요청이 있는 경우 - 가장 최근 것을 기준으로 "피드백 완료" 표시
+      // 3. 완료된 브랜드 수정요청이 있는 경우 - 메인 상태와 상관없이 "피드백 완료" 표시
       const completedBrandRevisions = plan.revisions.filter(r => 
         r.requestedBy === 'brand' && r.status === 'completed'
       );
 
       if (completedBrandRevisions.length > 0) {
         const latestCompletedRevision = completedBrandRevisions[completedBrandRevisions.length - 1];
-        console.log(`✅ ${plan.influencerName}: 완료된 브랜드 수정요청 발견:`, latestCompletedRevision);
+        console.log(`✅ ${plan.influencerName}: 완료된 브랜드 수정요청 발견 (메인 상태: ${plan.status}):`, latestCompletedRevision);
+        // 메인 상태가 draft여도 완료된 revision이 있으면 "피드백 완료"로 표시
         return {
           text: `${latestCompletedRevision.revisionNumber}차 피드백 완료`,
           color: 'bg-purple-100 text-purple-800'
@@ -97,7 +98,7 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
       }
     }
 
-    // revision 배열이 없거나 비어있는 경우 plan.status 기반으로 판단
+    // revision 배열이 없거나 비어있는 경우에만 plan.status 기반으로 판단
     console.log(`📝 ${plan.influencerName}: revision 배열이 없거나 비어있음, plan.status 기반 처리`);
     
     if (plan.status === 'revision-feedback') {
