@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -182,32 +181,9 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
                 
                 {existingPlan ? (
                   <div className="mt-2">
-                    {canReviewPlan(existingPlan) && (
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onApprove(existingPlan.id);
-                          }}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          승인
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRequestRevision(existingPlan);
-                          }}
-                        >
-                          <MessageSquare className="w-3 h-3 mr-1" />
-                          수정요청
-                        </Button>
-                      </div>
-                    )}
+                    <p className="text-xs text-gray-500">
+                      클릭하여 기획안 상세를 확인하고 승인/수정요청을 진행하세요.
+                    </p>
                   </div>
                 ) : (
                   <div className="mt-2">

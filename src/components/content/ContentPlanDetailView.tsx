@@ -81,6 +81,32 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
           {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
             <ContentRevisionTimeline revisions={selectedPlan.revisions} />
           )}
+
+          {/* 승인/수정요청 버튼을 하단으로 이동 */}
+          {!showRevisionForm && canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
+            <div className="pt-6 border-t bg-gray-50 -mx-6 px-6 pb-4 rounded-b-lg">
+              <div className="flex justify-center gap-4">
+                <Button
+                  onClick={() => onApprove(selectedPlan.id)}
+                  className="bg-green-600 hover:bg-green-700 px-8"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  승인
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onRequestRevision}
+                  className="px-8"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  수정요청
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-3">
+                기획안 내용을 충분히 검토한 후 승인 또는 수정요청을 진행해주세요.
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -101,31 +127,9 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
-            콘텐츠 기획 상세
-          </div>
-          {selectedPlan && !showRevisionForm && canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => onApprove(selectedPlan.id)}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="w-4 h-4 mr-1" />
-                승인
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onRequestRevision}
-              >
-                <MessageSquare className="w-4 h-4 mr-1" />
-                수정요청
-              </Button>
-            </div>
-          )}
+        <CardTitle className="flex items-center">
+          <FileText className="w-5 h-5 mr-2" />
+          콘텐츠 기획 상세
         </CardTitle>
       </CardHeader>
       <CardContent className="h-full overflow-auto">
