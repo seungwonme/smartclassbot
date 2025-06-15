@@ -33,6 +33,69 @@ const AdminCampaignDetail = () => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [isContentLoading, setIsContentLoading] = useState(false);
+
+  // 콘텐츠 기획안 로딩 (강화된 로딩 및 실시간 업데이트)
+  React.useEffect(() => {
+    const loadContentPlans = async () => {
+      if (!campaign?.id) return;
+
+      try {
+        setIsContentLoading(true);
+        console.log('=== 시스템 관리자 - 콘텐츠 기획안 로딩 시작 ===');
+        console.log('캠페인 ID:', campaign.id);
+        
+        // 디버깅 정보 먼저 출력
+        await contentService.debugContentPlanStorage();
+        
+        const plans = await contentService.getContentPlans(campaign.id);
+        console.log('=== 로딩된 기획안들 ===');
+        plans.forEach(plan => {
+          console.log(`기획안 ID: ${plan.id}`);
+          console.log(`인플루언서: ${plan.influencerName}`);
+          console.log(`상태: ${plan.status}`);
+          console.log(`수정 요청 개수: ${plan.revisions?.length || 0}`);
+          if (plan.revisions && plan.revisions.length > 0) {
+            console.log('수정 요청 내역:');
+            plan.revisions.forEach(revision => {
+              console.log(`  - ${revision.revisionNumber}차: ${revision.feedback} (상태: ${revision.status})`);
+            });
+          }
+        });
+        
+        setContentPlans(plans);
+        console.log('=== 시스템 관리자 기획안 로딩 완료 ===');
+        
+      } catch (error) {
+        console.error('콘텐츠 기획안 로딩 실패:', error);
+        toast({
+          title: "기획안 로딩 실패",
+          description: "콘텐츠 기획안을 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsContentLoading(false);
+      }
+    };
+
+    loadContentPlans();
+  }, [campaign?.id, toast]);
+
+  // 탭 변경 시 데이터 리로드
+  React.useEffect(() => {
+    if (activeTab === 'planning' && campaign?.id) {
+      const reloadPlans = async () => {
+        console.log('🔄 탭 변경 - 기획안 재로딩');
+        try {
+          const plans = await contentService.getContentPlans(campaign.id);
+          setContentPlans(plans);
+        } catch (error) {
+          console.error('재로딩 실패:', error);
+        }
+      };
+      reloadPlans();
+    }
+  }, [activeTab, campaign?.id]);
 
   const getStatusColor = (status: any) => {
     switch (status) {
@@ -83,139 +146,66 @@ const AdminCampaignDetail = () => {
     if (!contentType) return;
 
     try {
-      console.log('=== 시스템 관리자 기획안 생성 시작 ===');
+      console.log('=== 시스템 관리자 기획안 생성/수정 시작 ===');
       console.log('선택된 인플루언서:', selectedInfluencer.name);
       console.log('콘텐츠 타입:', contentType);
-      console.log('기획안 데이터:', planData.planData);
 
-      const newPlan: ContentPlanDetail = {
-        id: `plan_${Date.now()}_${selectedInfluencer.id}`,
-        campaignId: id,
+      await contentService.createContentPlan(id, {
         influencerId: selectedInfluencer.id,
         influencerName: selectedInfluencer.name,
         contentType,
         status: 'draft',
-        planData: contentType === 'image' ? {
-          postTitle: (planData.planData as any)?.postTitle || '',
-          thumbnailTitle: (planData.planData as any)?.thumbnailTitle || '',
-          referenceImages: (planData.planData as any)?.referenceImages || [],
-          script: (planData.planData as any)?.script || '',
-          hashtags: (planData.planData as any)?.hashtags || []
-        } : {
-          postTitle: (planData.planData as any)?.postTitle || '',
-          scenario: (planData.planData as any)?.scenario || '',
-          scenarioFiles: (planData.planData as any)?.scenarioFiles || [],
-          script: (planData.planData as any)?.script || '',
-          hashtags: (planData.planData as any)?.hashtags || []
-        },
-        revisions: [],
-        currentRevisionNumber: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      console.log('생성할 기획안:', newPlan);
-
-      // 통합된 저장 방식 사용
-      let existingPlans: ContentPlanDetail[] = [];
-      try {
-        const data = localStorage.getItem('content_plans');
-        if (data && data !== 'null') {
-          existingPlans = JSON.parse(data);
-        }
-      } catch (error) {
-        console.log('기존 데이터 로딩 실패, 새로 시작');
-        existingPlans = [];
-      }
-
-      // 동일한 인플루언서의 기존 기획안 확인
-      const existingIndex = existingPlans.findIndex(
-        plan => plan.campaignId === id && plan.influencerId === selectedInfluencer.id
-      );
-
-      if (existingIndex !== -1) {
-        existingPlans[existingIndex] = newPlan;
-        console.log('기존 기획안 업데이트');
-      } else {
-        existingPlans.push(newPlan);
-        console.log('새 기획안 추가');
-      }
-
-      // localStorage에 저장
-      localStorage.setItem('content_plans', JSON.stringify(existingPlans));
-      console.log('localStorage 저장 완료. 총 기획안 수:', existingPlans.length);
-
-      // 콘텐츠 기획 목록에 추가
-      setContentPlans(prev => {
-        const filtered = prev.filter(p => p.influencerId !== selectedInfluencer.id);
-        return [...filtered, newPlan];
+        planData: planData.planData!,
+        revisions: planData.revisions || [],
+        currentRevisionNumber: planData.currentRevisionNumber || 0
       });
+
+      // 기획안 목록 재로딩
+      const updatedPlans = await contentService.getContentPlans(id);
+      setContentPlans(updatedPlans);
       
-      // 우측 상세 화면 숨기기
+      // UI 상태 초기화
       setSelectedPlan(null);
-      
-      // 폼 닫기 및 선택된 인플루언서 초기화
       setShowCreateForm(false);
       setSelectedInfluencer(null);
 
-      console.log('=== 시스템 관리자 기획안 생성 완료 ===');
+      console.log('=== 시스템 관리자 기획안 생성/수정 완료 ===');
 
       toast({
-        title: "콘텐츠 기획안 생성 완료",
-        description: `${selectedInfluencer.name}의 ${contentType === 'image' ? '이미지' : '동영상'} 기획안이 생성되었습니다.`
+        title: "기획안 저장 완료",
+        description: `${selectedInfluencer.name}의 콘텐츠 기획안이 저장되었습니다.`
       });
     } catch (error) {
-      console.error('콘텐츠 기획안 생성 실패:', error);
+      console.error('기획안 저장 실패:', error);
       toast({
-        title: "생성 실패",
-        description: "콘텐츠 기획안 생성에 실패했습니다.",
+        title: "저장 실패",
+        description: "기획안 저장에 실패했습니다.",
         variant: "destructive"
       });
     }
   };
 
   const handleUpdatePlan = async (planData: Partial<ContentPlanDetail>) => {
-    if (!selectedPlan) return;
+    if (!selectedPlan || !campaign) return;
 
     try {
-      console.log('=== 시스템 관리자 기획안 수정 시작 ===');
-      console.log('수정할 기획안:', selectedPlan.id);
+      console.log('=== 시스템 관리자 기획안 업데이트 시작 ===');
+      console.log('기획안 ID:', selectedPlan.id);
       console.log('업데이트 데이터:', planData);
 
-      const updatedPlan: ContentPlanDetail = {
-        ...selectedPlan,
-        ...planData,
-        updatedAt: new Date().toISOString()
-      };
+      await contentService.updateContentPlan(campaign.id, selectedPlan.id, planData);
 
-      // localStorage에서 데이터 로딩 및 업데이트
-      let existingPlans: ContentPlanDetail[] = [];
-      try {
-        const data = localStorage.getItem('content_plans');
-        if (data && data !== 'null') {
-          existingPlans = JSON.parse(data);
-        }
-      } catch (error) {
-        console.error('기존 데이터 로딩 실패:', error);
-        existingPlans = [];
+      // 기획안 목록 재로딩
+      const updatedPlans = await contentService.getContentPlans(campaign.id);
+      setContentPlans(updatedPlans);
+
+      // 선택된 기획안 업데이트
+      const updatedPlan = updatedPlans.find(p => p.id === selectedPlan.id);
+      if (updatedPlan) {
+        setSelectedPlan(updatedPlan);
       }
 
-      const index = existingPlans.findIndex(p => p.id === selectedPlan.id);
-      if (index !== -1) {
-        existingPlans[index] = updatedPlan;
-        localStorage.setItem('content_plans', JSON.stringify(existingPlans));
-        console.log('localStorage 업데이트 완료');
-      }
-
-      // 콘텐츠 기획 목록 업데이트
-      setContentPlans(prev => prev.map(plan => 
-        plan.id === selectedPlan.id ? updatedPlan : plan
-      ));
-
-      // 우측 상세 화면 숨기기
-      setSelectedPlan(null);
-
-      console.log('=== 시스템 관리자 기획안 수정 완료 ===');
+      console.log('=== 시스템 관리자 기획안 업데이트 완료 ===');
 
       toast({
         title: "기획안 수정 완료",
@@ -278,6 +268,12 @@ const AdminCampaignDetail = () => {
   const handleEditPlan = (influencerId: string) => {
     const plan = contentPlans.find(p => p.influencerId === influencerId);
     if (plan) {
+      console.log('=== 기획안 편집 시작 ===');
+      console.log('선택된 기획안:', plan.id);
+      console.log('인플루언서:', plan.influencerName);
+      console.log('현재 상태:', plan.status);
+      console.log('수정 요청 개수:', plan.revisions?.length || 0);
+      
       setSelectedPlan(plan);
       setShowCreateForm(false);
       setShowRevisionForm(false);
@@ -313,7 +309,7 @@ const AdminCampaignDetail = () => {
     );
   }
 
-  const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
+  const confirmedInfluencers = campaign?.influencers.filter(inf => inf.status === 'confirmed') || [];
 
   return (
     <div className="flex min-h-screen w-full">
@@ -341,7 +337,7 @@ const AdminCampaignDetail = () => {
           </div>
         </div>
 
-        <CampaignWorkflowSteps campaign={campaign} />
+        <CampaignWorkflowSteps campaign={campaign!} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
@@ -442,111 +438,132 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
-              {/* 좌측: 인플루언서 목록 */}
-              <div className="lg:col-span-1">
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Users className="w-5 h-5 mr-2" />
-                      확정된 인플루언서
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {confirmedInfluencers.map((influencer) => {
-                        const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
-                        
-                        return (
-                          <div key={influencer.id} className="p-3 border rounded-lg hover:bg-gray-50">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium">{influencer.name}</h4>
-                                <p className="text-sm text-gray-500">{influencer.platform}</p>
-                                {existingPlan && (
-                                  <Badge className={
-                                    existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                    (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
-                                    'bg-green-100 text-green-800'
-                                  }>
-                                    {existingPlan.status === 'draft' ? '기획초안' :
-                                     (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
-                                  </Badge>
+            {isContentLoading ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <div className="text-lg">콘텐츠 기획안을 로딩 중...</div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mt-4"></div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
+                {/* 좌측: 인플루언서 목록 */}
+                <div className="lg:col-span-1">
+                  <Card className="h-full">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Users className="w-5 h-5 mr-2" />
+                        확정된 인플루언서
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {confirmedInfluencers.map((influencer) => {
+                          const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
+                          const hasPendingRevision = existingPlan?.revisions?.some(rev => rev.status === 'pending');
+                          
+                          return (
+                            <div key={influencer.id} className="p-3 border rounded-lg hover:bg-gray-50">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h4 className="font-medium">{influencer.name}</h4>
+                                  <p className="text-sm text-gray-500">{influencer.platform}</p>
+                                  {existingPlan && (
+                                    <div className="mt-1 space-y-1">
+                                      <Badge className={
+                                        existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                        existingPlan.status === 'revision-requested' ? 'bg-orange-100 text-orange-800' :
+                                        existingPlan.status === 'revision-feedback' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-green-100 text-green-800'
+                                      }>
+                                        {existingPlan.status === 'draft' ? '기획초안' :
+                                         existingPlan.status === 'revision-requested' ? '수정요청됨' :
+                                         existingPlan.status === 'revision-feedback' ? '수정완료' : '기획완료'}
+                                      </Badge>
+                                      {hasPendingRevision && (
+                                        <Badge className="bg-red-100 text-red-800 ml-1">
+                                          🔄 수정 대기
+                                        </Badge>
+                                      )}
+                                      {existingPlan.revisions && existingPlan.revisions.length > 0 && (
+                                        <p className="text-xs text-gray-500">
+                                          수정 요청 {existingPlan.revisions.length}회
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                {existingPlan ? (
+                                  <Button
+                                    size="sm"
+                                    variant={hasPendingRevision ? "default" : "outline"}
+                                    onClick={() => handleEditPlan(influencer.id)}
+                                    className={hasPendingRevision ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-50 hover:bg-blue-100"}
+                                  >
+                                    <Edit className="w-4 h-4 mr-1" />
+                                    {hasPendingRevision ? '수정 요청 확인' : '편집'}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleCreatePlan(influencer)}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    기획안 생성
+                                  </Button>
                                 )}
                               </div>
-                              {existingPlan ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEditPlan(influencer.id)}
-                                  className="bg-blue-50 hover:bg-blue-100"
-                                >
-                                  <Edit className="w-4 h-4 mr-1" />
-                                  편집
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleCreatePlan(influencer)}
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                  <Plus className="w-4 h-4 mr-1" />
-                                  기획안 생성
-                                </Button>
-                              )}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* 우측: 콘텐츠 기획 상세 */}
-              <div className="lg:col-span-2">
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <FileText className="w-5 h-5 mr-2" />
-                        콘텐츠 기획 상세
+                          );
+                        })}
                       </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-full overflow-auto">
-                    {showCreateForm && selectedInfluencer ? (
-                      <ContentPlanForm
-                        influencer={selectedInfluencer}
-                        campaignId={id!}
-                        onSave={handleCreateContentPlan}
-                        onCancel={() => {
-                          setShowCreateForm(false);
-                          setSelectedInfluencer(null);
-                        }}
-                      />
-                    ) : selectedPlan ? (
-                      <div className="space-y-6">
-                        {/* 상단: 수정요청 히스토리 */}
-                        {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
-                          <div className="border-b pb-4">
-                            <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
-                            <ContentRevisionTimeline revisions={selectedPlan.revisions} />
-                          </div>
-                        )}
+                    </CardContent>
+                  </Card>
+                </div>
 
-                        {/* 수정피드백 폼 */}
-                        {showRevisionForm && (
-                          <RevisionRequestForm
-                            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
-                            onSubmit={handleRevisionFeedback}
-                            onCancel={() => setShowRevisionForm(false)}
-                            requestType="admin-feedback"
-                          />
+                {/* 우측: 콘텐츠 기획 상세 */}
+                <div className="lg:col-span-2">
+                  <Card className="h-full">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 mr-2" />
+                          콘텐츠 기획 상세
+                        </div>
+                        {selectedPlan && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedPlan(null)}
+                          >
+                            목록으로
+                          </Button>
                         )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-full overflow-auto">
+                      {showCreateForm && selectedInfluencer ? (
+                        <ContentPlanForm
+                          influencer={selectedInfluencer}
+                          campaignId={id!}
+                          onSave={handleCreateContentPlan}
+                          onCancel={() => {
+                            setShowCreateForm(false);
+                            setSelectedInfluencer(null);
+                          }}
+                        />
+                      ) : selectedPlan ? (
+                        <div className="space-y-6">
+                          {/* 수정요청 히스토리 */}
+                          {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+                            <div className="border-b pb-4">
+                              <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
+                              <ContentRevisionTimeline revisions={selectedPlan.revisions} />
+                            </div>
+                          )}
 
-                        {/* 하단: 기획안 편집 폼 */}
-                        {!showRevisionForm && (
+                          {/* 기획안 편집 폼 */}
                           <div>
                             <h3 className="text-lg font-medium mb-3">기획안 편집</h3>
                             <ContentPlanForm
@@ -557,17 +574,30 @@ const AdminCampaignDetail = () => {
                               onCancel={() => setSelectedPlan(null)}
                             />
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
-                        좌측에서 인플루언서를 선택하여 기획안을 생성하거나 편집하세요.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                          <div className="text-center">
+                            <p className="mb-4">좌측에서 인플루언서를 선택하여 기획안을 생성하거나 편집하세요.</p>
+                            {contentPlans.length > 0 && (
+                              <div className="text-sm">
+                                <p className="text-green-600">✅ 총 {contentPlans.length}개의 기획안이 로딩되었습니다.</p>
+                                <button 
+                                  onClick={() => contentService.debugContentPlanStorage()}
+                                  className="mt-2 px-3 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200"
+                                >
+                                  🔍 디버깅 정보 확인
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="production" className="mt-6">
