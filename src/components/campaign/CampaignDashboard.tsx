@@ -197,9 +197,9 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg">{campaign.title}</CardTitle>
             <div className="flex items-center space-x-2">
-              {/* revision-feedback 상태일 때 수정요청 배지를 우선 표시 */}
+              {/* revision-feedback 상태이면서 수정요청이 있는 경우 "N차 피드백완료" 표시 */}
               {campaign.status === 'revision-feedback' && revisionInfo.hasRevisions && revisionInfo.count > 0 ? (
-                <Badge className="bg-orange-100 text-orange-800 px-2 py-1">
+                <Badge className="bg-green-100 text-green-800 px-2 py-1">
                   <MessageSquare className="w-3 h-3 mr-1" />
                   {revisionInfo.count}차 피드백완료
                 </Badge>
