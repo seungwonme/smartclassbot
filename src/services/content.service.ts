@@ -3,18 +3,28 @@ import { ContentPlanDetail, ContentRevision } from '@/types/content';
 import { storageService } from './storage.service';
 
 export const contentService = {
-  // 콘텐츠 기획안 목록 조회
+  // 콘텐츠 기획안 목록 조회 (강화된 디버깅)
   getContentPlans: async (campaignId: string): Promise<ContentPlanDetail[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
         console.log('=== contentService.getContentPlans 시작 ===');
-        console.log('캠페인 ID:', campaignId);
+        console.log('🎯 요청된 캠페인 ID:', campaignId);
+        
+        // 전체 스토리지 상태 확인
+        storageService.debugAllStorage();
         
         const contentPlans = storageService.getContentPlans();
-        const filtered = contentPlans.filter(plan => plan.campaignId === campaignId);
+        console.log('📋 로드된 전체 기획안:', contentPlans);
         
-        console.log('전체 기획안:', contentPlans.length);
-        console.log('해당 캠페인 기획안:', filtered.length);
+        const filtered = contentPlans.filter(plan => {
+          const matches = plan.campaignId === campaignId;
+          console.log(`🔍 기획안 ${plan.id} (${plan.influencerName}): campaignId=${plan.campaignId}, 매치=${matches}`);
+          return matches;
+        });
+        
+        console.log('🎯 전체 기획안:', contentPlans.length);
+        console.log('✅ 해당 캠페인 기획안:', filtered.length);
+        console.log('📝 필터링된 결과:', filtered);
         console.log('=== contentService.getContentPlans 완료 ===');
         
         resolve(filtered);
@@ -38,16 +48,17 @@ export const contentService = {
       }, 300);
     }),
 
-  // 콘텐츠 기획안 생성
+  // 콘텐츠 기획안 생성 (강화된 로깅)
   createContentPlan: async (campaignId: string, planData: Omit<ContentPlanDetail, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContentPlanDetail> =>
     new Promise((resolve, reject) => {
       setTimeout(() => {
         console.log('=== contentService.createContentPlan 시작 ===');
-        console.log('캠페인 ID:', campaignId);
-        console.log('기획안 데이터:', planData);
+        console.log('🎯 캠페인 ID:', campaignId);
+        console.log('📝 기획안 데이터:', planData);
         
         try {
           const contentPlans = storageService.getContentPlans();
+          console.log('📋 현재 저장된 기획안 수:', contentPlans.length);
           
           const newPlan: ContentPlanDetail = {
             ...planData,
@@ -59,13 +70,20 @@ export const contentService = {
             updatedAt: new Date().toISOString()
           };
           
-          console.log('생성될 새 기획안:', newPlan);
+          console.log('🆕 생성될 새 기획안:', newPlan);
           
           contentPlans.push(newPlan);
+          console.log('📝 업데이트된 기획안 리스트:', contentPlans);
+          
           const success = storageService.setContentPlans(contentPlans);
           
           if (success) {
             console.log('💾 기획안 저장 완료 - 전체 기획안:', contentPlans.length);
+            
+            // 저장 후 즉시 검증
+            const verification = storageService.getContentPlans();
+            console.log('🔍 저장 검증:', verification.length, '개');
+            
             console.log('=== contentService.createContentPlan 완료 ===');
             resolve(newPlan);
           } else {
@@ -120,7 +138,6 @@ export const contentService = {
       }, 300);
     }),
 
-  // 콘텐츠 기획안 삭제
   deleteContentPlan: async (campaignId: string, planId: string): Promise<void> =>
     new Promise((resolve, reject) => {
       setTimeout(() => {

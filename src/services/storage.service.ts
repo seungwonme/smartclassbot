@@ -84,26 +84,49 @@ export const storageService = {
     }
   },
 
-  // 콘텐츠 기획안 관련 (새로 추가)
+  // 콘텐츠 기획안 관련 (강화된 로깅)
   getContentPlans: (): ContentPlanDetail[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CONTENT_PLANS);
+      console.log('🔍 콘텐츠 기획안 로컬스토리지 원본 데이터:', data);
+      
       const plans = data ? JSON.parse(data) : [];
-      console.log('저장된 콘텐츠 기획안:', plans.length, '개');
+      console.log('📋 파싱된 콘텐츠 기획안:', plans);
+      console.log('📊 저장된 콘텐츠 기획안:', plans.length, '개');
+      
+      // 각 기획안의 상세 정보 로깅
+      plans.forEach((plan: ContentPlanDetail, index: number) => {
+        console.log(`📝 기획안 ${index + 1}:`, {
+          id: plan.id,
+          campaignId: plan.campaignId,
+          influencerName: plan.influencerName,
+          status: plan.status,
+          contentType: plan.contentType
+        });
+      });
+      
       return plans;
     } catch (error) {
-      console.error('콘텐츠 기획안 로드 실패:', error);
+      console.error('❌ 콘텐츠 기획안 로드 실패:', error);
       return [];
     }
   },
 
   setContentPlans: (plans: ContentPlanDetail[]): boolean => {
     try {
+      console.log('💾 콘텐츠 기획안 저장 시작:', plans.length, '개');
+      console.log('💾 저장할 데이터:', plans);
+      
       localStorage.setItem(STORAGE_KEYS.CONTENT_PLANS, JSON.stringify(plans));
-      console.log('콘텐츠 기획안 저장 완료:', plans.length, '개');
+      
+      // 저장 후 즉시 검증
+      const saved = localStorage.getItem(STORAGE_KEYS.CONTENT_PLANS);
+      const parsed = saved ? JSON.parse(saved) : [];
+      console.log('✅ 저장 검증 완료:', parsed.length, '개');
+      
       return true;
     } catch (error) {
-      console.error('콘텐츠 기획안 저장 실패:', error);
+      console.error('❌ 콘텐츠 기획안 저장 실패:', error);
       return false;
     }
   },
@@ -149,5 +172,15 @@ export const storageService = {
       localStorage.removeItem(key);
     });
     console.log('전체 데이터 삭제 완료');
+  },
+
+  // 디버그용 로컬스토리지 전체 조회
+  debugAllStorage: (): void => {
+    console.log('🔍 === 로컬스토리지 전체 디버그 ===');
+    Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
+      const data = localStorage.getItem(storageKey);
+      console.log(`${key}:`, data ? JSON.parse(data) : null);
+    });
+    console.log('🔍 === 로컬스토리지 디버그 완료 ===');
   }
 };

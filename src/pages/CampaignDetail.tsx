@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, FileText, Video, Plus } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, FileText, Video } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
 import CampaignConfirmationSummary from '@/components/campaign/CampaignConfirmationSummary';
-import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
 import RevisionRequestForm from '@/components/content/RevisionRequestForm';
 import { Campaign } from '@/types/campaign';
@@ -37,23 +36,47 @@ const CampaignDetail = () => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showRevisionForm, setShowRevisionForm] = useState(false);
 
-  // Load content plans when campaign is loaded
+  // Load content plans when campaign is loaded (강화된 로딩)
   React.useEffect(() => {
     const loadContentPlans = async () => {
       if (campaign?.id) {
         try {
-          console.log('브랜드 관리자 - 콘텐츠 기획 로딩 시작');
+          console.log('🎯 브랜드 관리자 - 콘텐츠 기획 로딩 시작');
+          console.log('🎯 캠페인 정보:', {
+            id: campaign.id,
+            title: campaign.title,
+            status: campaign.status,
+            currentStage: campaign.currentStage
+          });
+          
+          // 스토리지 전체 상태 먼저 확인
+          const { storageService } = await import('@/services/storage.service');
+          storageService.debugAllStorage();
+          
           const plans = await contentService.getContentPlans(campaign.id);
-          console.log('로딩된 콘텐츠 기획:', plans);
+          console.log('📋 로딩된 콘텐츠 기획:', plans);
+          console.log('📊 기획안 개수:', plans.length);
+          
           setContentPlans(plans);
+          
+          if (plans.length > 0) {
+            console.log('✅ 콘텐츠 기획안 로딩 성공');
+          } else {
+            console.log('⚠️ 해당 캠페인의 콘텐츠 기획안이 없습니다');
+          }
         } catch (error) {
-          console.error('콘텐츠 기획 로딩 실패:', error);
+          console.error('❌ 콘텐츠 기획 로딩 실패:', error);
+          toast({
+            title: "콘텐츠 기획 로딩 실패",
+            description: "콘텐츠 기획안을 불러오는데 실패했습니다.",
+            variant: "destructive"
+          });
         }
       }
     };
 
     loadContentPlans();
-  }, [campaign?.id]);
+  }, [campaign?.id, toast]);
 
   const handleContentPlanApprove = async (planId: string) => {
     if (!campaign) return;
@@ -493,179 +516,182 @@ const CampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
-              {/* 좌측: 인플루언서 목록 */}
-              <div className="lg:col-span-1">
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Users className="w-5 h-5 mr-2" />
-                      확정된 인플루언서
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {confirmedInfluencers.map((influencer) => {
-                        const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
-                        
-                        return (
-                          <div 
-                            key={influencer.id} 
-                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                              selectedPlan?.influencerId === influencer.id 
-                                ? 'bg-blue-50 border-blue-200' 
-                                : 'hover:bg-gray-50'
-                            }`}
-                            onClick={() => existingPlan && setSelectedPlan(existingPlan)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium">{influencer.name}</h4>
-                                <p className="text-sm text-gray-500">{influencer.platform}</p>
-                                {existingPlan && (
-                                  <Badge className={
-                                    existingPlan.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                    (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
-                                    'bg-green-100 text-green-800'
-                                  }>
-                                    {existingPlan.status === 'draft' ? '기획초안' :
-                                     (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
-                                  </Badge>
-                                )}
-                              </div>
-                              {!existingPlan && (
-                                <span className="text-sm text-gray-400">기획안 없음</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+            <div className="space-y-6">
+              {/* 콘텐츠 기획 현황 표시 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FileText className="w-5 h-5 mr-2" />
+                      콘텐츠 기획 현황
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Badge variant="outline">
+                      {contentPlans.length}개 기획안
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {confirmedInfluencers.map((influencer) => {
+                      const existingPlan = contentPlans.find(plan => plan.influencerId === influencer.id);
+                      
+                      return (
+                        <div 
+                          key={influencer.id} 
+                          className={`p-4 border rounded-lg transition-all ${
+                            existingPlan 
+                              ? 'bg-green-50 border-green-200 cursor-pointer hover:bg-green-100' 
+                              : 'bg-gray-50 border-gray-200'
+                          }`}
+                          onClick={() => existingPlan && setSelectedPlan(existingPlan)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium">{influencer.name}</h4>
+                            {existingPlan ? (
+                              <Badge className={
+                                existingPlan.status === 'draft' ? 'bg-blue-100 text-blue-800' :
+                                (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? 'bg-orange-100 text-orange-800' :
+                                'bg-green-100 text-green-800'
+                              }>
+                                {existingPlan.status === 'draft' ? '기획초안' :
+                                 (existingPlan.status === 'revision-requested' || existingPlan.status === 'revision-feedback') ? '기획수정중' : '기획완료'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-gray-500">
+                                기획 대기중
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">{influencer.category}</p>
+                          {existingPlan && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              업데이트: {new Date(existingPlan.updatedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {contentPlans.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>아직 콘텐츠 기획안이 전달되지 않았습니다.</p>
+                      <p className="text-sm mt-2">시스템 관리자가 기획안을 작성하면 여기에 표시됩니다.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-              {/* 우측: 콘텐츠 기획 상세 */}
-              <div className="lg:col-span-2">
-                <Card className="h-full">
+              {/* 선택된 기획안 상세 보기 */}
+              {selectedPlan && (
+                <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center">
                         <FileText className="w-5 h-5 mr-2" />
-                        콘텐츠 기획 검토
+                        {selectedPlan.influencerName}의 {selectedPlan.contentType === 'image' ? '이미지' : '동영상'} 기획안
                       </div>
-                      {selectedPlan && (
-                        <div className="flex space-x-2">
-                          {selectedPlan.status !== 'approved' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setShowRevisionForm(true)}
-                                className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                              >
-                                수정 요청
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleContentPlanApprove(selectedPlan.id)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                승인
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex space-x-2">
+                        {selectedPlan.status !== 'approved' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setShowRevisionForm(true)}
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                            >
+                              수정 요청
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleContentPlanApprove(selectedPlan.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              승인
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedPlan(null)}
+                        >
+                          닫기
+                        </Button>
+                      </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-full overflow-auto">
-                    {selectedPlan ? (
-                      <div className="space-y-6">
-                        {/* 상단: 수정요청 히스토리 */}
-                        {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
-                          <div className="border-b pb-4">
-                            <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
-                            <ContentRevisionTimeline revisions={selectedPlan.revisions} />
-                          </div>
-                        )}
-
-                        {/* 수정요청 폼 */}
-                        {showRevisionForm && (
-                          <RevisionRequestForm
-                            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
-                            onSubmit={(feedback) => handleContentPlanRevision(selectedPlan.id, feedback)}
-                            onCancel={() => setShowRevisionForm(false)}
-                            requestType="brand-revision"
-                          />
-                        )}
-
-                        {/* 기획안 내용 표시 */}
-                        {!showRevisionForm && (
-                          <div>
-                            <h3 className="text-lg font-medium mb-3">
-                              {selectedPlan.influencerName}의 {selectedPlan.contentType === 'image' ? '이미지' : '동영상'} 기획안
-                            </h3>
-                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                              <div>
-                                <label className="text-sm font-medium text-gray-700">포스트 제목</label>
-                                <p className="mt-1 text-sm">{selectedPlan.planData.postTitle}</p>
-                              </div>
-
-                              {selectedPlan.contentType === 'image' && (
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700">썸네일 제목</label>
-                                  <p className="mt-1 text-sm">{(selectedPlan.planData as any).thumbnailTitle}</p>
-                                </div>
-                              )}
-
-                              {selectedPlan.contentType === 'video' && (
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700">시나리오</label>
-                                  <p className="mt-1 text-sm whitespace-pre-wrap">{(selectedPlan.planData as any).scenario}</p>
-                                </div>
-                              )}
-
-                              <div>
-                                <label className="text-sm font-medium text-gray-700">스크립트</label>
-                                <p className="mt-1 text-sm whitespace-pre-wrap">{selectedPlan.planData.script}</p>
-                              </div>
-
-                              <div>
-                                <label className="text-sm font-medium text-gray-700">해시태그</label>
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                  {selectedPlan.planData.hashtags.map((hashtag, index) => (
-                                    <Badge key={index} variant="outline" className="text-xs">
-                                      #{hashtag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="pt-2 border-t">
-                                <div className="flex items-center justify-between text-xs text-gray-500">
-                                  <span>생성일: {new Date(selectedPlan.createdAt).toLocaleString()}</span>
-                                  <span>수정일: {new Date(selectedPlan.updatedAt).toLocaleString()}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                  <CardContent>
+                    {/* 수정요청 히스토리 */}
+                    {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+                      <div className="border-b pb-4 mb-4">
+                        <h3 className="text-lg font-medium mb-3">수정요청 히스토리</h3>
+                        <ContentRevisionTimeline revisions={selectedPlan.revisions} />
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
-                        <div className="text-center">
-                          <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p>좌측에서 인플루언서를 선택하여 기획안을 확인하세요.</p>
-                          {contentPlans.length === 0 && (
-                            <p className="mt-2 text-sm">아직 콘텐츠 기획안이 전달되지 않았습니다.</p>
-                          )}
+                    )}
+
+                    {/* 수정요청 폼 */}
+                    {showRevisionForm && (
+                      <div className="mb-6">
+                        <RevisionRequestForm
+                          revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+                          onSubmit={(feedback) => handleContentPlanRevision(selectedPlan.id, feedback)}
+                          onCancel={() => setShowRevisionForm(false)}
+                          requestType="brand-revision"
+                        />
+                      </div>
+                    )}
+
+                    {/* 기획안 내용 표시 */}
+                    {!showRevisionForm && (
+                      <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">포스트 제목</label>
+                          <p className="mt-1 text-sm">{selectedPlan.planData.postTitle}</p>
+                        </div>
+
+                        {selectedPlan.contentType === 'image' && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-700">썸네일 제목</label>
+                            <p className="mt-1 text-sm">{(selectedPlan.planData as any).thumbnailTitle}</p>
+                          </div>
+                        )}
+
+                        {selectedPlan.contentType === 'video' && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-700">시나리오</label>
+                            <p className="mt-1 text-sm whitespace-pre-wrap">{(selectedPlan.planData as any).scenario}</p>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">스크립트</label>
+                          <p className="mt-1 text-sm whitespace-pre-wrap">{selectedPlan.planData.script}</p>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">해시태그</label>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {selectedPlan.planData.hashtags.map((hashtag, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                #{hashtag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>생성일: {new Date(selectedPlan.createdAt).toLocaleString()}</span>
+                            <span>수정일: {new Date(selectedPlan.updatedAt).toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
                     )}
                   </CardContent>
                 </Card>
-              </div>
+              )}
             </div>
           </TabsContent>
 
