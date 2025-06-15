@@ -9,7 +9,9 @@ import { Calendar, Users, DollarSign, Eye, CheckCircle, XCircle, Plus, Edit, Tra
 import AdminSidebar from '@/components/AdminSidebar';
 import CampaignDashboard from '@/components/campaign/CampaignDashboard';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
+import { ContentPlanDetail } from '@/types/content';
 import { campaignService } from '@/services/campaign.service';
+import { contentService } from '@/services/content.service';
 import { storageService } from '@/services/storage.service';
 import { useToast } from '@/hooks/use-toast';
 import InfluencerEditModal from '@/components/campaign/InfluencerEditModal';
@@ -25,6 +27,7 @@ const AdminCampaigns = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSimilarModalOpen, setIsSimilarModalOpen] = useState(false);
   const [rejectedInfluencerForSimilar, setRejectedInfluencerForSimilar] = useState<CampaignInfluencer | null>(null);
+  const [contentPlansMap, setContentPlansMap] = useState<{ [campaignId: string]: ContentPlanDetail[] }>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,6 +53,20 @@ const AdminCampaigns = () => {
           console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status} - ID: ${campaign.id}`);
         });
         setCampaigns(data);
+
+        // 각 캠페인의 콘텐츠 기획안도 로드
+        const plansMap: { [campaignId: string]: ContentPlanDetail[] } = {};
+        for (const campaign of data) {
+          try {
+            const plans = await contentService.getContentPlans(campaign.id);
+            plansMap[campaign.id] = plans;
+          } catch (error) {
+            console.error(`캠페인 ${campaign.id}의 기획안 로딩 실패:`, error);
+            plansMap[campaign.id] = [];
+          }
+        }
+        setContentPlansMap(plansMap);
+        
       } catch (error) {
         console.error('캠페인 로딩 실패:', error);
         // 에러 발생 시 로컬스토리지에서 직접 가져오기 시도
@@ -148,7 +165,19 @@ const AdminCampaigns = () => {
     }
   };
 
-  const getStatusText = (status: Campaign['status']) => {
+  const getStatusText = (status: Campaign['status'], campaignId?: string) => {
+    // 콘텐츠 기획 관련 상태인 경우 기획안 정보를 확인
+    if ((status === 'revision-feedback' || status === 'planning') && campaignId) {
+      const plans = contentPlansMap[campaignId] || [];
+      const revisionFeedbackPlans = plans.filter(plan => plan.status === 'revision-feedback');
+      
+      if (revisionFeedbackPlans.length > 0) {
+        // 가장 높은 revision number를 찾음
+        const maxRevisionNumber = Math.max(...revisionFeedbackPlans.map(plan => plan.currentRevisionNumber || 0));
+        return `${maxRevisionNumber}차 피드백완료`;
+      }
+    }
+
     switch (status) {
       case 'creating': return '생성중';
       case 'submitted': return '제출됨';
@@ -429,6 +458,7 @@ const AdminCampaigns = () => {
             onCampaignDelete={handleCampaignDelete}
             onCampaignReceive={handleCampaignReceive}
             onCampaignManage={handleCampaignManage}
+            getStatusText={(status, campaign) => getStatusText(status, campaign?.id)}
           />
         )}
 

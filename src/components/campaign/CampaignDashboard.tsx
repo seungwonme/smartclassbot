@@ -1,62 +1,30 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  CheckCircle, 
-  Clock, 
-  PlayCircle, 
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
-  MessageSquare
-} from 'lucide-react';
+import { Calendar, Users, DollarSign, Eye, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { Campaign } from '@/types/campaign';
 
 interface CampaignDashboardProps {
   campaigns: Campaign[];
-  userType: 'admin' | 'brand';
-  onCampaignClick?: (campaignId: string) => void;
-  onCampaignEdit?: (campaignId: string) => void;
+  userType: 'brand' | 'admin';
+  onCampaignClick: (campaignId: string) => void;
   onCampaignDelete?: (campaignId: string, campaignTitle: string) => void;
   onCampaignReceive?: (campaignId: string) => void;
   onCampaignManage?: (campaign: Campaign) => void;
+  getStatusText?: (status: Campaign['status'], campaign?: Campaign) => string;
 }
 
 const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
   campaigns,
   userType,
   onCampaignClick,
-  onCampaignEdit,
   onCampaignDelete,
   onCampaignReceive,
-  onCampaignManage
+  onCampaignManage,
+  getStatusText
 }) => {
-  const [expandedSections, setExpandedSections] = useState({
-    creation: true,
-    content: true,
-    live: true
-  });
-
-  // 캠페인 단계별 분류 - producing 상태 추가
-  const creationStageCampaigns = campaigns.filter(c => 
-    ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
-  );
-  
-  const contentStageCampaigns = campaigns.filter(c => 
-    ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
-  );
-  
-  const liveStageCampaigns = campaigns.filter(c => 
-    ['live', 'monitoring', 'completed'].includes(c.status)
-  );
-
   const getStatusColor = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return 'bg-yellow-100 text-yellow-800';
@@ -66,21 +34,12 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'revising': return 'bg-red-100 text-red-800';
       case 'revision-feedback': return 'bg-amber-100 text-amber-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'planning': return 'bg-blue-100 text-blue-800';
-      case 'plan-review': return 'bg-indigo-100 text-indigo-800';
-      case 'plan-revision': return 'bg-orange-100 text-orange-800';
-      case 'plan-approved': return 'bg-lime-100 text-lime-800';
-      case 'producing': return 'bg-violet-100 text-violet-800';
-      case 'content-review': return 'bg-purple-100 text-purple-800';
-      case 'content-approved': return 'bg-emerald-100 text-emerald-800';
-      case 'live': return 'bg-green-100 text-green-800';
-      case 'monitoring': return 'bg-teal-100 text-teal-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusText = (status: Campaign['status']) => {
+  const defaultGetStatusText = (status: Campaign['status']) => {
     switch (status) {
       case 'creating': return '생성중';
       case 'submitted': return '제출됨';
@@ -89,20 +48,12 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       case 'revising': return '제안수정요청';
       case 'revision-feedback': return '제안수정피드백';
       case 'confirmed': return '확정됨';
-      case 'planning': return '콘텐츠 기획중';
-      case 'plan-review': return '콘텐츠 기획중';
-      case 'plan-revision': return '콘텐츠 기획중';
-      case 'plan-approved': return '콘텐츠 기획중';
-      case 'producing': return '제작중';
-      case 'content-review': return '콘텐츠검수';
-      case 'content-approved': return '콘텐츠 승인완료';
-      case 'live': return '라이브';
-      case 'monitoring': return '모니터링';
       case 'completed': return '완료됨';
       default: return status;
     }
   };
 
+  // 활성 상태의 인플루언서만 카운트 (거절된 인플루언서 제외)
   const getActiveInfluencersCount = (influencers: Campaign['influencers']) => {
     return influencers.filter(inf => 
       inf.status !== 'brand-rejected' && 
@@ -111,304 +62,114 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     ).length;
   };
 
-  // 기획 완료 여부 확인 (브랜드 관리자 승인 기준)
-  const checkPlanningCompletion = (campaign: Campaign) => {
-    if (!campaign.contentPlans?.length) return false;
-    
-    const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
-    if (confirmedInfluencers.length === 0) return false;
-    
-    const allInfluencersHavePlans = confirmedInfluencers.every(influencer => 
-      campaign.contentPlans?.some(plan => plan.influencerId === influencer.id)
-    );
-    
-    if (!allInfluencersHavePlans) return false;
-    
-    const allPlansApproved = confirmedInfluencers.every(influencer => {
-      const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
-      if (!plan) return false;
-      
-      return plan.status === 'approved';
-    });
-    
-    return allPlansApproved;
-  };
-
-  // 수정요청 개수 및 정보 가져오기 (통일된 상태값 사용)
-  const getRevisionInfo = (campaign: Campaign) => {
-    if (!campaign.contentPlans?.length) return { count: 0, hasRevisions: false };
-    
-    let revisionCount = 0;
-    let hasRevisions = false;
-    
-    const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
-    
-    confirmedInfluencers.forEach(influencer => {
-      const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
-      if (!plan) return;
-      
-      // 수정요청 상태인 기획안들을 확인 (통일된 status 값 사용)
-      if (plan.status === 'revision-request' || plan.status === 'revision-feedback') {
-        const planRevisionCount = plan.revisions?.length || 0;
-        revisionCount = Math.max(revisionCount, planRevisionCount);
-        hasRevisions = true;
-      }
-    });
-    
-    return { count: revisionCount, hasRevisions };
-  };
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const handleCampaignCardClick = (campaignId: string, event: React.MouseEvent) => {
-    console.log('Campaign card clicked:', campaignId);
-    console.log('onCampaignClick function:', onCampaignClick);
-    
-    event.stopPropagation();
-    
-    if (onCampaignClick) {
-      onCampaignClick(campaignId);
-    } else {
-      console.warn('onCampaignClick handler not provided');
-    }
-  };
-
-  const renderCampaignCard = (campaign: Campaign) => {
-    const shouldShowReceiveButton = userType === 'admin' && campaign.status === 'submitted';
-    const shouldShowManageButton = userType === 'admin' && 
-      ['recruiting', 'proposing', 'revising', 'revision-feedback'].includes(campaign.status);
-    const shouldShowEditButton = userType === 'brand' && campaign.status === 'creating';
-
-    const isPlanningCompleted = campaign.status === 'planning' && checkPlanningCompletion(campaign);
-    const revisionInfo = getRevisionInfo(campaign);
-
-    return (
-      <Card 
-        key={campaign.id} 
-        className="hover:shadow-lg transition-shadow cursor-pointer relative"
-        onClick={(e) => handleCampaignCardClick(campaign.id, e)}
-      >
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <CardTitle className="text-lg">{campaign.title}</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Badge className={getStatusColor(campaign.status)}>
-                {getStatusText(campaign.status)}
-              </Badge>
-              
-              {/* 기획 완료 배지 */}
-              {isPlanningCompleted && (
-                <Badge className="bg-green-100 text-green-800 px-2 py-1">
-                  ✓ 기획완료
-                </Badge>
-              )}
-              
-              {/* 수정요청 배지 */}
-              {revisionInfo.hasRevisions && revisionInfo.count > 0 && (
-                <Badge className="bg-orange-100 text-orange-800 px-2 py-1">
-                  <MessageSquare className="w-3 h-3 mr-1" />
-                  {revisionInfo.count}차 수정요청
-                </Badge>
-              )}
-
-              {userType === 'admin' && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCampaignDelete?.(campaign.id, campaign.title);
-                  }}
-                  className="p-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
-              {shouldShowEditButton && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCampaignEdit?.(campaign.id);
-                  }}
-                  className="p-1 h-6 w-6"
-                >
-                  <Edit className="w-3 h-3" />
-                </Button>
-              )}
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">{campaign.brandName}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center text-sm">
-              <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-              예산: {campaign.budget.toLocaleString()}원
-            </div>
-            <div className="flex items-center text-sm">
-              <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-              {campaign.campaignStartDate} ~ {campaign.campaignEndDate}
-            </div>
-            <div className="flex items-center text-sm">
-              <Users className="w-4 h-4 mr-2 text-purple-600" />
-              인플루언서: {getActiveInfluencersCount(campaign.influencers)}명
-            </div>
-            <div className="flex justify-between mt-4">
-              {shouldShowReceiveButton && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCampaignReceive?.(campaign.id);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 flex-1"
-                >
-                  캠페인 수령
-                </Button>
-              )}
-              {shouldShowManageButton && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCampaignManage?.(campaign);
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  {campaign.status === 'revising' ? '재제안' : '섭외 관리'}
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderSection = (
-    title: string,
-    icon: React.ReactNode,
-    campaigns: Campaign[],
-    sectionKey: keyof typeof expandedSections,
-    description: string
-  ) => {
-    const isExpanded = expandedSections[sectionKey];
-    
-    return (
-      <div className="mb-8">
-        <div 
-          className="flex items-center justify-between cursor-pointer mb-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-          onClick={() => toggleSection(sectionKey)}
-        >
-          <div className="flex items-center space-x-3">
-            {icon}
-            <div>
-              <h2 className="text-xl font-semibold">{title}</h2>
-              <p className="text-sm text-gray-600">{description}</p>
-            </div>
-            <Badge variant="outline" className="ml-2">
-              {campaigns.length}
-            </Badge>
-          </div>
-          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-        </div>
-        
-        {isExpanded && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {campaigns.map(renderCampaignCard)}
-            {campaigns.length === 0 && (
-              <div className="col-span-full text-center py-8 text-gray-500">
-                이 단계의 캠페인이 없습니다.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
-    <div className="space-y-6">
-      {/* 상단 통계 대시보드 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Clock className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">생성~확정 단계</p>
-              <p className="text-2xl font-bold">{creationStageCampaigns.length}</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {campaigns.map((campaign) => (
+        <Card key={campaign.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <CardTitle className="text-lg mb-2">{campaign.title}</CardTitle>
+                <Badge className={getStatusColor(campaign.status)}>
+                  {getStatusText ? getStatusText(campaign.status, campaign) : defaultGetStatusText(campaign.status)}
+                </Badge>
+              </div>
+              <div className="flex gap-2">
+                {userType === 'admin' && (
+                  <>
+                    {campaign.status === 'submitted' && onCampaignReceive && (
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCampaignReceive(campaign.id);
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        수령
+                      </Button>
+                    )}
+                    {(campaign.status === 'recruiting' || campaign.status === 'proposing' || campaign.status === 'revising') && onCampaignManage && (
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCampaignManage(campaign);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        관리
+                      </Button>
+                    )}
+                    {onCampaignDelete && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCampaignDelete(campaign.id, campaign.title);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </>
+                )}
+                {userType === 'brand' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCampaignClick(campaign.id);
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    보기
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent
+            onClick={() => onCampaignClick(campaign.id)}
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">브랜드</span>
+                <span className="text-sm font-medium">{campaign.brandName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">제품</span>
+                <span className="text-sm font-medium">{campaign.productName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <DollarSign className="w-4 h-4 mr-1 text-green-600" />
+                  <span className="text-sm text-muted-foreground">예산</span>
+                </div>
+                <span className="text-sm font-medium">{campaign.budget.toLocaleString()}원</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Users className="w-4 h-4 mr-1 text-blue-600" />
+                  <span className="text-sm text-muted-foreground">인플루언서</span>
+                </div>
+                <span className="text-sm font-medium">{getActiveInfluencersCount(campaign.influencers)}명</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-1 text-purple-600" />
+                  <span className="text-sm text-muted-foreground">마감일</span>
+                </div>
+                <span className="text-sm font-medium">{campaign.proposalDeadline}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Edit className="h-8 w-8 text-purple-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">콘텐츠 단계</p>
-              <p className="text-2xl font-bold">{contentStageCampaigns.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <PlayCircle className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">라이브~완료</p>
-              <p className="text-2xl font-bold">{liveStageCampaigns.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <BarChart3 className="h-8 w-8 text-orange-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">전체 캠페인</p>
-              <p className="text-2xl font-bold">{campaigns.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 단계별 섹션 */}
-      {renderSection(
-        "캠페인 생성 ~ 확정 단계",
-        <Clock className="w-6 h-6 text-blue-600" />,
-        creationStageCampaigns,
-        'creation',
-        userType === 'admin' 
-          ? "캠페인 수령, 인플루언서 섭외, 제안 작성 단계"
-          : "캠페인 생성, 인플루언서 승인, 최종 확정 단계"
-      )}
-
-      {renderSection(
-        "콘텐츠 기획/제작/검수 단계", 
-        <Edit className="w-6 h-6 text-purple-600" />,
-        contentStageCampaigns,
-        'content',
-        userType === 'admin'
-          ? "콘텐츠 기획 관리, 제작 관리, 검수 관리 단계"
-          : "콘텐츠 기획 확인, 제작물 검토, 피드백 단계"
-      )}
-
-      {renderSection(
-        "라이브 ~ 성과모니터링 단계",
-        <PlayCircle className="w-6 h-6 text-green-600" />,
-        liveStageCampaigns,
-        'live',
-        userType === 'admin'
-          ? "라이브 모니터링, 플랫폼 관리, 성과 분석 단계"
-          : "라이브 모니터링, 브랜드 성과 확인, ROI 분석 단계"
-      )}
+      ))}
     </div>
   );
 };
