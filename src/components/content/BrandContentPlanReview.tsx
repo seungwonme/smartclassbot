@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus } from 'lucide-react';
+import { ImageIcon, VideoIcon, CheckCircle, MessageSquare, Clock, Plus, Users, FileText } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
 import { useInlineComments } from '@/hooks/useInlineComments';
@@ -14,12 +15,14 @@ import InlineCommentForm from './InlineCommentForm';
 
 interface BrandContentPlanReviewProps {
   plans: ContentPlanDetail[];
+  confirmedInfluencers: any[];
   onApprove: (planId: string) => void;
   onRequestRevision: (planId: string, feedback: string) => void;
 }
 
 const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   plans,
+  confirmedInfluencers,
   onApprove,
   onRequestRevision
 }) => {
@@ -50,7 +53,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     }
   };
 
-  // 상태 표시 텍스트를 수정요청/피드백으로 구분
   const getStatusText = (status: ContentPlanDetail['status']) => {
     switch (status) {
       case 'draft': return '기획초안';
@@ -66,7 +68,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   };
 
   const hasPlanContent = (plan: ContentPlanDetail) => {
-    // Add null checks for planData
     if (!plan.planData) {
       console.log('Plan data is undefined for plan:', plan.id);
       return false;
@@ -92,7 +93,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
 
   const handleApprove = (planId: string) => {
     onApprove(planId);
-    // Close modal after approval
     setSelectedPlan(null);
     setShowRevisionForm(false);
     resetComments();
@@ -196,7 +196,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     );
   };
 
-  // 현재 진행중인 수정 차수와 상태를 더 정확하게 표시
   const getCurrentRevisionInfo = (plan: ContentPlanDetail) => {
     const pendingRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
@@ -227,202 +226,210 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     return completedBrandRevisions > 0 ? `${completedBrandRevisions}차 완료` : null;
   };
 
-  if (plans.length === 0) {
+  if (confirmedInfluencers.length === 0) {
     return (
       <Card>
         <CardContent className="text-center py-12">
           <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500">아직 콘텐츠 기획이 전달되지 않았습니다.</p>
+          <p className="text-gray-500">확정된 인플루언서가 없습니다.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {plans.map((plan) => {
-          const revisionInfo = getCurrentRevisionInfo(plan);
-          const hasContent = hasPlanContent(plan);
-          
-          return (
-            <Card key={plan.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedPlan(plan)}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="flex items-center gap-2">
-                    {plan.contentType === 'image' ? (
-                      <ImageIcon className="w-5 h-5" />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
+      {/* 좌측: 인플루언서 목록 */}
+      <div className="lg:col-span-1">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="w-5 h-5 mr-2" />
+              확정된 인플루언서
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {confirmedInfluencers.map((influencer) => {
+                const existingPlan = plans.find(plan => plan.influencerId === influencer.id);
+                const revisionInfo = existingPlan ? getCurrentRevisionInfo(existingPlan) : null;
+                const hasContent = existingPlan ? hasPlanContent(existingPlan) : false;
+                
+                return (
+                  <div 
+                    key={influencer.id} 
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedPlan?.influencerId === influencer.id 
+                        ? 'bg-blue-50 border-blue-200' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => existingPlan && setSelectedPlan(existingPlan)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h4 className="font-medium">{influencer.name}</h4>
+                        <p className="text-sm text-gray-500">{influencer.platform}</p>
+                      </div>
+                      {existingPlan && (
+                        <div className="flex flex-col gap-1">
+                          <Badge className={getStatusColor(existingPlan.status)}>
+                            {getStatusText(existingPlan.status)}
+                          </Badge>
+                          {revisionInfo && (
+                            <Badge variant="outline" className="text-xs">
+                              {revisionInfo}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {existingPlan ? (
+                      <div className="mt-2">
+                        {hasContent ? (
+                          <Badge variant="outline" className="text-green-600 border-green-200">
+                            기획안 작성완료
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-500 border-gray-200">
+                            기획안 미작성
+                          </Badge>
+                        )}
+                        
+                        {canReviewPlan(existingPlan) && hasContent && (
+                          <div className="flex gap-2 mt-2">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApprove(existingPlan.id);
+                              }}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              승인
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPlan(existingPlan);
+                                setShowRevisionForm(true);
+                              }}
+                            >
+                              <MessageSquare className="w-3 h-3 mr-1" />
+                              수정요청
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <VideoIcon className="w-5 h-5" />
-                    )}
-                    {plan.influencerName}
-                  </CardTitle>
-                  <div className="flex flex-col gap-1">
-                    <Badge className={getStatusColor(plan.status)}>
-                      {getStatusText(plan.status)}
-                    </Badge>
-                    {revisionInfo && (
-                      <Badge variant="outline" className="text-xs">
-                        {revisionInfo}
-                      </Badge>
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-gray-500">
+                          기획 대기중
+                        </Badge>
+                        <p className="text-xs text-gray-500 mt-1">시스템 관리자가 기획안을 작성 중입니다.</p>
+                      </div>
                     )}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
-                    콘텐츠 타입: {plan.contentType === 'image' ? '이미지 포스팅' : '영상 포스팅'}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    작성일: {new Date(plan.createdAt).toLocaleDateString()}
-                  </p>
-                  
-                  <div className="mt-2">
-                    {hasContent ? (
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        기획안 작성완료
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-gray-500 border-gray-200">
-                        기획안 미작성
-                      </Badge>
-                    )}
-                  </div>
-
-                  {canReviewPlan(plan) && hasContent && (
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(plan.id);
-                        }}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        승인
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPlan(plan);
-                          setShowRevisionForm(true);
-                        }}
-                      >
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        수정요청
-                      </Button>
-                    </div>
-                  )}
-
-                  {canReviewPlan(plan) && !hasContent && (
-                    <div className="mt-4">
-                      <p className="text-sm text-gray-500">인플루언서가 기획안을 작성 중입니다.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {selectedPlan && !showRevisionForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white mx-4">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="flex items-center gap-2">
+      {/* 우측: 콘텐츠 기획 상세 */}
+      <div className="lg:col-span-2">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <FileText className="w-5 h-5 mr-2" />
+                콘텐츠 기획 상세
+              </div>
+              {selectedPlan && !showRevisionForm && canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleApprove(selectedPlan.id)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    승인
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowRevisionForm(true)}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                    수정요청
+                  </Button>
+                </div>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-full overflow-auto">
+            {showRevisionForm && selectedPlan ? (
+              <div className="space-y-4">
+                {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
+                    {inlineComments
+                      .filter(c => c.planId === selectedPlan.id)
+                      .map((comment, index) => (
+                        <div key={index} className="text-sm text-blue-600 mb-1">
+                          <strong>{comment.fieldName}:</strong> {comment.comment}
+                        </div>
+                      ))}
+                  </div>
+                )}
+                
+                <RevisionRequestForm
+                  revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+                  onSubmit={handleRequestRevision}
+                  onCancel={() => {
+                    setShowRevisionForm(false);
+                    resetComments();
+                  }}
+                  requestType="brand-request"
+                />
+              </div>
+            ) : selectedPlan ? (
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 pb-4 border-b">
                   {selectedPlan.contentType === 'image' ? (
                     <ImageIcon className="w-5 h-5" />
                   ) : (
                     <VideoIcon className="w-5 h-5" />
                   )}
-                  {selectedPlan.influencerName} - 콘텐츠 기획 상세
-                </CardTitle>
-                <Button variant="outline" onClick={() => setSelectedPlan(null)}>
-                  닫기
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <PlanDataRenderer plan={selectedPlan} renderFieldWithFeedback={renderFieldWithFeedback} />
-              
-              {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
-                <ContentRevisionTimeline revisions={selectedPlan.revisions} />
-              )}
-              
-              {canReviewPlan(selectedPlan) && hasPlanContent(selectedPlan) && (
-                <div className="flex gap-2 mt-6">
-                  <Button
-                    onClick={() => handleApprove(selectedPlan.id)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    승인
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowRevisionForm(true)}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    수정요청
-                  </Button>
+                  <h3 className="text-lg font-medium">
+                    {selectedPlan.influencerName} - {selectedPlan.contentType === 'image' ? '이미지' : '영상'} 기획안
+                  </h3>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
-      {showRevisionForm && selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-5xl max-h-[90vh] overflow-auto bg-white mx-4">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>
-                  수정 요청 - {selectedPlan.influencerName}
-                </CardTitle>
-                <Button variant="outline" onClick={() => {
-                  setShowRevisionForm(false);
-                  setSelectedPlan(null);
-                  resetComments();
-                }}>
-                  닫기
-                </Button>
+                <PlanDataRenderer plan={selectedPlan} renderFieldWithFeedback={renderFieldWithFeedback} />
+                
+                {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+                  <ContentRevisionTimeline revisions={selectedPlan.revisions} />
+                )}
               </div>
-            </CardHeader>
-            <CardContent>
-              {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
-                <div className="p-3 bg-blue-50 rounded-lg mb-4">
-                  <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
-                  {inlineComments
-                    .filter(c => c.planId === selectedPlan.id)
-                    .map((comment, index) => (
-                      <div key={index} className="text-sm text-blue-600 mb-1">
-                        <strong>{comment.fieldName}:</strong> {comment.comment}
-                      </div>
-                    ))}
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>좌측에서 인플루언서를 선택하여 기획안을 확인하세요.</p>
+                  {plans.length === 0 && (
+                    <p className="text-sm mt-2">시스템 관리자가 기획안을 작성하면 여기에 표시됩니다.</p>
+                  )}
                 </div>
-              )}
-              
-              <RevisionRequestForm
-                revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
-                onSubmit={handleRequestRevision}
-                onCancel={() => {
-                  setShowRevisionForm(false);
-                  setSelectedPlan(null);
-                  resetComments();
-                }}
-                requestType="brand-request"
-              />
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
