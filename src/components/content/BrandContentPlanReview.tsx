@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ContentPlanDetail } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
@@ -56,8 +57,14 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     }
   };
 
-  // 수정된 상태 텍스트 로직 - revisions가 있으면 "기획수정중"으로 표시
+  // 수정된 상태 텍스트 로직 - approved 상태 우선 처리
   const getModifiedStatusText = (plan: ContentPlanDetail) => {
+    // approved 상태라면 무조건 "기획완료" 표시
+    if (plan.status === 'approved') {
+      console.log(`✅ ${plan.influencerName}: approved 상태로 인해 "기획완료" 표시`);
+      return "기획완료";
+    }
+
     // revisions 배열이 존재하고 비어있지 않으면 "기획수정중"
     if (plan.revisions && plan.revisions.length > 0) {
       console.log(`🔄 ${plan.influencerName}: revisions 존재로 인해 "기획수정중" 표시`);
@@ -69,6 +76,8 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
   };
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
+    // 승인된 기획안은 더 이상 검토할 수 없음
+    if (plan.status === 'approved') return false;
     return plan.status === 'draft' || plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
 

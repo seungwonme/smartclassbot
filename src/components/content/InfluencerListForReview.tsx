@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
   getCurrentRevisionInfo,
   canReviewPlan
 }) => {
-  // 수정된 revision 상태 확인 로직 - revision 데이터 우선 확인
+  // 수정된 revision 상태 확인 로직 - approved 상태 우선 처리
   const getDetailedRevisionStatus = (plan: ContentPlanDetail) => {
     console.log(`🔍 ${plan.influencerName}의 기획안 상세 분석:`, {
       status: plan.status,
@@ -38,7 +39,16 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
       currentRevisionNumber: plan.currentRevisionNumber
     });
 
-    // revision 배열이 있는 경우 우선 처리
+    // 승인된 상태라면 무조건 "기획완료" 표시
+    if (plan.status === 'approved') {
+      console.log(`✅ ${plan.influencerName}: 승인된 상태 - 기획완료 표시`);
+      return {
+        text: '기획완료',
+        color: 'bg-green-100 text-green-800'
+      };
+    }
+
+    // revision 배열이 있는 경우 처리 (approved가 아닐 때만)
     if (plan.revisions && plan.revisions.length > 0) {
       console.log(`📋 ${plan.influencerName}: revision 목록:`, plan.revisions);
 
