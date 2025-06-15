@@ -34,7 +34,7 @@ const CampaignDetail = () => {
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
   const [isContentLoading, setIsContentLoading] = useState(false);
 
-  // Load content plans when campaign is loaded (강화된 로딩)
+  // Load content plans when campaign is loaded (강화된 로딩 및 디버깅)
   React.useEffect(() => {
     const loadContentPlans = async () => {
       if (campaign?.id) {
@@ -48,13 +48,9 @@ const CampaignDetail = () => {
             currentStage: campaign.currentStage
           });
           
-          // 스토리지 전체 상태 먼저 확인
-          const { storageService } = await import('@/services/storage.service');
-          storageService.debugAllStorage();
-          
-          // localStorage에서 직접 확인
-          const rawPlans = localStorage.getItem('content_plans');
-          console.log('🔍 localStorage에서 직접 확인:', rawPlans);
+          // 스토리지 전체 상태 및 디버깅 정보 확인
+          const debugResult = await contentService.debugContentPlanStorage();
+          console.log('🔍 디버깅 결과:', debugResult);
           
           // 강제 새로고침을 위해 약간의 지연 추가
           await new Promise(resolve => setTimeout(resolve, 200));
@@ -73,6 +69,13 @@ const CampaignDetail = () => {
             });
           } else {
             console.log('⚠️ 해당 캠페인의 콘텐츠 기획안이 없습니다');
+            // 디버깅: 전체 localStorage 상태 한번 더 확인
+            console.log('🔍 localStorage 전체 상태 재확인:');
+            Object.keys(localStorage).forEach(key => {
+              if (key.includes('content') || key.includes('plan')) {
+                console.log(`📝 ${key}:`, localStorage.getItem(key));
+              }
+            });
           }
         } catch (error) {
           console.error('❌ 콘텐츠 기획 로딩 실패:', error);
@@ -90,7 +93,7 @@ const CampaignDetail = () => {
     loadContentPlans();
   }, [campaign?.id, toast]);
 
-  // 탭이 콘텐츠 기획으로 변경될 때 데이터 다시 로딩 (강화된 재로딩)
+  // 탭이 콘텐츠 기획으로 변경될 때 데이터 다시 로딩 (강화된 재로딩 및 디버깅)
   React.useEffect(() => {
     if (activeTab === 'planning' && campaign?.id) {
       const reloadContentPlans = async () => {
@@ -98,9 +101,10 @@ const CampaignDetail = () => {
           setIsContentLoading(true);
           console.log('🔄 콘텐츠 기획 탭 활성화 - 강제 데이터 재로딩 시작');
           
-          // localStorage 직접 확인
-          const rawPlans = localStorage.getItem('content_plans');
-          console.log('🔄 localStorage 직접 확인:', rawPlans);
+          // 즉시 디버깅 정보 출력
+          console.log('🔄 탭 활성화 시점 스토리지 디버깅:');
+          const debugResult = await contentService.debugContentPlanStorage();
+          console.log('🔄 디버깅 결과:', debugResult);
           
           // 약간의 지연 후 데이터 로딩
           await new Promise(resolve => setTimeout(resolve, 300));
@@ -116,6 +120,14 @@ const CampaignDetail = () => {
               title: "기획안 업데이트",
               description: `${plans.length}개의 기획안이 확인되었습니다.`
             });
+          } else {
+            // 기획안이 없을 때 추가 디버깅
+            console.log('🔄 기획안이 없음 - 추가 디버깅 시작');
+            const allPlans = JSON.parse(localStorage.getItem('content_plans') || '[]');
+            console.log('🔄 전체 기획안 목록:', allPlans);
+            console.log('🔄 현재 캠페인 ID로 필터링 시도:', campaign.id);
+            const matchingPlans = allPlans.filter((plan: any) => plan.campaignId === campaign.id);
+            console.log('🔄 매칭되는 기획안:', matchingPlans);
           }
         } catch (error) {
           console.error('🔄 재로딩 실패:', error);
@@ -572,6 +584,15 @@ const CampaignDetail = () => {
                     💡 현재 {contentPlans.length}개의 기획안이 로딩되었습니다. 
                     {contentPlans.length === 0 && " 시스템 관리자가 기획안을 작성하면 여기에 표시됩니다."}
                   </p>
+                  <button 
+                    onClick={() => {
+                      console.log('🔍 수동 디버깅 버튼 클릭');
+                      contentService.debugContentPlanStorage();
+                    }}
+                    className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
+                  >
+                    🔍 스토리지 상태 확인
+                  </button>
                 </div>
                 <BrandContentPlanReview
                   plans={contentPlans}
