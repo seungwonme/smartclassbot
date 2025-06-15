@@ -134,7 +134,7 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
     return allPlansApproved;
   };
 
-  // 수정요청 개수 및 정보 가져오기 (새로운 상태값 기준으로 수정)
+  // 수정요청 개수 및 정보 가져오기 (올바른 상태값 사용)
   const getRevisionInfo = (campaign: Campaign) => {
     if (!campaign.contentPlans?.length) return { count: 0, hasRevisions: false };
     
@@ -147,8 +147,8 @@ const CampaignDashboard: React.FC<CampaignDashboardProps> = ({
       const plan = campaign.contentPlans?.find(p => p.influencerId === influencer.id);
       if (!plan) return;
       
-      // 수정요청 상태인 기획안들을 확인 (새로운 status 값 사용)
-      if (plan.status === 'revision-request' || plan.status === 'revision-feedback') {
+      // 수정요청 상태인 기획안들을 확인 (올바른 status 값 사용)
+      if (plan.status === 'revision') {
         const planRevisionCount = plan.revisions?.length || 0;
         revisionCount = Math.max(revisionCount, planRevisionCount);
         hasRevisions = true;
