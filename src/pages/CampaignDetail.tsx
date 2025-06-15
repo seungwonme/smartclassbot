@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
 import CampaignConfirmationSummary from '@/components/campaign/CampaignConfirmationSummary';
 import BrandContentPlanReview from '@/components/content/BrandContentPlanReview';
-import ContentProductionTab from '@/components/content/ContentProductionTab';
+import BrandContentProductionTab from '@/components/content/BrandContentProductionTab';
 import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
@@ -637,10 +638,9 @@ const CampaignDetail = () => {
 
           <TabsContent value="production" className="mt-6">
             {isProducing || campaign.currentStage >= 3 ? (
-              <ContentProductionTab
+              <BrandContentProductionTab
                 campaignId={campaign.id}
                 confirmedInfluencers={confirmedInfluencers}
-                onContentReviewReady={handleContentReviewReady}
               />
             ) : (
               <Card>
