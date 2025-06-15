@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,9 @@ import { CampaignInfluencer, ContentSubmission } from '@/types/campaign';
 import { contentSubmissionService } from '@/services/contentSubmission.service';
 import ContentUploadModal from './ContentUploadModal';
 import { useToast } from '@/hooks/use-toast';
+import ProductionScheduleStatus from './ProductionScheduleStatus';
+import ProductionTimeline from './ProductionTimeline';
+import { calculateScheduleStatus } from '@/utils/scheduleUtils';
 
 interface ContentProductionTabProps {
   campaignId: string;
@@ -158,6 +160,39 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
     return submission && submission.status !== 'draft';
   });
 
+  // 일정별로 인플루언서 정렬하는 함수 추가
+  const sortInfluencersBySchedule = (influencers: CampaignInfluencer[]) => {
+    return [...influencers].sort((a, b) => {
+      // 일정이 없는 경우 맨 뒤로
+      if (!a.productionStartDate || !a.productionDeadline) return 1;
+      if (!b.productionStartDate || !b.productionDeadline) return -1;
+
+      const submissionA = getInfluencerSubmission(a.id);
+      const submissionB = getInfluencerSubmission(b.id);
+      
+      const isCompletedA = submissionA && ['submitted', 'approved'].includes(submissionA.status);
+      const isCompletedB = submissionB && ['submitted', 'approved'].includes(submissionB.status);
+
+      // 완료된 것은 맨 뒤로
+      if (isCompletedA && !isCompletedB) return 1;
+      if (!isCompletedA && isCompletedB) return -1;
+      if (isCompletedA && isCompletedB) return 0;
+
+      const scheduleA = calculateScheduleStatus(a.productionStartDate, a.productionDeadline, false);
+      const scheduleB = calculateScheduleStatus(b.productionStartDate, b.productionDeadline, false);
+
+      // 긴급도 순서: overdue > deadline-approaching > in-progress > not-started
+      const urgencyOrder = { 'overdue': 0, 'deadline-approaching': 1, 'in-progress': 2, 'not-started': 3 };
+      const urgencyA = urgencyOrder[scheduleA.status] ?? 4;
+      const urgencyB = urgencyOrder[scheduleB.status] ?? 4;
+
+      if (urgencyA !== urgencyB) return urgencyA - urgencyB;
+
+      // 같은 긴급도면 마감일이 빠른 순
+      return new Date(a.productionDeadline).getTime() - new Date(b.productionDeadline).getTime();
+    });
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -169,9 +204,18 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
     );
   }
 
+  // 일정별로 정렬된 인플루언서 목록
+  const sortedInfluencers = sortInfluencersBySchedule(confirmedInfluencers);
+
   return (
     <>
       <div className="space-y-6">
+        {/* 제작 일정 현황 대시보드 추가 */}
+        <ProductionTimeline 
+          confirmedInfluencers={confirmedInfluencers}
+          contentSubmissions={contentSubmissions}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -186,7 +230,7 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {confirmedInfluencers.map((influencer) => {
+              {sortedInfluencers.map((influencer) => {
                 const submission = getInfluencerSubmission(influencer.id);
                 const expectedContentType = getExpectedContentType(influencer);
                 const contentTypeInfo = getContentTypeInfo(submission?.contentType || expectedContentType);
@@ -224,20 +268,24 @@ const ContentProductionTab: React.FC<ContentProductionTabProps> = ({
                           )}
                         </div>
 
-                        <div className="space-y-2">
-                          {influencer.productionStartDate && influencer.productionDeadline && (
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                <span>시작: {influencer.productionStartDate}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>마감: {influencer.productionDeadline}</span>
-                              </div>
+                        {/* 제작 일정 상태 표시 (새로 추가) */}
+                        {influencer.productionStartDate && influencer.productionDeadline ? (
+                          <ProductionScheduleStatus
+                            startDate={influencer.productionStartDate}
+                            deadline={influencer.productionDeadline}
+                            submission={submission}
+                            className="mb-3"
+                          />
+                        ) : (
+                          <div className="mb-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div className="flex items-center gap-1 text-yellow-700">
+                              <Clock className="w-4 h-4" />
+                              <span className="text-sm">제작 일정이 설정되지 않았습니다.</span>
                             </div>
-                          )}
+                          </div>
+                        )}
 
+                        <div className="space-y-2">
                           {submission ? (
                             <div className="flex items-center gap-2">
                               <Badge className={getStatusColor(submission.status)}>
