@@ -16,7 +16,7 @@ interface ContentPlanFormProps {
   existingPlan?: ContentPlanDetail;
   onSave: (planData: Partial<ContentPlanDetail>) => void;
   onCancel: () => void;
-  onContentUpdated?: () => void; // 새로운 콜백 추가
+  onContentUpdated?: () => void;
 }
 
 const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
@@ -45,9 +45,15 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     hashtags: []
   });
 
+  // 수정 요청이 있는지 확인 (가장 최근 revision이 pending 상태인지)
+  const hasPendingRevision = existingPlan?.revisions?.some(
+    revision => revision.status === 'pending'
+  );
+
   useEffect(() => {
     console.log('=== ContentPlanForm 데이터 로딩 ===');
     console.log('existingPlan:', existingPlan);
+    console.log('hasPendingRevision:', hasPendingRevision);
     
     if (existingPlan) {
       console.log('기존 기획안 데이터 복원 시작');
@@ -98,11 +104,10 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     } else {
       console.log('새 기획안 작성 - 초기값 설정');
     }
-  }, [existingPlan]);
+  }, [existingPlan, hasPendingRevision]);
 
   const handleImageDataUpdate = (updates: Partial<ImagePlanData>) => {
     setImageData(prev => ({ ...prev, ...updates }));
-    // 콘텐츠가 수정되었음을 알림
     if (onContentUpdated) {
       onContentUpdated();
     }
@@ -110,7 +115,6 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
 
   const handleVideoDataUpdate = (updates: Partial<VideoPlanData>) => {
     setVideoData(prev => ({ ...prev, ...updates }));
-    // 콘텐츠가 수정되었음을 알림
     if (onContentUpdated) {
       onContentUpdated();
     }
@@ -129,9 +133,38 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
     console.log('contentType:', contentType);
     console.log('현재 imageData:', imageData);
     console.log('현재 videoData:', videoData);
+    console.log('기존 기획안 존재 여부:', !!existingPlan);
+    console.log('수정 요청 대기 중:', hasPendingRevision);
     
     const currentPlanData = contentType === 'image' ? imageData : videoData;
     console.log('저장할 planData:', currentPlanData);
+    
+    // 상태 결정 로직
+    let newStatus: 'draft' | 'revision-feedback' = 'draft';
+    let updatedRevisions = existingPlan?.revisions || [];
+    
+    if (hasPendingRevision && existingPlan) {
+      console.log('🔄 수정 요청에 대한 응답 처리');
+      newStatus = 'revision-feedback';
+      
+      // 가장 최근 pending revision을 completed로 변경
+      updatedRevisions = existingPlan.revisions.map(revision => {
+        if (revision.status === 'pending') {
+          return {
+            ...revision,
+            status: 'completed' as const,
+            response: '수정 요청사항을 반영하여 기획안을 업데이트했습니다.',
+            respondedAt: new Date().toISOString(),
+            respondedBy: '시스템 관리자'
+          };
+        }
+        return revision;
+      });
+      
+      console.log('🔄 업데이트된 revisions:', updatedRevisions);
+    } else {
+      console.log('🆕 최초 기획안 생성 또는 일반 수정');
+    }
     
     const planData: Partial<ContentPlanDetail> = {
       campaignId,
@@ -139,10 +172,15 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
       influencerName: influencer.name,
       contentType,
       planData: currentPlanData,
-      status: 'draft'
+      status: newStatus,
+      revisions: updatedRevisions,
+      currentRevisionNumber: existingPlan?.currentRevisionNumber || 0
     };
     
     console.log('최종 저장 데이터:', planData);
+    console.log('상태:', newStatus);
+    console.log('=== 기획안 저장 완료 ===');
+    
     onSave(planData);
   };
 
@@ -150,13 +188,30 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* 수정 요청 알림 표시 */}
+      {hasPendingRevision && (
+        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <h4 className="font-medium text-orange-800 mb-2">🔄 브랜드 관리자 수정 요청</h4>
+          {existingPlan?.revisions
+            ?.filter(revision => revision.status === 'pending')
+            .map(revision => (
+              <div key={revision.id} className="text-sm text-orange-700">
+                <p><strong>요청일:</strong> {new Date(revision.requestedAt).toLocaleDateString()}</p>
+                <p><strong>요청 내용:</strong> {revision.feedback}</p>
+              </div>
+            ))}
+          <p className="text-sm text-orange-600 mt-2">
+            💡 수정 요청사항을 반영한 후 저장하면 브랜드 관리자에게 피드백이 전달됩니다.
+          </p>
+        </div>
+      )}
+
       {/* 콘텐츠 타입 선택 */}
       <div>
         <Label className="text-base font-medium mb-3 block">콘텐츠 타입</Label>
         <RadioGroup value={contentType} onValueChange={(value) => {
           console.log('콘텐츠 타입 변경:', value);
           setContentType(value as 'image' | 'video');
-          // 타입 변경도 콘텐츠 수정으로 간주
           if (onContentUpdated) {
             onContentUpdated();
           }
@@ -203,7 +258,7 @@ const ContentPlanForm: React.FC<ContentPlanFormProps> = ({
           취소
         </Button>
         <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-          저장
+          {hasPendingRevision ? '수정 완료' : '저장'}
         </Button>
       </div>
     </div>
