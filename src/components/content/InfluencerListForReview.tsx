@@ -31,6 +31,46 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
   getCurrentRevisionInfo,
   canReviewPlan
 }) => {
+  const getDetailedRevisionStatus = (plan: ContentPlanDetail) => {
+    if (!plan.revisions || plan.revisions.length === 0) {
+      return null;
+    }
+
+    const pendingBrandRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'brand' && r.status === 'pending'
+    );
+    
+    const pendingAdminRevisions = plan.revisions.filter(r => 
+      r.requestedBy === 'admin' && r.status === 'pending'
+    );
+
+    if (pendingBrandRevisions.length > 0) {
+      return {
+        text: `${pendingBrandRevisions[0].revisionNumber}차 수정요청`,
+        color: 'bg-orange-100 text-orange-800'
+      };
+    }
+
+    if (pendingAdminRevisions.length > 0) {
+      return {
+        text: `${pendingAdminRevisions[0].revisionNumber}차 피드백 완료`,
+        color: 'bg-purple-100 text-purple-800'
+      };
+    }
+
+    // 최근 완료된 수정 요청이 있다면
+    const completedRevisions = plan.revisions.filter(r => r.status === 'completed');
+    if (completedRevisions.length > 0) {
+      const latestRevision = completedRevisions[completedRevisions.length - 1];
+      return {
+        text: `${latestRevision.revisionNumber}차 완료`,
+        color: 'bg-gray-100 text-gray-600'
+      };
+    }
+
+    return null;
+  };
+
   if (confirmedInfluencers.length === 0) {
     return (
       <Card className="h-full">
@@ -54,7 +94,7 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
         <div className="space-y-3">
           {confirmedInfluencers.map((influencer) => {
             const existingPlan = plans.find(plan => plan.influencerId === influencer.id);
-            const revisionInfo = existingPlan ? getCurrentRevisionInfo(existingPlan) : null;
+            const revisionStatus = existingPlan ? getDetailedRevisionStatus(existingPlan) : null;
             
             return (
               <div 
@@ -76,9 +116,9 @@ const InfluencerListForReview: React.FC<InfluencerListForReviewProps> = ({
                       <Badge className={getStatusColor(existingPlan.status)}>
                         {getStatusText(existingPlan.status)}
                       </Badge>
-                      {revisionInfo && (
-                        <Badge variant="outline" className="text-xs">
-                          {revisionInfo}
+                      {revisionStatus && (
+                        <Badge className={revisionStatus.color}>
+                          {revisionStatus.text}
                         </Badge>
                       )}
                     </div>

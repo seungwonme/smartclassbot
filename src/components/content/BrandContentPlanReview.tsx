@@ -78,13 +78,13 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     );
     
     if (pendingAdminFeedback.length > 0) {
-      return `${pendingAdminFeedback[0].revisionNumber}차 수정피드백`;
+      return `${pendingAdminFeedback[0].revisionNumber}차 피드백 완료`;
     }
     
     if (plan.status === 'revision-request') {
       return `${completedBrandRevisions + 1}차 수정요청`;
     } else if (plan.status === 'revision-feedback') {
-      return `${completedBrandRevisions}차 수정피드백`;
+      return `${completedBrandRevisions}차 피드백 완료`;
     }
     
     return completedBrandRevisions > 0 ? `${completedBrandRevisions}차 완료` : null;
