@@ -1,4 +1,3 @@
-
 export interface Campaign {
   id: string;
   title: string;
@@ -70,6 +69,9 @@ export interface CampaignInfluencer {
   proposalSubmittedAt?: string;
   platform?: 'douyin' | 'xiaohongshu';
   region?: string;
+  productionStartDate?: string;
+  productionDeadline?: string;
+  hasUploadedContent?: boolean;
 }
 
 export interface ContentPlan {

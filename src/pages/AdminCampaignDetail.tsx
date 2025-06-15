@@ -19,6 +19,7 @@ import { contentService } from '@/services/content.service';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { useInlineComments } from '@/hooks/useInlineComments';
 import { useFieldFeedback } from '@/hooks/useFieldFeedback';
+import ProductionScheduleManager from '@/components/content/ProductionScheduleManager';
 
 const AdminCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -318,6 +319,75 @@ const AdminCampaignDetail = () => {
     return true; // 시스템 관리자는 항상 피드백 가능
   };
 
+  // 기획 완료 여부 확인
+  const isAllPlansApproved = () => {
+    if (confirmedInfluencers.length === 0) return false;
+    const approvedPlans = contentPlans.filter(plan => plan.status === 'approved');
+    return approvedPlans.length === confirmedInfluencers.length;
+  };
+
+  // 제작 일정 설정 완료 여부 확인
+  const isAllSchedulesSet = () => {
+    return confirmedInfluencers.every(inf => 
+      inf.productionStartDate && inf.productionDeadline
+    );
+  };
+
+  // 제작 일정 업데이트
+  const handleUpdateProductionSchedule = async (influencerId: string, startDate: string, deadline: string) => {
+    if (!campaign) return;
+
+    try {
+      const updatedInfluencers = campaign.influencers.map(inf =>
+        inf.id === influencerId 
+          ? { ...inf, productionStartDate: startDate, productionDeadline: deadline }
+          : inf
+      );
+
+      await updateCampaignInfluencers(updatedInfluencers);
+
+      toast({
+        title: "제작 일정 설정 완료",
+        description: "인플루언서의 제작 일정이 설정되었습니다."
+      });
+    } catch (error) {
+      console.error('제작 일정 설정 실패:', error);
+      toast({
+        title: "설정 실패",
+        description: "제작 일정 설정에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 콘텐츠 제작 단계로 전환
+  const handleStartProduction = async () => {
+    if (!campaign) return;
+
+    try {
+      const { campaignService } = await import('@/services/campaign.service');
+      await campaignService.updateCampaign(campaign.id, { 
+        status: 'producing',
+        currentStage: 3
+      });
+
+      toast({
+        title: "콘텐츠 제작 단계 시작",
+        description: "캠페인이 콘텐츠 제작 단계로 전환되었습니다."
+      });
+
+      // 페이지 새로고침하여 최신 상태 반영
+      window.location.reload();
+    } catch (error) {
+      console.error('제작 단계 전환 실패:', error);
+      toast({
+        title: "전환 실패",
+        description: "콘텐츠 제작 단계 전환에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -476,6 +546,51 @@ const AdminCampaignDetail = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mt-4"></div>
                 </CardContent>
               </Card>
+            ) : isAllPlansApproved() ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[700px]">
+                {/* 좌측: 제작 일정 관리 */}
+                <div className="lg:col-span-1">
+                  <ProductionScheduleManager
+                    confirmedInfluencers={confirmedInfluencers}
+                    onUpdateSchedule={handleUpdateProductionSchedule}
+                    onStartProduction={handleStartProduction}
+                    canStartProduction={isAllSchedulesSet()}
+                  />
+                </div>
+
+                {/* 우측: 기획안 완료 현황 */}
+                <div className="lg:col-span-1">
+                  <Card className="h-full">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        기획안 완료 현황
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {confirmedInfluencers.map((influencer) => {
+                          const plan = contentPlans.find(p => p.influencerId === influencer.id);
+                          return (
+                            <div key={influencer.id} className="p-3 border rounded-lg bg-green-50">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h4 className="font-medium">{influencer.name}</h4>
+                                  <p className="text-sm text-gray-500">{influencer.platform}</p>
+                                </div>
+                                <Badge className="bg-green-100 text-green-800">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  기획완료
+                                </Badge>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
                 {/* 좌측: 인플루언서 목록 */}
