@@ -60,30 +60,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     return plan.status === 'draft' || plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
 
-  const hasPlanContent = (plan: ContentPlanDetail) => {
-    if (!plan.planData) {
-      console.log('Plan data is undefined for plan:', plan.id);
-      return false;
-    }
-
-    try {
-      if (plan.contentType === 'image') {
-        const imageData = plan.planData as any;
-        return !!(imageData?.postTitle || imageData?.thumbnailTitle || imageData?.script || 
-                 (imageData?.hashtags && imageData.hashtags.length > 0) ||
-                 (imageData?.referenceImages && imageData.referenceImages.length > 0));
-      } else {
-        const videoData = plan.planData as any;
-        return !!(videoData?.postTitle || videoData?.scenario || videoData?.script ||
-                 (videoData?.hashtags && videoData.hashtags.length > 0) ||
-                 (videoData?.scenarioFiles && videoData.scenarioFiles.length > 0));
-      }
-    } catch (error) {
-      console.error('Error checking plan content:', error);
-      return false;
-    }
-  };
-
   const getCurrentRevisionInfo = (plan: ContentPlanDetail) => {
     const pendingRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
@@ -199,7 +175,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           getStatusText={getStatusText}
           getCurrentRevisionInfo={getCurrentRevisionInfo}
           canReviewPlan={canReviewPlan}
-          hasPlanContent={hasPlanContent}
         />
       </div>
 
@@ -214,7 +189,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           onSubmitRevision={handleRequestRevision}
           onCancelRevision={handleCancelRevision}
           canReviewPlan={canReviewPlan}
-          hasPlanContent={hasPlanContent}
+          hasPlanContent={() => true}
           renderFieldWithFeedback={renderFieldWithFeedback}
           plans={plans}
         />
