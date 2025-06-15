@@ -1,41 +1,20 @@
-
-import { ContentSubmission } from './contentSubmission';
-
 export interface Campaign {
   id: string;
   title: string;
-  brandId: string;
   brandName: string;
-  productId: string;
   productName: string;
   budget: number;
   campaignStartDate: string;
   campaignEndDate: string;
   proposalDeadline: string;
-  adType: 'branding' | 'live-commerce';
-  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-revision' | 'content-approved' | 'live' | 'monitoring' | 'completed';
+  adType: 'branding' | 'livecommerce';
   targetContent: TargetContent;
-  influencers: CampaignInfluencer[];
+  influencers: Influencer[];
   contentPlans?: ContentPlan[];
-  contentSubmissions?: ContentSubmission[];
+  status: 'creating' | 'submitted' | 'recruiting' | 'proposing' | 'revising' | 'revision-feedback' | 'confirmed' | 'planning' | 'plan-review' | 'plan-revision' | 'plan-approved' | 'producing' | 'content-review' | 'content-approved' | 'live' | 'monitoring' | 'completed';
   currentStage: number;
-  quote?: CampaignQuote;
-  productionSchedule?: {
-    startDate: string;
-    endDate: string;
-    notes?: string;
-    createdAt: string;
-    createdBy: string;
-  };
   createdAt: string;
   updatedAt: string;
-}
-
-export interface CampaignQuote {
-  subtotal: number;
-  agencyFee: number;
-  vat: number;
-  total: number;
 }
 
 export interface TargetContent {
@@ -43,65 +22,41 @@ export interface TargetContent {
   targetAge: string;
   uspImportance: number;
   influencerImpact: string;
-  additionalDescription: string;
+  additionalDescription?: string;
   secondaryContentUsage: boolean;
 }
 
-export interface CampaignInfluencer {
+export interface Influencer {
   id: string;
   name: string;
-  category: string;
-  followers: number;
-  avgViews: number;
-  avgLikes: number;
-  avgComments: number;
-  engagementRate: number;
-  profileImageUrl: string;
-  profileImage?: string;
-  instagramUrl: string;
-  youtubeUrl?: string;
-  xiaohongshuUrl?: string;
-  tiktokUrl?: string;
-  proposedFee: number;
-  adFee?: number;
-  deliverables: string[];
-  additionalTerms?: string;
-  status: 'pending' | 'confirmed' | 'rejected' | 'accepted' | 'admin-rejected' | 'brand-rejected';
-  proposalSubmittedAt?: string;
-  platform?: 'douyin' | 'xiaohongshu';
-  region?: string;
-}
-
-export interface ContentPlan {
-  id: string;
-  campaignId: string;
-  influencerId: string;
-  influencerName: string;
-  contentType: 'image' | 'video';
-  status: 'draft' | 'submitted' | 'revision' | 'approved';
-  planDocument: string;
-  revisions: ContentRevision[];
+  platform: string;
+  followerCount: number;
+   প্রস্তাবAmount: number;
+  status: 'pending' | 'confirmed' | 'rejected' | 'brand-rejected' | 'admin-rejected';
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ContentRevision {
+export interface ContentPlan {
   id: string;
-  revisionNumber: number;
-  feedback: string;
-  requestedBy: 'brand' | 'admin';
-  requestedByName: string;
-  requestedAt: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  response?: string;
-  respondedAt?: string;
-  respondedBy?: string;
-}
-
-export interface Persona {
-  id: string;
-  name: string;
-  age: string;
-  interests: string[];
-  productId: string;
+  influencerId: string;
+  influencerName: string;
+  contentType: 'image' | 'video';
+  status: 'waiting' | 'draft' | 'revision-request' | 'revision-feedback' | 'approved';
+  planData: any;
+  revisions?: Array<{
+    id: string;
+    revisionNumber: number;
+    feedback: string;
+    requestedBy: 'brand' | 'admin';
+    requestedByName: string;
+    requestedAt: string;
+    status: 'pending' | 'in-progress' | 'completed';
+    response?: string;
+    respondedAt?: string;
+    respondedBy?: string;
+  }>;
+  currentRevisionNumber: number;
+  createdAt: string;
+  updatedAt: string;
 }
