@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -8,7 +9,8 @@ import {
   Calculator,
   Settings,
   LogOut,
-  Megaphone
+  Megaphone,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,6 +23,7 @@ const AdminSidebar = () => {
     { icon: Building2, label: '브랜드 및 제품관리', href: '/admin/brands' },
     { icon: Users, label: '인플루언서 관리', href: '/admin/influencers' },
     { icon: Megaphone, label: '캠페인 관리', href: '/admin/campaigns' },
+    { icon: Database, label: '데이터 관리', href: '/admin/data-management' },
     { icon: BarChart3, label: '성과분석관리', href: '/admin/analytics' },
     { icon: Calculator, label: '정산관리', href: '/admin/billing' },
     { icon: Settings, label: '일반설정', href: '/admin/settings' },
