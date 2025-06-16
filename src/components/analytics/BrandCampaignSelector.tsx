@@ -40,9 +40,9 @@ const BrandCampaignSelector: React.FC<BrandCampaignSelectorProps> = ({
   const selectedInfluencerData = influencers.find(inf => inf.id === selectedInfluencer);
 
   return (
-    <Card>
+    <Card className="mb-6">
       <CardContent className="pt-6">
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* 브랜드 선택 */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -115,11 +115,12 @@ const BrandCampaignSelector: React.FC<BrandCampaignSelectorProps> = ({
                 <span className="text-lg">
                   {selectedInfluencerData.platform === 'xiaohongshu' ? '📕' : '🎵'}
                 </span>
-                <span className="font-medium text-sm">{selectedInfluencerData.name}</span>
+                <span className="font-medium">{selectedInfluencerData.name}</span>
               </div>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline">
                 {selectedInfluencerData.platform === 'xiaohongshu' ? '샤오홍슈' : '도우인'}
               </Badge>
+              <span className="text-sm text-gray-600">분석 대상</span>
             </div>
           </div>
         )}
