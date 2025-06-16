@@ -17,16 +17,41 @@ interface PlanDataRendererProps {
 
 const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
   plan,
-  renderFieldWithFeedback
+  renderFieldWithFeedback,
+  editingField,
+  editingValue,
+  setEditingValue,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit
 }) => {
   const isImagePlan = plan.contentType === 'image';
   const planData = plan.planData as ImagePlanData | VideoPlanData;
 
+  // renderFieldWithFeedback 함수를 편집 관련 props와 함께 래핑
+  const renderFieldWithEditSupport = (
+    fieldName: string,
+    fieldLabel: string,
+    content: React.ReactNode,
+    canAddFeedback: boolean = true,
+    fieldType: 'text' | 'textarea' | 'array' = 'text',
+    currentValue?: any
+  ) => {
+    return renderFieldWithFeedback(
+      plan,
+      fieldName,
+      fieldLabel,
+      content,
+      canAddFeedback,
+      fieldType,
+      currentValue
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* 게시물 제목 */}
-      {renderFieldWithFeedback(
-        plan,
+      {renderFieldWithEditSupport(
         'postTitle',
         '게시물 제목',
         <div className="p-3 bg-gray-50 rounded border">
@@ -40,8 +65,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
       {/* 이미지 기획 전용 필드 */}
       {isImagePlan && (
         <>
-          {renderFieldWithFeedback(
-            plan,
+          {renderFieldWithEditSupport(
             'thumbnailTitle',
             '썸네일 제목',
             <div className="p-3 bg-gray-50 rounded border">
@@ -52,8 +76,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
             (planData as ImagePlanData).thumbnailTitle
           )}
 
-          {renderFieldWithFeedback(
-            plan,
+          {renderFieldWithEditSupport(
             'referenceImages',
             '참고 이미지',
             <div className="p-3 bg-gray-50 rounded border">
@@ -75,8 +98,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
       {/* 영상 기획 전용 필드 */}
       {!isImagePlan && (
         <>
-          {renderFieldWithFeedback(
-            plan,
+          {renderFieldWithEditSupport(
             'scenario',
             '시나리오',
             <div className="p-3 bg-gray-50 rounded border">
@@ -87,8 +109,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
             (planData as VideoPlanData).scenario
           )}
 
-          {renderFieldWithFeedback(
-            plan,
+          {renderFieldWithEditSupport(
             'scenarioFiles',
             '시나리오 파일',
             <div className="p-3 bg-gray-50 rounded border">
@@ -107,8 +128,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
       )}
 
       {/* 공통 필드 */}
-      {renderFieldWithFeedback(
-        plan,
+      {renderFieldWithEditSupport(
         'script',
         '스크립트',
         <div className="p-3 bg-gray-50 rounded border">
@@ -119,8 +139,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
         planData.script
       )}
 
-      {renderFieldWithFeedback(
-        plan,
+      {renderFieldWithEditSupport(
         'hashtags',
         '해시태그',
         <div className="p-3 bg-gray-50 rounded border">
