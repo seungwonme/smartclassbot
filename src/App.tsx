@@ -31,6 +31,8 @@ import AdminCampaigns from "./pages/AdminCampaigns";
 import AdminCampaignDetail from "./pages/AdminCampaignDetail";
 import AdminContentPlanning from "./pages/AdminContentPlanning";
 import BrandInfluencers from "./pages/BrandInfluencers";
+import BrandAnalytics from "./pages/BrandAnalytics";
+import AdminAnalytics from "./pages/AdminAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +58,7 @@ const App = () => (
           <Route path="/brand/campaigns/:id" element={<CampaignDetail />} />
           <Route path="/brand/campaigns/edit/:id" element={<CampaignEdit />} />
           <Route path="/brand/influencers" element={<BrandInfluencers />} />
+          <Route path="/brand/analytics" element={<BrandAnalytics />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/brands" element={<AdminBrandManagement />} />
           <Route path="/admin/brands/create" element={<AdminCreateBrand />} />
@@ -69,6 +72,7 @@ const App = () => (
           <Route path="/admin/campaigns" element={<AdminCampaigns />} />
           <Route path="/admin/campaigns/:id" element={<AdminCampaignDetail />} />
           <Route path="/admin/campaigns/:campaignId/content-planning" element={<AdminContentPlanning />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
