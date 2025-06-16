@@ -1,9 +1,10 @@
-
 import React, { useState } from 'react';
 import { ContentPlanDetail } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
 import { useInlineComments } from '@/hooks/useInlineComments';
 import { useFieldFeedback } from '@/hooks/useFieldFeedback';
+import { useFieldEditing } from '@/hooks/useFieldEditing';
+import { contentService } from '@/services/content.service';
 import InfluencerListForReview from './InfluencerListForReview';
 import ContentPlanDetailView from './ContentPlanDetailView';
 
@@ -22,6 +23,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>(plans);
   const { toast } = useToast();
   
   const {
@@ -35,7 +37,62 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     resetComments
   } = useInlineComments();
 
-  console.log('BrandContentPlanReview received plans:', plans);
+  const handleSaveFieldEdit = async (planId: string, fieldName: string, newValue: any) => {
+    try {
+      const plan = contentPlans.find(p => p.id === planId);
+      if (!plan) return;
+
+      // planData 업데이트
+      const updatedPlanData = {
+        ...plan.planData,
+        [fieldName]: newValue
+      };
+
+      const updatedPlan = {
+        ...plan,
+        planData: updatedPlanData,
+        updatedAt: new Date().toISOString()
+      };
+
+      // 서버에 저장
+      await contentService.updateContentPlan(plan.campaignId, planId, {
+        planData: updatedPlanData,
+        updatedAt: new Date().toISOString()
+      });
+
+      // 로컬 상태 업데이트
+      setContentPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
+      
+      if (selectedPlan?.id === planId) {
+        setSelectedPlan(updatedPlan);
+      }
+
+      toast({
+        title: "수정 완료",
+        description: "필드가 성공적으로 수정되었습니다."
+      });
+
+    } catch (error) {
+      console.error('필드 수정 실패:', error);
+      toast({
+        title: "수정 실패",
+        description: "필드 수정에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const {
+    editingField,
+    editingValue,
+    setEditingValue,
+    startEditing,
+    saveEdit,
+    cancelEdit,
+    isEditing
+  } = useFieldEditing({
+    onSaveEdit: handleSaveFieldEdit
+  });
 
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
@@ -57,37 +114,26 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     }
   };
 
-  // 수정된 상태 텍스트 로직 - approved 상태 우선 처리
   const getModifiedStatusText = (plan: ContentPlanDetail) => {
-    // approved 상태라면 무조건 "기획완료" 표시
     if (plan.status === 'approved') {
-      console.log(`✅ ${plan.influencerName}: approved 상태로 인해 "기획완료" 표시`);
       return "기획완료";
     }
-
-    // revisions 배열이 존재하고 비어있지 않으면 "기획수정중"
     if (plan.revisions && plan.revisions.length > 0) {
-      console.log(`🔄 ${plan.influencerName}: revisions 존재로 인해 "기획수정중" 표시`);
       return "기획수정중";
     }
-    
-    // revisions가 없으면 기본 status 텍스트 사용
     return getStatusText(plan.status);
   };
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
-    // 승인된 기획안은 더 이상 검토할 수 없음
     if (plan.status === 'approved') return false;
     return plan.status === 'draft' || plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
 
-  // 수정된 revision 상태 확인 로직
   const getCurrentRevisionInfo = (plan: ContentPlanDetail) => {
     if (!plan.revisions || plan.revisions.length === 0) {
       return null;
     }
 
-    // 브랜드가 요청한 pending 수정사항이 있는지 확인
     const pendingBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'pending'
     );
@@ -96,7 +142,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       return `${pendingBrandRevisions[0].revisionNumber}차 수정요청`;
     }
 
-    // 관리자가 피드백한 pending 상태 확인 (브랜드 관점에서는 "피드백 완료")
     const pendingAdminFeedback = plan.revisions.filter(r =>
       r.requestedBy === 'admin' && r.status === 'pending'
     );
@@ -105,7 +150,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       return `${pendingAdminFeedback[0].revisionNumber}차 피드백 완료`;
     }
 
-    // plan.status 기반 fallback 로직
     const completedBrandRevisions = plan.revisions.filter(r => 
       r.requestedBy === 'brand' && r.status === 'completed'
     ).length;
@@ -126,7 +170,13 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     handleSaveInlineComment,
     handleCancelInlineComment,
     getFieldComment,
-    canReviewPlan
+    canReviewPlan,
+    editingField,
+    editingValue,
+    setEditingValue,
+    onStartEdit: startEditing,
+    onSaveEdit: saveEdit,
+    onCancelEdit: cancelEdit
   });
 
   const handleApprove = (planId: string) => {
@@ -195,7 +245,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       <div className="lg:col-span-1">
         <InfluencerListForReview
           confirmedInfluencers={confirmedInfluencers}
-          plans={plans}
+          plans={contentPlans}
           selectedPlan={selectedPlan}
           onSelectPlan={handleSelectPlan}
           onApprove={handleApprove}
@@ -220,7 +270,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           canReviewPlan={canReviewPlan}
           hasPlanContent={() => true}
           renderFieldWithFeedback={renderFieldWithFeedback}
-          plans={plans}
+          plans={contentPlans}
         />
       </div>
     </div>

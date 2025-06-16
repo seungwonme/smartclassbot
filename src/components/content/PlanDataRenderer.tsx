@@ -1,225 +1,136 @@
 
 import React from 'react';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
-import { downloadFile } from '@/utils/fileUtils';
-import { useToast } from '@/hooks/use-toast';
 
 interface PlanDataRendererProps {
   plan: ContentPlanDetail;
-  renderFieldWithFeedback: (
-    plan: ContentPlanDetail,
-    fieldName: string,
-    fieldLabel: string,
-    content: React.ReactNode,
-    canAddFeedback?: boolean
-  ) => React.ReactNode;
+  renderFieldWithFeedback: any;
 }
 
-const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({ plan, renderFieldWithFeedback }) => {
-  const { toast } = useToast();
+const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
+  plan,
+  renderFieldWithFeedback
+}) => {
+  const isImagePlan = plan.contentType === 'image';
+  const planData = plan.planData as ImagePlanData | VideoPlanData;
 
-  const handleDownloadImage = async (imageData: string, index: number) => {
-    try {
-      const fileName = `reference_image_${index + 1}.png`;
-      downloadFile(imageData, fileName, 'image/png');
-      toast({
-        title: "이미지 다운로드 완료",
-        description: `${fileName} 파일이 다운로드되었습니다.`
-      });
-    } catch (error) {
-      toast({
-        title: "다운로드 실패",
-        description: "이미지를 다운로드할 수 없습니다.",
-        variant: "destructive"
-      });
-    }
-  };
+  return (
+    <div className="space-y-6">
+      {/* 게시물 제목 */}
+      {renderFieldWithFeedback(
+        plan,
+        'postTitle',
+        '게시물 제목',
+        <div className="p-3 bg-gray-50 rounded border">
+          <p className="text-sm">{planData.postTitle}</p>
+        </div>,
+        true,
+        'text',
+        planData.postTitle
+      )}
 
-  const handleDownloadScenarioFile = async (file: { name: string; data: string; type: string }) => {
-    try {
-      downloadFile(file.data, file.name, file.type);
-      toast({
-        title: "파일 다운로드 완료",
-        description: `${file.name} 파일이 다운로드되었습니다.`
-      });
-    } catch (error) {
-      toast({
-        title: "다운로드 실패",
-        description: "파일을 다운로드할 수 없습니다.",
-        variant: "destructive"
-      });
-    }
-  };
+      {/* 이미지 기획 전용 필드 */}
+      {isImagePlan && (
+        <>
+          {renderFieldWithFeedback(
+            plan,
+            'thumbnailTitle',
+            '썸네일 제목',
+            <div className="p-3 bg-gray-50 rounded border">
+              <p className="text-sm">{(planData as ImagePlanData).thumbnailTitle}</p>
+            </div>,
+            true,
+            'text',
+            (planData as ImagePlanData).thumbnailTitle
+          )}
 
-  console.log('Rendering plan data for:', plan.influencerName, plan.planData);
-  
-  // Check if planData exists and provide fallback
-  if (!plan.planData) {
-    return (
-      <div className="space-y-4">
-        <div className="text-center py-8 text-gray-500">
-          <p>콘텐츠 기획 데이터가 없습니다.</p>
-          <p className="text-sm mt-2">인플루언서가 아직 기획안을 작성하지 않았거나 데이터 로딩 중입니다.</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (plan.contentType === 'image') {
-    // Provide default values for image data
-    const imageData: ImagePlanData = {
-      postTitle: '',
-      thumbnailTitle: '',
-      referenceImages: [],
-      script: '',
-      hashtags: [],
-      ...(plan.planData as ImagePlanData || {})
-    };
+          {renderFieldWithFeedback(
+            plan,
+            'referenceImages',
+            '참고 이미지',
+            <div className="p-3 bg-gray-50 rounded border">
+              <div className="space-y-2">
+                {(planData as ImagePlanData).referenceImages?.map((image, index) => (
+                  <div key={index} className="text-sm text-blue-600 underline">
+                    {image}
+                  </div>
+                )) || <p className="text-sm text-gray-500">참고 이미지가 없습니다.</p>}
+              </div>
+            </div>,
+            true,
+            'array',
+            (planData as ImagePlanData).referenceImages
+          )}
+        </>
+      )}
 
-    return (
-      <div className="space-y-4">
-        {renderFieldWithFeedback(
-          plan,
-          'postTitle',
-          '포스팅 제목',
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.postTitle || '제목이 입력되지 않았습니다.'}</p>
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'thumbnailTitle',
-          '썸네일 제목',
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{imageData.thumbnailTitle || '썸네일 제목이 입력되지 않았습니다.'}</p>
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'referenceImages',
-          '참고 이미지',
-          imageData.referenceImages && imageData.referenceImages.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              {imageData.referenceImages.map((image, index) => (
-                <div key={index} className="relative border rounded p-2">
-                  <img src={image} alt={`Reference ${index + 1}`} className="w-full h-20 object-cover rounded mb-2" />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute bottom-1 right-1 text-xs px-2 py-1 h-6"
-                    onClick={() => handleDownloadImage(image, index)}
-                  >
-                    <Download className="w-3 h-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">참고 이미지가 업로드되지 않았습니다.</p>
-          )
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'script',
-          '스크립트',
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{imageData.script || '스크립트가 입력되지 않았습니다.'}</p>
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'hashtags',
-          '해시태그',
-          imageData.hashtags && imageData.hashtags.length > 0 ? (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {imageData.hashtags.map((tag, index) => (
-                <Badge key={index} variant="outline">{tag}</Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">해시태그가 입력되지 않았습니다.</p>
-          )
-        )}
-      </div>
-    );
-  } else {
-    // Provide default values for video data
-    const videoData: VideoPlanData = {
-      postTitle: '',
-      scenario: '',
-      scenarioFiles: [],
-      script: '',
-      hashtags: [],
-      ...(plan.planData as VideoPlanData || {})
-    };
+      {/* 영상 기획 전용 필드 */}
+      {!isImagePlan && (
+        <>
+          {renderFieldWithFeedback(
+            plan,
+            'scenario',
+            '시나리오',
+            <div className="p-3 bg-gray-50 rounded border">
+              <p className="text-sm whitespace-pre-wrap">{(planData as VideoPlanData).scenario}</p>
+            </div>,
+            true,
+            'textarea',
+            (planData as VideoPlanData).scenario
+          )}
 
-    return (
-      <div className="space-y-4">
-        {renderFieldWithFeedback(
-          plan,
-          'postTitle',
-          '포스팅 제목',
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded">{videoData.postTitle || '제목이 입력되지 않았습니다.'}</p>
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'scenario',
-          '시나리오',
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.scenario || '시나리오가 입력되지 않았습니다.'}</p>
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'scenarioFiles',
-          '시나리오 파일',
-          videoData.scenarioFiles && videoData.scenarioFiles.length > 0 ? (
-            <div className="space-y-2 mt-2">
-              {videoData.scenarioFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span className="text-sm">{file.name}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs px-2 py-1 h-6"
-                    onClick={() => handleDownloadScenarioFile(file)}
-                  >
-                    <Download className="w-3 h-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">시나리오 파일이 업로드되지 않았습니다.</p>
-          )
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'script',
-          '스크립트',
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap">{videoData.script || '스크립트가 입력되지 않았습니다.'}</p>
-        )}
-        
-        {renderFieldWithFeedback(
-          plan,
-          'hashtags',
-          '해시태그',
-          videoData.hashtags && videoData.hashtags.length > 0 ? (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {videoData.hashtags.map((tag, index) => (
-                <Badge key={index} variant="outline">{tag}</Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm mt-1 p-2 bg-gray-50 rounded text-gray-500">해시태그가 입력되지 않았습니다.</p>
-          )
-        )}
-      </div>
-    );
-  }
+          {renderFieldWithFeedback(
+            plan,
+            'scenarioFiles',
+            '시나리오 파일',
+            <div className="p-3 bg-gray-50 rounded border">
+              <div className="space-y-2">
+                {(planData as VideoPlanData).scenarioFiles?.map((file, index) => (
+                  <div key={index} className="text-sm">
+                    <span className="font-medium">{file.name}</span>
+                    <span className="text-gray-500 ml-2">({file.type})</span>
+                  </div>
+                )) || <p className="text-sm text-gray-500">시나리오 파일이 없습니다.</p>}
+              </div>
+            </div>,
+            false // 파일은 편집 불가
+          )}
+        </>
+      )}
+
+      {/* 공통 필드 */}
+      {renderFieldWithFeedback(
+        plan,
+        'script',
+        '스크립트',
+        <div className="p-3 bg-gray-50 rounded border">
+          <p className="text-sm whitespace-pre-wrap">{planData.script}</p>
+        </div>,
+        true,
+        'textarea',
+        planData.script
+      )}
+
+      {renderFieldWithFeedback(
+        plan,
+        'hashtags',
+        '해시태그',
+        <div className="p-3 bg-gray-50 rounded border">
+          <div className="flex flex-wrap gap-1">
+            {planData.hashtags?.map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                #{tag}
+              </Badge>
+            )) || <p className="text-sm text-gray-500">해시태그가 없습니다.</p>}
+          </div>
+        </div>,
+        true,
+        'array',
+        planData.hashtags
+      )}
+    </div>
+  );
 };
 
 export default PlanDataRenderer;
