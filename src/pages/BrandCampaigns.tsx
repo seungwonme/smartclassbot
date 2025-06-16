@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, Download } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignDashboard from '@/components/campaign/CampaignDashboard';
 import { Campaign } from '@/types/campaign';
@@ -15,68 +16,44 @@ const BrandCampaigns = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadCampaigns = async () => {
-    console.log('=== BrandCampaigns 캠페인 로딩 시작 ===');
-    
-    // 로컬스토리지 직접 확인
-    const localStorageCampaigns = storageService.getCampaigns();
-    console.log('로컬스토리지 직접 확인:', localStorageCampaigns);
-    console.log('로컬스토리지 캠페인 개수:', localStorageCampaigns.length);
-    
-    try {
-      const data = await campaignService.getCampaigns();
-      console.log('브랜드 페이지 - 로드된 캠페인 데이터:', data);
-      console.log('캠페인 개수:', data.length);
-      
-      if (data.length === 0) {
-        console.warn('⚠️ 캠페인 데이터가 비어있습니다!');
-        console.log('로컬스토리지 상태 재확인:', storageService.getCampaigns());
-      }
-      
-      data.forEach((campaign, index) => {
-        console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status} - 단계: ${campaign.currentStage} - ID: ${campaign.id}`);
-      });
-      setCampaigns(data);
-    } catch (error) {
-      console.error('캠페인 로딩 실패:', error);
-      // 에러 발생 시 로컬스토리지에서 직접 가져오기 시도
-      console.log('에러 발생, 로컬스토리지에서 직접 가져오기 시도');
-      const fallbackCampaigns = storageService.getCampaigns();
-      console.log('Fallback 캠페인 데이터:', fallbackCampaigns);
-      setCampaigns(fallbackCampaigns);
-    } finally {
-      setIsLoading(false);
-      console.log('=== BrandCampaigns 캠페인 로딩 완료 ===');
-    }
-  };
-
   useEffect(() => {
+    const loadCampaigns = async () => {
+      console.log('=== BrandCampaigns 캠페인 로딩 시작 ===');
+      
+      // 로컬스토리지 직접 확인
+      const localStorageCampaigns = storageService.getCampaigns();
+      console.log('로컬스토리지 직접 확인:', localStorageCampaigns);
+      console.log('로컬스토리지 캠페인 개수:', localStorageCampaigns.length);
+      
+      try {
+        const data = await campaignService.getCampaigns();
+        console.log('브랜드 페이지 - 로드된 캠페인 데이터:', data);
+        console.log('캠페인 개수:', data.length);
+        
+        if (data.length === 0) {
+          console.warn('⚠️ 캠페인 데이터가 비어있습니다!');
+          console.log('로컬스토리지 상태 재확인:', storageService.getCampaigns());
+        }
+        
+        data.forEach((campaign, index) => {
+          console.log(`캠페인 ${index + 1}: "${campaign.title}" - 상태: ${campaign.status} - ID: ${campaign.id}`);
+        });
+        setCampaigns(data);
+      } catch (error) {
+        console.error('캠페인 로딩 실패:', error);
+        // 에러 발생 시 로컬스토리지에서 직접 가져오기 시도
+        console.log('에러 발생, 로컬스토리지에서 직접 가져오기 시도');
+        const fallbackCampaigns = storageService.getCampaigns();
+        console.log('Fallback 캠페인 데이터:', fallbackCampaigns);
+        setCampaigns(fallbackCampaigns);
+      } finally {
+        setIsLoading(false);
+        console.log('=== BrandCampaigns 캠페인 로딩 완료 ===');
+      }
+    };
+
     loadCampaigns();
   }, []);
-
-  const handleForceReinitialize = async () => {
-    console.log('=== 데이터 강제 재초기화 시작 ===');
-    setIsLoading(true);
-    
-    try {
-      campaignService.forceReinitialize();
-      await loadCampaigns();
-      
-      toast({
-        title: "데이터 초기화 완료",
-        description: "최신 mock 데이터로 업데이트되었습니다."
-      });
-    } catch (error) {
-      console.error('데이터 초기화 실패:', error);
-      toast({
-        title: "초기화 실패",
-        description: "데이터 초기화에 실패했습니다.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCampaignClick = (campaignId: string) => {
     console.log('브랜드 - 캠페인 클릭:', campaignId);
@@ -86,25 +63,6 @@ const BrandCampaigns = () => {
   const handleEditClick = (campaignId: string) => {
     console.log('브랜드 - 캠페인 편집 클릭:', campaignId);
     navigate(`/brand/campaigns/edit/${campaignId}`);
-  };
-
-  const handleExportData = async () => {
-    try {
-      const { dataManagerService } = await import('@/services/dataManager.service');
-      const data = dataManagerService.exportCurrentData();
-      dataManagerService.downloadDataAsFile(data, 'brand-campaigns-backup.json');
-      
-      toast({
-        title: "데이터 백업 완료",
-        description: "현재 캠페인 데이터가 다운로드되었습니다."
-      });
-    } catch (error) {
-      toast({
-        title: "백업 실패",
-        description: "데이터 백업 중 오류가 발생했습니다.",
-        variant: "destructive"
-      });
-    }
   };
 
   if (isLoading) {
@@ -137,22 +95,6 @@ const BrandCampaigns = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={handleExportData}
-              variant="outline"
-              className="text-purple-600 border-purple-600 hover:bg-purple-50"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              데이터 백업
-            </Button>
-            <Button
-              onClick={handleForceReinitialize}
-              variant="outline"
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              데이터 초기화
-            </Button>
             <Button
               onClick={() => {
                 console.log('=== 로컬스토리지 데이터 확인 버튼 클릭 ===');
