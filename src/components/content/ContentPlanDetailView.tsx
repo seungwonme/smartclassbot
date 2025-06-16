@@ -86,11 +86,68 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   };
 
   const renderContent = () => {
-    if (showRevisionForm && selectedPlan) {
-      const hasJustEdited = justEditedField && justEditedField.startsWith(selectedPlan.id);
-      
+    // 전용 수정요청 폼 모드 (브랜드에서 처음 수정요청 시)
+    if (showRevisionForm && selectedPlan && !justEditedField) {
       return (
         <div className="space-y-4">
+          {/* 기존 인라인 코멘트 기반 피드백 섹션 */}
+          {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
+              {inlineComments
+                .filter(c => c.planId === selectedPlan.id)
+                .map((comment, index) => (
+                  <div key={index} className="text-sm text-blue-600 mb-1">
+                    <strong>{comment.fieldName}:</strong> {comment.comment}
+                  </div>
+                ))}
+            </div>
+          )}
+          
+          <RevisionRequestForm
+            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+            onSubmit={onSubmitRevision}
+            onCancel={onCancelRevision}
+            requestType={isAdminView ? "admin-feedback" : "brand-request"}
+          />
+        </div>
+      );
+    }
+
+    if (selectedPlan) {
+      const savedComments = inlineComments.filter(c => c.planId === selectedPlan.id);
+      const hasComments = savedComments.length > 0;
+      const hasPendingRevision = selectedPlan.revisions?.some(rev => rev.status === 'pending');
+      const hasJustEdited = justEditedField && justEditedField.startsWith(selectedPlan.id);
+
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 pb-4 border-b">
+            {selectedPlan.contentType === 'image' ? (
+              <ImageIcon className="w-5 h-5" />
+            ) : (
+              <VideoIcon className="w-5 h-5" />
+            )}
+            <h3 className="text-lg font-medium">
+              {selectedPlan.influencerName} - {selectedPlan.contentType === 'image' ? '이미지' : '영상'} 기획안
+            </h3>
+          </div>
+
+          <PlanDataRenderer 
+            plan={selectedPlan} 
+            renderFieldWithFeedback={renderFieldWithFeedback}
+            editingField={editingField}
+            editingValue={editingValue}
+            setEditingValue={setEditingValue}
+            onStartEdit={onStartEdit}
+            onSaveEdit={onSaveEdit}
+            onCancelEdit={onCancelEdit}
+          />
+          
+          {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
+            <ContentRevisionTimeline revisions={selectedPlan.revisions} />
+          )}
+
           {/* 편집 완료 후 자동 표시되는 피드백 섹션 */}
           {hasJustEdited && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -140,68 +197,8 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             </div>
           )}
 
-          {/* 기존 인라인 코멘트 기반 피드백 섹션 */}
-          {!hasJustEdited && inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
-              {inlineComments
-                .filter(c => c.planId === selectedPlan.id)
-                .map((comment, index) => (
-                  <div key={index} className="text-sm text-blue-600 mb-1">
-                    <strong>{comment.fieldName}:</strong> {comment.comment}
-                  </div>
-                ))}
-            </div>
-          )}
-          
-          {/* 기존 수정요청 폼 (편집 완료 후가 아닌 경우에만 표시) */}
-          {!hasJustEdited && (
-            <RevisionRequestForm
-              revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
-              onSubmit={onSubmitRevision}
-              onCancel={onCancelRevision}
-              requestType={isAdminView ? "admin-feedback" : "brand-request"}
-            />
-          )}
-        </div>
-      );
-    }
-
-    if (selectedPlan) {
-      const savedComments = inlineComments.filter(c => c.planId === selectedPlan.id);
-      const hasComments = savedComments.length > 0;
-      const hasPendingRevision = selectedPlan.revisions?.some(rev => rev.status === 'pending');
-
-      return (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 pb-4 border-b">
-            {selectedPlan.contentType === 'image' ? (
-              <ImageIcon className="w-5 h-5" />
-            ) : (
-              <VideoIcon className="w-5 h-5" />
-            )}
-            <h3 className="text-lg font-medium">
-              {selectedPlan.influencerName} - {selectedPlan.contentType === 'image' ? '이미지' : '영상'} 기획안
-            </h3>
-          </div>
-
-          <PlanDataRenderer 
-            plan={selectedPlan} 
-            renderFieldWithFeedback={renderFieldWithFeedback}
-            editingField={editingField}
-            editingValue={editingValue}
-            setEditingValue={setEditingValue}
-            onStartEdit={onStartEdit}
-            onSaveEdit={onSaveEdit}
-            onCancelEdit={onCancelEdit}
-          />
-          
-          {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
-            <ContentRevisionTimeline revisions={selectedPlan.revisions} />
-          )}
-
           {/* 시스템 관리자용: 수정피드백 섹션 */}
-          {isAdminView && hasComments && hasPendingRevision && !showRevisionForm && (
+          {isAdminView && hasComments && hasPendingRevision && !showRevisionForm && !hasJustEdited && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <MessageSquare className="w-5 h-5 text-blue-600" />
@@ -236,7 +233,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
           )}
 
           {/* 브랜드 관리자용: N차 수정요청 섹션 */}
-          {isBrandView && hasComments && canReviewPlan(selectedPlan) && !showRevisionForm && (
+          {isBrandView && hasComments && canReviewPlan(selectedPlan) && !showRevisionForm && !hasJustEdited && (
             <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <MessageSquare className="w-5 h-5 text-orange-600" />
@@ -271,7 +268,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
           )}
 
           {/* 하단 액션 버튼 */}
-          {!showRevisionForm && (
+          {!showRevisionForm && !hasJustEdited && (
             <div className="pt-6 border-t bg-gray-50 -mx-6 px-6 pb-4 rounded-b-lg">
               <div className="flex justify-center gap-4">
                 {/* 브랜드 관리자만 승인 버튼 표시 */}
