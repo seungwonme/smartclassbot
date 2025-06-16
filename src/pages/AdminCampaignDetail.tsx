@@ -14,6 +14,7 @@ import ContentPlanForm from '@/components/content/ContentPlanForm';
 import ContentRevisionTimeline from '@/components/content/ContentRevisionTimeline';
 import RevisionRequestForm from '@/components/content/RevisionRequestForm';
 import ContentPlanDetailView from '@/components/content/ContentPlanDetailView';
+import AdminContentReviewTab from '@/components/content/AdminContentReviewTab';
 import { ContentPlanDetail } from '@/types/content';
 import { contentService } from '@/services/content.service';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
@@ -542,12 +543,13 @@ const AdminCampaignDetail = () => {
         <CampaignWorkflowSteps campaign={campaign!} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="basic">📋 기본정보</TabsTrigger>
             <TabsTrigger value="influencers">👥 인플루언서 관리</TabsTrigger>
             <TabsTrigger value="planning" disabled={campaign.currentStage < 2}>💡 콘텐츠 기획</TabsTrigger>
             <TabsTrigger value="production" disabled={campaign.currentStage < 3}>🎬 콘텐츠 제작</TabsTrigger>
             <TabsTrigger value="content" disabled={campaign.currentStage < 4}>🔍 콘텐츠 검수</TabsTrigger>
+            <TabsTrigger value="monitoring" disabled={campaign.currentStage < 5}>📊 성과 모니터링</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="mt-6">
@@ -856,16 +858,24 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="content" className="mt-6">
+            <AdminContentReviewTab
+              campaignId={id!}
+              confirmedInfluencers={confirmedInfluencers}
+              toast={toast}
+            />
+          </TabsContent>
+
+          <TabsContent value="monitoring" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Video className="w-5 h-5 mr-2" />
-                  콘텐츠 검수
+                  성과 모니터링
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12 text-gray-500">
-                  콘텐츠 검수 기능이 곧 추가될 예정입니다.
+                  성과 모니터링 기능이 곧 추가될 예정입니다.
                 </div>
               </CardContent>
             </Card>
