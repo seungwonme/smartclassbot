@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, Download } from 'lucide-react';
+import { Plus, RefreshCw, Download, Trash2 } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignDashboard from '@/components/campaign/CampaignDashboard';
 import { Campaign } from '@/types/campaign';
@@ -53,6 +53,41 @@ const BrandCampaigns = () => {
   useEffect(() => {
     loadCampaigns();
   }, []);
+
+  const handleQuickClearData = async () => {
+    if (!confirm('⚠️ 모든 데이터를 삭제하고 처음부터 시작하시겠습니까?\n\n현재 데이터는 백업됩니다.')) {
+      return;
+    }
+
+    console.log('=== 빠른 데이터 초기화 시작 ===');
+    setIsLoading(true);
+    
+    try {
+      const { dataManagerService } = await import('@/services/dataManager.service');
+      const success = dataManagerService.clearAllData();
+      
+      if (success) {
+        toast({
+          title: "데이터 초기화 완료",
+          description: "모든 데이터가 삭제되었습니다. 새로 캠페인을 생성해보세요."
+        });
+        
+        // 페이지 새로고침
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        throw new Error('데이터 초기화 실패');
+      }
+    } catch (error) {
+      console.error('데이터 초기화 실패:', error);
+      toast({
+        title: "초기화 실패",
+        description: "데이터 초기화에 실패했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleForceReinitialize = async () => {
     console.log('=== 데이터 강제 재초기화 시작 ===');
@@ -137,6 +172,14 @@ const BrandCampaigns = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={handleQuickClearData}
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              데이터 초기화
+            </Button>
             <Button
               onClick={handleExportData}
               variant="outline"
