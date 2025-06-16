@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +6,7 @@ import { ContentReviewDetail } from '@/types/content';
 import ContentReviewActions from './ContentReviewActions';
 import ContentReviewFeedbackSection from './ContentReviewFeedbackSection';
 import ContentReviewTimeline from './ContentReviewTimeline';
+import MediaPreview from './MediaPreview';
 
 interface ContentReviewDetailViewProps {
   selectedContent: ContentReviewDetail | null;
@@ -106,40 +106,8 @@ const ContentReviewDetailView: React.FC<ContentReviewDetailViewProps> = ({
 
       <CardContent className="h-full overflow-auto pb-32">
         <div className="space-y-6">
-          {/* 콘텐츠 미리보기 */}
-          <div>
-            <h4 className="font-medium mb-3">업로드된 콘텐츠</h4>
-            <div className="grid grid-cols-2 gap-4">
-              {selectedContent.contentFiles.map((file) => (
-                <div key={file.id} className="border rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    {file.type === 'image' ? (
-                      <Image className="w-4 h-4" />
-                    ) : (
-                      <Video className="w-4 h-4" />
-                    )}
-                    <span className="text-sm font-medium">{file.name}</span>
-                  </div>
-                  {file.type === 'image' ? (
-                    <img 
-                      src={file.url} 
-                      alt={file.name}
-                      className="w-full h-32 object-cover rounded"
-                    />
-                  ) : (
-                    <video 
-                      src={file.url}
-                      className="w-full h-32 object-cover rounded"
-                      controls
-                    />
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    {(file.size / 1024 / 1024).toFixed(1)} MB
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* 콘텐츠 미리보기 - 새로운 MediaPreview 컴포넌트 사용 */}
+          <MediaPreview files={selectedContent.contentFiles} />
 
           {/* 검수 히스토리 */}
           {selectedContent.reviewRevisions && selectedContent.reviewRevisions.length > 0 && (
