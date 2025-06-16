@@ -8,7 +8,7 @@ class AnalyticsService {
   getMonitoringUrls(campaignId: string): PlatformUrlData[] {
     try {
       const allUrls = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
-      return allUrls.filter((url: PlatformUrlData & { campaignId: string }) => 
+      return allUrls.filter((url: PlatformUrlData) => 
         url.campaignId === campaignId
       );
     } catch (error) {
@@ -18,15 +18,21 @@ class AnalyticsService {
   }
 
   // URL 추가
-  addMonitoringUrl(campaignId: string, urlData: Omit<PlatformUrlData, 'id' | 'addedAt'>): PlatformUrlData {
+  addMonitoringUrl(campaignId: string, urlData: Omit<PlatformUrlData, 'id' | 'addedAt' | 'campaignId'>): PlatformUrlData {
     try {
       const allUrls = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
       
-      const newUrl: PlatformUrlData & { campaignId: string } = {
+      const newUrl: PlatformUrlData = {
         ...urlData,
         id: `url_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         addedAt: new Date().toISOString(),
-        campaignId
+        campaignId,
+        analytics: {
+          views: Math.floor(Math.random() * 50000),
+          likes: Math.floor(Math.random() * 5000),
+          comments: Math.floor(Math.random() * 500),
+          shares: Math.floor(Math.random() * 250)
+        }
       };
 
       allUrls.push(newUrl);
@@ -49,7 +55,7 @@ class AnalyticsService {
   removeMonitoringUrl(campaignId: string, urlId: string): void {
     try {
       const allUrls = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
-      const filteredUrls = allUrls.filter((url: PlatformUrlData & { campaignId: string }) => 
+      const filteredUrls = allUrls.filter((url: PlatformUrlData) => 
         !(url.campaignId === campaignId && url.id === urlId)
       );
       

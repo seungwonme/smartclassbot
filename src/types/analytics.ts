@@ -9,6 +9,15 @@ export interface PlatformUrlData {
   influencerName: string;
   contentTitle?: string;
   addedAt: string;
+  campaignId?: string;
+  brandId?: string;
+  brandName?: string;
+  analytics?: {
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+  };
 }
 
 export interface ChinesePerformanceMetrics {

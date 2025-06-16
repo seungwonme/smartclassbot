@@ -30,7 +30,7 @@ const AdminAnalytics = () => {
         
         // 모든 브랜드와 캠페인 로딩
         const allBrands = await brandService.getBrands();
-        const allCampaigns = await campaignService.getAllCampaigns(); // 관리자는 모든 캠페인 조회
+        const allCampaigns = await campaignService.getCampaigns(); // getAllCampaigns -> getCampaigns로 수정
         
         setBrands(allBrands);
         setCampaigns(allCampaigns.filter(c => 
@@ -44,7 +44,14 @@ const AdminAnalytics = () => {
           allMonitoringData = [...allMonitoringData, ...urls.map(url => ({
             ...url,
             brandId: campaign.brandId,
-            brandName: allBrands.find(b => b.id === campaign.brandId)?.name || '알 수 없음'
+            brandName: allBrands.find(b => b.id === campaign.brandId)?.name || '알 수 없음',
+            campaignId: campaign.id,
+            analytics: {
+              views: Math.floor(Math.random() * 100000),
+              likes: Math.floor(Math.random() * 10000),
+              comments: Math.floor(Math.random() * 1000),
+              shares: Math.floor(Math.random() * 500)
+            }
           }))];
         }
         setMonitoringData(allMonitoringData);

@@ -1,6 +1,8 @@
+
 export interface Campaign {
   id: string;
   title: string;
+  description?: string;
   brandId: string;
   brandName: string;
   productId: string;

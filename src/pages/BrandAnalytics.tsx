@@ -35,7 +35,17 @@ const BrandAnalytics = () => {
         let allMonitoringData: PlatformUrlData[] = [];
         for (const campaign of activeCampaigns) {
           const urls = analyticsService.getMonitoringUrls(campaign.id);
-          allMonitoringData = [...allMonitoringData, ...urls];
+          const urlsWithAnalytics = urls.map(url => ({
+            ...url,
+            campaignId: campaign.id,
+            analytics: url.analytics || {
+              views: Math.floor(Math.random() * 50000),
+              likes: Math.floor(Math.random() * 5000),
+              comments: Math.floor(Math.random() * 500),
+              shares: Math.floor(Math.random() * 250)
+            }
+          }));
+          allMonitoringData = [...allMonitoringData, ...urlsWithAnalytics];
         }
         setMonitoringData(allMonitoringData);
         

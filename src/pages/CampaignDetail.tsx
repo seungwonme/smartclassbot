@@ -18,6 +18,7 @@ import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { useContentPlans } from '@/hooks/useContentPlans';
 import { useMonitoringUrls } from '@/hooks/useMonitoringUrls';
 import { campaignService } from '@/services/campaign.service';
+import { contentService } from '@/services/content.service';
 
 const CampaignDetail = () => {
   const {
