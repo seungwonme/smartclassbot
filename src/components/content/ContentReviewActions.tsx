@@ -31,7 +31,7 @@ const ContentReviewActions: React.FC<ContentReviewActionsProps> = ({
   const hasPendingRevision = selectedContent.reviewRevisions?.some(rev => rev.status === 'pending');
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 pt-6 border-t bg-gray-50 px-6 pb-4 rounded-b-lg">
+    <div className="space-y-3">
       <div className="flex justify-center gap-4">
         {/* 브랜드 관리자 버튼들 */}
         {isBrandView && canReviewContent(selectedContent) && hasContentFiles(selectedContent) && (
@@ -85,7 +85,7 @@ const ContentReviewActions: React.FC<ContentReviewActionsProps> = ({
         )}
       </div>
       
-      <p className="text-xs text-gray-500 text-center mt-3">
+      <p className="text-xs text-gray-500 text-center">
         {isBrandView 
           ? "콘텐츠를 충분히 검토한 후 검수확정 또는 수정요청을 진행해주세요."
           : "브랜드의 수정요청에 대한 피드백을 작성해주세요."

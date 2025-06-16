@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,71 +76,77 @@ const ContentReviewDetailView: React.FC<ContentReviewDetailViewProps> = ({
 
   if (!selectedContent) {
     return (
-      <Card className="h-full">
-        <CardContent className="flex items-center justify-center h-full text-gray-500">
-          <div className="text-center">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>좌측에서 인플루언서를 선택하여 콘텐츠를 확인하세요.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="h-full flex flex-col">
+        <Card className="flex-1 flex flex-col">
+          <CardContent className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="text-center">
+              <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>좌측에서 인플루언서를 선택하여 콘텐츠를 확인하세요.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <div className="flex items-center gap-2 pb-4 border-b">
-          {selectedContent.contentType === 'image' ? (
-            <Image className="w-5 h-5" />
-          ) : (
-            <Video className="w-5 h-5" />
-          )}
-          <CardTitle className="text-lg font-medium">
-            {selectedContent.influencerName} - {selectedContent.contentType === 'image' ? '이미지' : '영상'} 콘텐츠
-          </CardTitle>
-          <Badge className={getStatusColor(selectedContent.reviewStatus)}>
-            {getStatusText(selectedContent.reviewStatus)}
-          </Badge>
-        </div>
-      </CardHeader>
+    <div className="h-full flex flex-col">
+      <Card className="flex-1 flex flex-col">
+        <CardHeader className="flex-shrink-0">
+          <div className="flex items-center gap-2 pb-4 border-b">
+            {selectedContent.contentType === 'image' ? (
+              <Image className="w-5 h-5" />
+            ) : (
+              <Video className="w-5 h-5" />
+            )}
+            <CardTitle className="text-lg font-medium">
+              {selectedContent.influencerName} - {selectedContent.contentType === 'image' ? '이미지' : '영상'} 콘텐츠
+            </CardTitle>
+            <Badge className={getStatusColor(selectedContent.reviewStatus)}>
+              {getStatusText(selectedContent.reviewStatus)}
+            </Badge>
+          </div>
+        </CardHeader>
 
-      <CardContent className="h-full overflow-auto pb-32">
-        <div className="space-y-6">
-          {/* 콘텐츠 미리보기 - 새로운 MediaPreview 컴포넌트 사용 */}
-          <MediaPreview files={selectedContent.contentFiles} />
+        <CardContent className="flex-1 overflow-auto">
+          <div className="space-y-6">
+            {/* 콘텐츠 미리보기 - 새로운 MediaPreview 컴포넌트 사용 */}
+            <MediaPreview files={selectedContent.contentFiles} />
 
-          {/* 검수 히스토리 */}
-          {selectedContent.reviewRevisions && selectedContent.reviewRevisions.length > 0 && (
-            <ContentReviewTimeline revisions={selectedContent.reviewRevisions} />
-          )}
+            {/* 검수 히스토리 */}
+            {selectedContent.reviewRevisions && selectedContent.reviewRevisions.length > 0 && (
+              <ContentReviewTimeline revisions={selectedContent.reviewRevisions} />
+            )}
 
-          {/* 피드백 섹션 */}
-          <ContentReviewFeedbackSection
+            {/* 피드백 섹션 */}
+            <ContentReviewFeedbackSection
+              selectedContent={selectedContent}
+              showRevisionForm={showRevisionForm}
+              revisionFeedback={revisionFeedback}
+              setRevisionFeedback={setRevisionFeedback}
+              onSubmitFeedback={handleSubmitFeedback}
+              onCancelRevision={() => {
+                setShowRevisionForm(false);
+                setRevisionFeedback('');
+              }}
+            />
+          </div>
+        </CardContent>
+
+        {/* 액션 버튼 - 고정 하단 */}
+        <div className="flex-shrink-0 border-t bg-gray-50 px-6 py-4">
+          <ContentReviewActions
             selectedContent={selectedContent}
+            onApprove={onApprove}
+            onRequestRevision={() => setShowRevisionForm(true)}
+            onSubmitRevision={handleSubmitFeedback}
+            canReviewContent={canReviewContent}
+            hasContentFiles={hasContentFiles}
             showRevisionForm={showRevisionForm}
-            revisionFeedback={revisionFeedback}
-            setRevisionFeedback={setRevisionFeedback}
-            onSubmitFeedback={handleSubmitFeedback}
-            onCancelRevision={() => {
-              setShowRevisionForm(false);
-              setRevisionFeedback('');
-            }}
           />
         </div>
-      </CardContent>
-
-      {/* 액션 버튼 */}
-      <ContentReviewActions
-        selectedContent={selectedContent}
-        onApprove={onApprove}
-        onRequestRevision={() => setShowRevisionForm(true)}
-        onSubmitRevision={handleSubmitFeedback}
-        canReviewContent={canReviewContent}
-        hasContentFiles={hasContentFiles}
-        showRevisionForm={showRevisionForm}
-      />
-    </Card>
+      </Card>
+    </div>
   );
 };
 
