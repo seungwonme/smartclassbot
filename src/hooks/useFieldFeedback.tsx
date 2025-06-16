@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -58,7 +59,24 @@ export const useFieldFeedback = ({
     // 브랜드 관리자인지 확인 (URL 기반) - 더 포괄적으로 체크
     const isBrandView = window.location.pathname.includes('/brand');
     // 시스템 관리자인지 확인 (URL 기반) - 더 포괄적으로 체크
-    const isAdminView = window.location.pathname.startsWith('/admin');
+    const isAdminView = window.location.pathname.includes('/admin');
+
+    // 디버깅 로그 추가
+    console.log('🔍 Field Feedback Debug:', {
+      planId: plan.id,
+      fieldName,
+      fieldLabel,
+      currentPath: window.location.pathname,
+      isAdminView,
+      isBrandView,
+      canReviewPlan: canReviewPlan(plan),
+      canAddFeedback,
+      hasOnStartEdit: !!onStartEdit,
+      isEditing,
+      editingField,
+      editKey,
+      onStartEditType: typeof onStartEdit
+    });
 
     return (
       <div className="space-y-2">
@@ -71,7 +89,10 @@ export const useFieldFeedback = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onStartEdit(plan.id, fieldName, currentValue)}
+                  onClick={() => {
+                    console.log('🔧 수정하기 버튼 클릭:', { planId: plan.id, fieldName, currentValue });
+                    onStartEdit(plan.id, fieldName, currentValue);
+                  }}
                   className="text-xs px-2 py-1 h-6 bg-blue-50 hover:bg-blue-100"
                 >
                   <Edit className="w-3 h-3 mr-1" />

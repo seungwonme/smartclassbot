@@ -98,6 +98,18 @@ const AdminContentPlanning = () => {
     return true; // 시스템 관리자는 모든 기획안을 검토할 수 있음
   };
 
+  // 디버깅을 위한 로그 추가
+  console.log('📊 AdminContentPlanning Debug:', {
+    currentPath: window.location.pathname,
+    selectedPlan: selectedPlan?.id,
+    editingField,
+    editingValue,
+    hasStartEditing: !!startEditing,
+    hasSaveEdit: !!saveEdit,
+    hasCancelEdit: !!cancelEdit,
+    startEditingType: typeof startEditing
+  });
+
   const { renderFieldWithFeedback } = useFieldFeedback({
     activeCommentField,
     currentComment,
