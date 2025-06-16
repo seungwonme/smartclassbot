@@ -7,7 +7,6 @@ import ChineseCommentAnalyzer from '@/components/analytics/ChineseCommentAnalyze
 import PerformanceReportGenerator from '@/components/analytics/PerformanceReportGenerator';
 import NotificationSystem from '@/components/analytics/NotificationSystem';
 import MobileAnalyticsDashboard from '@/components/analytics/MobileAnalyticsDashboard';
-import BrandMonitoringView from '@/components/analytics/BrandMonitoringView';
 import BrandCampaignSelector from '@/components/analytics/BrandCampaignSelector';
 import CompactRealTimeStatus from '@/components/analytics/CompactRealTimeStatus';
 import CampaignOverviewPanel from '@/components/analytics/CampaignOverviewPanel';
@@ -33,30 +32,6 @@ const BrandAnalytics = () => {
     { id: 'inf1', name: '샤오리', platform: 'xiaohongshu' },
     { id: 'inf2', name: '리밍', platform: 'douyin' },
     { id: 'inf3', name: '왕위안', platform: 'xiaohongshu' }
-  ];
-
-  // 모의 모니터링 URL 데이터
-  const mockMonitoringUrls = [
-    {
-      id: 'url1',
-      url: 'https://xiaohongshu.com/sample1',
-      platform: 'xiaohongshu' as const,
-      influencerId: 'inf1',
-      influencerName: '샤오리',
-      campaignId: 'campaign1',
-      addedAt: new Date().toISOString(),
-      contentTitle: '봄 신제품 소개'
-    },
-    {
-      id: 'url2', 
-      url: 'https://douyin.com/sample2',
-      platform: 'douyin' as const,
-      influencerId: 'inf2',
-      influencerName: '리밍',
-      campaignId: 'campaign1',
-      addedAt: new Date().toISOString(),
-      contentTitle: '제품 언박싱 영상'
-    }
   ];
 
   const handleStartTracking = () => {
@@ -123,13 +98,12 @@ const BrandAnalytics = () => {
             </div>
           )}
 
-          {/* 메인 분석 탭 */}
+          {/* 메인 분석 탭 - 3개 탭으로 축소 */}
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">
                 {selectedInfluencer === 'all' ? '전체 성과' : '인플루언서 분석'}
               </TabsTrigger>
-              <TabsTrigger value="monitoring">모니터링</TabsTrigger>
               <TabsTrigger value="comments">댓글 분석</TabsTrigger>
               <TabsTrigger value="reports">리포트</TabsTrigger>
             </TabsList>
@@ -146,14 +120,6 @@ const BrandAnalytics = () => {
                   />
                 )
               )}
-            </TabsContent>
-
-            <TabsContent value="monitoring" className="mt-6">
-              <BrandMonitoringView 
-                campaignId={selectedCampaign === 'all' ? 'campaign1' : selectedCampaign}
-                confirmedInfluencers={mockInfluencers}
-                monitoringUrls={mockMonitoringUrls}
-              />
             </TabsContent>
 
             <TabsContent value="comments" className="mt-6">
