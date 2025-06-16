@@ -37,6 +37,7 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
     fieldType: 'text' | 'textarea' | 'array' = 'text',
     currentValue?: any
   ) => {
+    // 편집 관련 props를 renderFieldWithFeedback에 전달하는 방식 수정
     return renderFieldWithFeedback(
       plan,
       fieldName,
@@ -44,7 +45,16 @@ const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({
       content,
       canAddFeedback,
       fieldType,
-      currentValue
+      currentValue,
+      // 편집 관련 추가 정보들을 객체로 전달
+      {
+        editingField,
+        editingValue,
+        setEditingValue,
+        onStartEdit,
+        onSaveEdit,
+        onCancelEdit
+      }
     );
   };
 

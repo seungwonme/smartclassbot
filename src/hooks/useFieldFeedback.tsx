@@ -48,7 +48,8 @@ export const useFieldFeedback = ({
     content: React.ReactNode,
     canAddFeedback: boolean = true,
     fieldType: 'text' | 'textarea' | 'array' = 'text',
-    currentValue?: any
+    currentValue?: any,
+    editProps?: any // 편집 관련 props를 받기 위한 추가 매개변수
   ) => {
     const commentKey = `${plan.id}-${fieldName}`;
     const editKey = `${plan.id}-${fieldName}`;
@@ -56,27 +57,18 @@ export const useFieldFeedback = ({
     const isEditing = editingField === editKey;
     const existingComment = getFieldComment(plan.id, fieldLabel);
 
+    // editProps가 전달된 경우 해당 값들을 사용, 그렇지 않으면 기본 props 사용
+    const actualEditingField = editProps?.editingField || editingField;
+    const actualEditingValue = editProps?.editingValue || editingValue;
+    const actualSetEditingValue = editProps?.setEditingValue || setEditingValue;
+    const actualOnStartEdit = editProps?.onStartEdit || onStartEdit;
+    const actualOnSaveEdit = editProps?.onSaveEdit || onSaveEdit;
+    const actualOnCancelEdit = editProps?.onCancelEdit || onCancelEdit;
+
     // 브랜드 관리자인지 확인 (URL 기반) - 더 포괄적으로 체크
     const isBrandView = window.location.pathname.includes('/brand');
     // 시스템 관리자인지 확인 (URL 기반) - 더 포괄적으로 체크
     const isAdminView = window.location.pathname.includes('/admin');
-
-    // 디버깅 로그 추가
-    console.log('🔍 Field Feedback Debug:', {
-      planId: plan.id,
-      fieldName,
-      fieldLabel,
-      currentPath: window.location.pathname,
-      isAdminView,
-      isBrandView,
-      canReviewPlan: canReviewPlan(plan),
-      canAddFeedback,
-      hasOnStartEdit: !!onStartEdit,
-      isEditing,
-      editingField,
-      editKey,
-      onStartEditType: typeof onStartEdit
-    });
 
     return (
       <div className="space-y-2">
@@ -85,13 +77,13 @@ export const useFieldFeedback = ({
           {canAddFeedback && canReviewPlan(plan) && (
             <div className="flex gap-2">
               {/* 시스템 관리자용 수정하기 버튼만 표시 */}
-              {isAdminView && onStartEdit && !isEditing && (
+              {isAdminView && actualOnStartEdit && !isEditing && (
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
                     console.log('🔧 수정하기 버튼 클릭:', { planId: plan.id, fieldName, currentValue });
-                    onStartEdit(plan.id, fieldName, currentValue);
+                    actualOnStartEdit(plan.id, fieldName, currentValue);
                   }}
                   className="text-xs px-2 py-1 h-6 bg-blue-50 hover:bg-blue-100"
                 >
@@ -132,29 +124,29 @@ export const useFieldFeedback = ({
               <Label className="text-sm font-medium text-blue-700">필드 수정</Label>
               {fieldType === 'textarea' ? (
                 <Textarea
-                  value={editingValue || ''}
-                  onChange={(e) => setEditingValue?.(e.target.value)}
+                  value={actualEditingValue || ''}
+                  onChange={(e) => actualSetEditingValue?.(e.target.value)}
                   className="text-sm"
                   rows={3}
                 />
               ) : fieldType === 'array' ? (
                 <Textarea
-                  value={Array.isArray(editingValue) ? editingValue.join(', ') : editingValue || ''}
-                  onChange={(e) => setEditingValue?.(e.target.value.split(',').map(s => s.trim()))}
+                  value={Array.isArray(actualEditingValue) ? actualEditingValue.join(', ') : actualEditingValue || ''}
+                  onChange={(e) => actualSetEditingValue?.(e.target.value.split(',').map(s => s.trim()))}
                   placeholder="쉼표로 구분하여 입력하세요"
                   className="text-sm"
                 />
               ) : (
                 <Input
-                  value={editingValue || ''}
-                  onChange={(e) => setEditingValue?.(e.target.value)}
+                  value={actualEditingValue || ''}
+                  onChange={(e) => actualSetEditingValue?.(e.target.value)}
                   className="text-sm"
                 />
               )}
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  onClick={() => onSaveEdit?.(plan.id, fieldName)}
+                  onClick={() => actualOnSaveEdit?.(plan.id, fieldName)}
                   className="text-xs px-3 py-1 h-7 bg-blue-600 hover:bg-blue-700"
                 >
                   <Save className="w-3 h-3 mr-1" />
@@ -163,7 +155,7 @@ export const useFieldFeedback = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={onCancelEdit}
+                  onClick={actualOnCancelEdit}
                   className="text-xs px-3 py-1 h-7"
                 >
                   <X className="w-3 h-3 mr-1" />
