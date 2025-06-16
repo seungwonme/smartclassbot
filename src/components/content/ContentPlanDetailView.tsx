@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, MessageSquare, FileText, ImageIcon, VideoIcon, Send } from 'lucide-react';
+import { CheckCircle, MessageSquare, FileText, ImageIcon, VideoIcon, Send, Edit } from 'lucide-react';
 import { ContentPlanDetail } from '@/types/content';
 import ContentRevisionTimeline from './ContentRevisionTimeline';
 import RevisionRequestForm from './RevisionRequestForm';
@@ -28,6 +29,8 @@ interface ContentPlanDetailViewProps {
   onStartEdit?: (planId: string, fieldName: string, currentValue: any) => void;
   onSaveEdit?: (planId: string, fieldName: string) => void;
   onCancelEdit?: () => void;
+  // 편집 완료 후 피드백 모드 관련 props 추가
+  justEditedField?: string | null;
 }
 
 const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
@@ -47,7 +50,8 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   setEditingValue,
   onStartEdit,
   onSaveEdit,
-  onCancelEdit
+  onCancelEdit,
+  justEditedField
 }) => {
   const [revisionFeedback, setRevisionFeedback] = React.useState('');
 
@@ -55,6 +59,11 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   const isAdminView = window.location.pathname.includes('/admin/');
   // 브랜드 관리자인지 확인 (URL 기반)
   const isBrandView = window.location.pathname.includes('/brand/');
+
+  // 방금 편집한 필드인지 확인
+  const isJustEditedField = (planId: string, fieldName: string) => {
+    return justEditedField === `${planId}-${fieldName}`;
+  };
 
   const handleSubmitRevision = () => {
     if (!selectedPlan) return;
@@ -78,9 +87,61 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
 
   const renderContent = () => {
     if (showRevisionForm && selectedPlan) {
+      const hasJustEdited = justEditedField && justEditedField.startsWith(selectedPlan.id);
+      
       return (
         <div className="space-y-4">
-          {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
+          {/* 편집 완료 후 자동 표시되는 피드백 섹션 */}
+          {hasJustEdited && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Edit className="w-5 h-5 text-blue-600" />
+                <h4 className="font-medium text-blue-800">
+                  {(selectedPlan.currentRevisionNumber || 0)}차 수정피드백
+                </h4>
+              </div>
+              
+              <div className="mb-3 p-2 bg-white rounded border">
+                <p className="text-sm font-medium text-gray-700 mb-2">방금 수정한 필드:</p>
+                <div className="text-sm text-blue-600">
+                  {justEditedField?.split('-')[1]} 필드가 수정되었습니다.
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="auto-revision-feedback" className="text-sm font-medium">
+                  수정피드백 내용
+                </Label>
+                <Textarea
+                  id="auto-revision-feedback"
+                  value={revisionFeedback}
+                  onChange={(e) => setRevisionFeedback(e.target.value)}
+                  placeholder="수정한 내용에 대한 피드백을 작성해주세요..."
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={handleSubmitRevision}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  {(selectedPlan.currentRevisionNumber || 0)}차 피드백 전송
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onCancelRevision}
+                >
+                  취소
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 기존 인라인 코멘트 기반 피드백 섹션 */}
+          {!hasJustEdited && inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
             <div className="p-3 bg-blue-50 rounded-lg">
               <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
               {inlineComments
@@ -93,12 +154,15 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             </div>
           )}
           
-          <RevisionRequestForm
-            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
-            onSubmit={onSubmitRevision}
-            onCancel={onCancelRevision}
-            requestType={isAdminView ? "admin-feedback" : "brand-request"}
-          />
+          {/* 기존 수정요청 폼 (편집 완료 후가 아닌 경우에만 표시) */}
+          {!hasJustEdited && (
+            <RevisionRequestForm
+              revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+              onSubmit={onSubmitRevision}
+              onCancel={onCancelRevision}
+              requestType={isAdminView ? "admin-feedback" : "brand-request"}
+            />
+          )}
         </div>
       );
     }

@@ -4,9 +4,10 @@ import { ContentPlanDetail } from '@/types/content';
 
 interface UseFieldEditingProps {
   onSaveEdit: (planId: string, fieldName: string, newValue: any) => void;
+  onAfterSave?: (planId: string, fieldName: string) => void; // 편집 완료 후 콜백
 }
 
-export const useFieldEditing = ({ onSaveEdit }: UseFieldEditingProps) => {
+export const useFieldEditing = ({ onSaveEdit, onAfterSave }: UseFieldEditingProps) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<any>(null);
 
@@ -16,10 +17,19 @@ export const useFieldEditing = ({ onSaveEdit }: UseFieldEditingProps) => {
     setEditingValue(currentValue);
   };
 
-  const saveEdit = (planId: string, fieldName: string) => {
-    onSaveEdit(planId, fieldName, editingValue);
-    setEditingField(null);
-    setEditingValue(null);
+  const saveEdit = async (planId: string, fieldName: string) => {
+    try {
+      await onSaveEdit(planId, fieldName, editingValue);
+      setEditingField(null);
+      setEditingValue(null);
+      
+      // 편집 완료 후 콜백 실행
+      if (onAfterSave) {
+        onAfterSave(planId, fieldName);
+      }
+    } catch (error) {
+      console.error('편집 저장 실패:', error);
+    }
   };
 
   const cancelEdit = () => {

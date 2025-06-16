@@ -42,6 +42,7 @@ const AdminCampaignDetail = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showRevisionFeedbackForm, setShowRevisionFeedbackForm] = useState(false);
   const [isContentLoading, setIsContentLoading] = useState(false);
+  const [justEditedField, setJustEditedField] = useState<string | null>(null); // 방금 편집한 필드 추적
 
   const {
     activeCommentField,
@@ -111,7 +112,15 @@ const AdminCampaignDetail = () => {
           description: "필드 수정 저장에 실패했습니다.",
           variant: "destructive"
         });
+        throw error;
       }
+    },
+    onAfterSave: (planId: string, fieldName: string) => {
+      // 편집 완료 후 피드백 모드 활성화
+      setJustEditedField(`${planId}-${fieldName}`);
+      setShowRevisionFeedbackForm(true);
+      
+      console.log('📝 편집 완료 - 피드백 모드 활성화:', { planId, fieldName });
     }
   });
 
@@ -327,6 +336,7 @@ const AdminCampaignDetail = () => {
 
       setSelectedPlan(updatedPlan);
       setShowRevisionFeedbackForm(false);
+      setJustEditedField(null); // 피드백 전송 후 초기화
       resetComments();
 
       toast({
@@ -354,6 +364,7 @@ const AdminCampaignDetail = () => {
       setSelectedPlan(plan);
       setShowCreateForm(false);
       setShowRevisionFeedbackForm(false);
+      setJustEditedField(null); // 새 기획안 선택 시 초기화
     }
   };
 
@@ -362,6 +373,7 @@ const AdminCampaignDetail = () => {
     setSelectedPlan(null);
     setShowCreateForm(true);
     setShowRevisionFeedbackForm(false);
+    setJustEditedField(null); // 새 기획안 생성 시 초기화
   };
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
@@ -790,6 +802,7 @@ const AdminCampaignDetail = () => {
                       onSubmitRevision={handleRevisionFeedback}
                       onCancelRevision={() => {
                         setShowRevisionFeedbackForm(false);
+                        setJustEditedField(null);
                         resetComments();
                       }}
                       canReviewPlan={canReviewPlan}
@@ -803,6 +816,8 @@ const AdminCampaignDetail = () => {
                       onStartEdit={startEditing}
                       onSaveEdit={saveEdit}
                       onCancelEdit={cancelEdit}
+                      // 편집 완료 후 피드백 모드 관련 props 추가
+                      justEditedField={justEditedField}
                     />
                   )}
                 </div>
