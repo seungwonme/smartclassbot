@@ -23,6 +23,10 @@ import { useFieldFeedback } from '@/hooks/useFieldFeedback';
 import { useFieldEditing } from '@/hooks/useFieldEditing';
 import ProductionScheduleManager from '@/components/content/ProductionScheduleManager';
 import ContentProductionTab from '@/components/content/ContentProductionTab';
+import ChinesePlatformUrlInput from '@/components/analytics/ChinesePlatformUrlInput';
+import MonitoringUrlList from '@/components/analytics/MonitoringUrlList';
+import { PlatformUrlData } from '@/types/analytics';
+import { analyticsService } from '@/services/analytics.service';
 
 const AdminCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +48,7 @@ const AdminCampaignDetail = () => {
   const [showRevisionFeedbackForm, setShowRevisionFeedbackForm] = useState(false);
   const [isContentLoading, setIsContentLoading] = useState(false);
   const [justEditedField, setJustEditedField] = useState<string | null>(null); // 방금 편집한 필드 추적
+  const [monitoringUrls, setMonitoringUrls] = useState<PlatformUrlData[]>([]);
 
   const {
     activeCommentField,
@@ -185,6 +190,36 @@ const AdminCampaignDetail = () => {
       reloadPlans();
     }
   }, [activeTab, campaign?.id]);
+
+  // 모니터링 URL 로딩
+  useEffect(() => {
+    const loadMonitoringUrls = () => {
+      if (!campaign?.id) return;
+      
+      try {
+        console.log('=== 모니터링 URL 로딩 시작 ===');
+        console.log('캠페인 ID:', campaign.id);
+        
+        const urls = analyticsService.getMonitoringUrls(campaign.id);
+        setMonitoringUrls(urls);
+        
+        console.log('=== 로딩된 모니터링 URL ===');
+        console.log('URL 개수:', urls.length);
+        urls.forEach(url => {
+          console.log(`- ${url.platform}: ${url.influencerName} - ${url.url}`);
+        });
+      } catch (error) {
+        console.error('모니터링 URL 로딩 실패:', error);
+        toast({
+          title: "URL 로딩 실패",
+          description: "모니터링 URL을 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadMonitoringUrls();
+  }, [campaign?.id, toast]);
 
   const getStatusColor = (status: any) => {
     switch (status) {
@@ -386,6 +421,8 @@ const AdminCampaignDetail = () => {
   };
 
   // 기획 완료 여부 확인
+  const confirmedInfluencers = campaign?.influencers.filter(inf => inf.status === 'confirmed') || [];
+
   const isAllPlansApproved = () => {
     if (confirmedInfluencers.length === 0) return false;
     const approvedPlans = contentPlans.filter(plan => plan.status === 'approved');
@@ -473,6 +510,67 @@ const AdminCampaignDetail = () => {
     }
   };
 
+  // URL 추가 핸들러
+  const handleAddMonitoringUrl = async (urlData: Omit<PlatformUrlData, 'id' | 'addedAt'>) => {
+    if (!campaign?.id) return;
+
+    try {
+      const newUrl = analyticsService.addMonitoringUrl(campaign.id, urlData);
+      setMonitoringUrls(prev => [...prev, newUrl]);
+      
+      toast({
+        title: "URL 등록 완료",
+        description: `${urlData.influencerName}의 ${urlData.platform === 'xiaohongshu' ? '샤오홍슈' : '도우인'} 콘텐츠 URL이 등록되었습니다.`
+      });
+    } catch (error) {
+      console.error('URL 등록 실패:', error);
+      toast({
+        title: "등록 실패",
+        description: "URL 등록에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // URL 삭제 핸들러
+  const handleRemoveMonitoringUrl = async (urlId: string) => {
+    if (!campaign?.id) return;
+
+    try {
+      analyticsService.removeMonitoringUrl(campaign.id, urlId);
+      setMonitoringUrls(prev => prev.filter(url => url.id !== urlId));
+      
+      toast({
+        title: "URL 삭제 완료",
+        description: "모니터링 URL이 삭제되었습니다."
+      });
+    } catch (error) {
+      console.error('URL 삭제 실패:', error);
+      toast({
+        title: "삭제 실패",
+        description: "URL 삭제에 실패했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const { renderFieldWithFeedback } = useFieldFeedback({
+    activeCommentField,
+    currentComment,
+    handleInlineComment,
+    handleSaveInlineComment,
+    handleCancelInlineComment,
+    getFieldComment,
+    canReviewPlan: () => true, // 시스템 관리자는 항상 코멘트 가능
+    // 편집 기능을 위한 props 추가
+    editingField,
+    editingValue,
+    setEditingValue,
+    onStartEdit: startEditing,
+    onSaveEdit: saveEdit,
+    onCancelEdit: cancelEdit
+  });
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -494,25 +592,6 @@ const AdminCampaignDetail = () => {
       </div>
     );
   }
-
-  const confirmedInfluencers = campaign?.influencers.filter(inf => inf.status === 'confirmed') || [];
-
-  const { renderFieldWithFeedback } = useFieldFeedback({
-    activeCommentField,
-    currentComment,
-    handleInlineComment,
-    handleSaveInlineComment,
-    handleCancelInlineComment,
-    getFieldComment,
-    canReviewPlan: () => true, // 시스템 관리자는 항상 코멘트 가능
-    // 편집 기능을 위한 props 추가
-    editingField,
-    editingValue,
-    setEditingValue,
-    onStartEdit: startEditing,
-    onSaveEdit: saveEdit,
-    onCancelEdit: cancelEdit
-  });
 
   return (
     <div className="flex min-h-screen w-full">
@@ -866,16 +945,41 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="monitoring" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Video className="w-5 h-5 mr-2" />
-                  성과 모니터링
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  성과 모니터링 기능이 곧 추가될 예정입니다.
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 좌측: URL 입력 */}
+              <div>
+                <ChinesePlatformUrlInput
+                  confirmedInfluencers={confirmedInfluencers}
+                  onAddUrl={handleAddMonitoringUrl}
+                />
+              </div>
+
+              {/* 우측: URL 목록 */}
+              <div>
+                <MonitoringUrlList
+                  urls={monitoringUrls}
+                  onRemoveUrl={handleRemoveMonitoringUrl}
+                />
+              </div>
+            </div>
+            
+            {/* 하단: 성과 모니터링 안내 */}
+            <Card className="mt-6">
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <Video className="w-12 h-12 mx-auto text-blue-600 mb-2" />
+                    <h3 className="text-lg font-semibold text-gray-900">성과 모니터링 시스템</h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    등록된 콘텐츠 URL의 성과 데이터는 시스템 관리자의 <strong>성과분석관리</strong> 메뉴에서 
+                    상세히 분석할 수 있습니다.
+                  </p>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      💡 <strong>다음 단계:</strong> 사이드메뉴의 "성과분석관리"에서 등록된 URL들의 성과 지표를 확인하세요.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
