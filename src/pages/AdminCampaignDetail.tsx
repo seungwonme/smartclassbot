@@ -949,7 +949,11 @@ const AdminCampaignDetail = () => {
               {/* 좌측: URL 입력 */}
               <div>
                 <ChinesePlatformUrlInput
-                  confirmedInfluencers={confirmedInfluencers}
+                  confirmedInfluencers={confirmedInfluencers.map(inf => ({
+                    id: inf.id,
+                    name: inf.name,
+                    platform: inf.platform || '기타'
+                  }))}
                   onAddUrl={handleAddMonitoringUrl}
                 />
               </div>
