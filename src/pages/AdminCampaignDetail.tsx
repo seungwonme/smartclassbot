@@ -19,6 +19,7 @@ import { contentService } from '@/services/content.service';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { useInlineComments } from '@/hooks/useInlineComments';
 import { useFieldFeedback } from '@/hooks/useFieldFeedback';
+import { useFieldEditing } from '@/hooks/useFieldEditing';
 import ProductionScheduleManager from '@/components/content/ProductionScheduleManager';
 import ContentProductionTab from '@/components/content/ContentProductionTab';
 
@@ -52,6 +53,67 @@ const AdminCampaignDetail = () => {
     getFieldComment,
     resetComments
   } = useInlineComments();
+
+  // 편집 기능을 위한 훅 추가
+  const {
+    editingField,
+    editingValue,
+    setEditingValue,
+    startEditing,
+    saveEdit,
+    cancelEdit
+  } = useFieldEditing({
+    onSaveEdit: async (planId: string, fieldName: string, newValue: any) => {
+      try {
+        console.log('🔧 필드 편집 저장:', { planId, fieldName, newValue });
+        
+        const plan = contentPlans.find(p => p.id === planId);
+        if (!plan) {
+          throw new Error('기획안을 찾을 수 없습니다');
+        }
+
+        // planData 업데이트
+        const updatedPlanData = {
+          ...plan.planData,
+          [fieldName]: newValue
+        };
+
+        await contentService.updateContentPlan(plan.campaignId, planId, {
+          planData: updatedPlanData,
+          updatedAt: new Date().toISOString()
+        });
+
+        // 로컬 상태 업데이트
+        setContentPlans(prev => prev.map(p => 
+          p.id === planId 
+            ? { ...p, planData: updatedPlanData, updatedAt: new Date().toISOString() }
+            : p
+        ));
+
+        // 선택된 기획안도 업데이트
+        if (selectedPlan?.id === planId) {
+          setSelectedPlan(prev => prev ? {
+            ...prev,
+            planData: updatedPlanData,
+            updatedAt: new Date().toISOString()
+          } : null);
+        }
+
+        toast({
+          title: "필드 수정 완료",
+          description: `${fieldName} 필드가 성공적으로 수정되었습니다.`
+        });
+
+      } catch (error) {
+        console.error('필드 편집 저장 실패:', error);
+        toast({
+          title: "저장 실패",
+          description: "필드 수정 저장에 실패했습니다.",
+          variant: "destructive"
+        });
+      }
+    }
+  });
 
   useEffect(() => {
     const loadContentPlans = async () => {
@@ -302,16 +364,6 @@ const AdminCampaignDetail = () => {
     setShowRevisionFeedbackForm(false);
   };
 
-  const { renderFieldWithFeedback } = useFieldFeedback({
-    activeCommentField,
-    currentComment,
-    handleInlineComment,
-    handleSaveInlineComment,
-    handleCancelInlineComment,
-    getFieldComment,
-    canReviewPlan: () => true // 시스템 관리자는 항상 코멘트 가능
-  });
-
   const canReviewPlan = (plan: ContentPlanDetail) => {
     return plan.status === 'revision-request' || plan.status === 'revision-feedback';
   };
@@ -431,6 +483,23 @@ const AdminCampaignDetail = () => {
   }
 
   const confirmedInfluencers = campaign?.influencers.filter(inf => inf.status === 'confirmed') || [];
+
+  const { renderFieldWithFeedback } = useFieldFeedback({
+    activeCommentField,
+    currentComment,
+    handleInlineComment,
+    handleSaveInlineComment,
+    handleCancelInlineComment,
+    getFieldComment,
+    canReviewPlan: () => true, // 시스템 관리자는 항상 코멘트 가능
+    // 편집 기능을 위한 props 추가
+    editingField,
+    editingValue,
+    setEditingValue,
+    onStartEdit: startEditing,
+    onSaveEdit: saveEdit,
+    onCancelEdit: cancelEdit
+  });
 
   return (
     <div className="flex min-h-screen w-full">
@@ -727,6 +796,13 @@ const AdminCampaignDetail = () => {
                       hasPlanContent={hasPlanContent}
                       renderFieldWithFeedback={renderFieldWithFeedback}
                       plans={contentPlans}
+                      // 편집 기능을 위한 props 추가
+                      editingField={editingField}
+                      editingValue={editingValue}
+                      setEditingValue={setEditingValue}
+                      onStartEdit={startEditing}
+                      onSaveEdit={saveEdit}
+                      onCancelEdit={cancelEdit}
                     />
                   )}
                 </div>
