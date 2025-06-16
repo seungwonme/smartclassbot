@@ -499,6 +499,9 @@ const AdminCampaignDetail = () => {
   const isPlanning = ['planning', 'plan-review'].includes(campaign.status);
   const isProducing = ['producing', 'content-review'].includes(campaign.status);
 
+  // Define confirmedInfluencers from campaign data
+  const confirmedInfluencers = campaign.influencers?.filter(inf => inf.status === 'confirmed') || [];
+
   const handleEditClick = () => {
     if (handleEdit) {
       handleEdit();
@@ -541,14 +544,16 @@ const AdminCampaignDetail = () => {
   });
 
   const canReviewPlan = (plan: ContentPlanDetail) => {
-    return plan.status === 'pending' || plan.status === 'revision-request';
+    return plan.status === 'draft' || plan.status === 'revision-request';
   };
 
   const hasPlanContent = (plan: ContentPlanDetail) => {
     if (plan.contentType === 'image') {
-      return !!(plan.concept && plan.mainText && plan.hashtags?.length);
+      const imageData = plan.planData as any;
+      return !!(imageData.postTitle && imageData.script && imageData.hashtags?.length);
     } else {
-      return !!(plan.concept && plan.script && plan.hashtags?.length);
+      const videoData = plan.planData as any;
+      return !!(videoData.postTitle && videoData.script && videoData.hashtags?.length);
     }
   };
 
@@ -722,7 +727,6 @@ const AdminCampaignDetail = () => {
                 <div className="col-span-4">
                   <ContentPlanList
                     plans={contentPlans}
-                    selectedPlan={selectedPlan}
                     onSelectPlan={setSelectedPlan}
                     onCreatePlan={handleCreatePlan}
                     canCreatePlan={true}
@@ -735,7 +739,11 @@ const AdminCampaignDetail = () => {
                     inlineComments={inlineComments}
                     onApprove={handleContentPlanApprove}
                     onRequestRevision={() => {}}
-                    onSubmitRevision={handleContentPlanRevision}
+                    onSubmitRevision={(feedback: string) => {
+                      if (selectedPlan) {
+                        handleContentPlanRevision(selectedPlan.id, feedback);
+                      }
+                    }}
                     onCancelRevision={() => setJustEditedField(null)}
                     canReviewPlan={canReviewPlan}
                     hasPlanContent={hasPlanContent}
