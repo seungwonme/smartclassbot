@@ -3,15 +3,16 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Trash2, Send, Calendar, Users, DollarSign, CheckCircle, FileText, Video } from 'lucide-react';
+import { CheckCircle, FileText, Video } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignWorkflowSteps from '@/components/CampaignWorkflowSteps';
 import InfluencerManagementTab from '@/components/campaign/InfluencerManagementTab';
 import CampaignConfirmationSummary from '@/components/campaign/CampaignConfirmationSummary';
-import BrandContentPlanReview from '@/components/content/BrandContentPlanReview';
-import BrandContentProductionTab from '@/components/content/BrandContentProductionTab';
+import CampaignDetailHeader from '@/components/campaign/CampaignDetailHeader';
+import CampaignOverview from '@/components/campaign/CampaignOverview';
+import CampaignPlanningTab from '@/components/campaign/CampaignPlanningTab';
+import CampaignProductionTab from '@/components/campaign/CampaignProductionTab';
 import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
@@ -308,70 +309,9 @@ const CampaignDetail = () => {
     }
   };
 
-  const getStatusColor = (status: Campaign['status']) => {
-    switch (status) {
-      case 'creating': return 'bg-yellow-100 text-yellow-800';
-      case 'submitted': return 'bg-orange-100 text-orange-800';
-      case 'recruiting': return 'bg-blue-100 text-blue-800';
-      case 'proposing': return 'bg-purple-100 text-purple-800';
-      case 'revising': return 'bg-red-100 text-red-800';
-      case 'revision-feedback': return 'bg-amber-100 text-amber-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'planning': return 'bg-blue-100 text-blue-800';
-      case 'plan-review': return 'bg-indigo-100 text-indigo-800';
-      case 'plan-approved': return 'bg-lime-100 text-lime-800';
-      case 'producing': return 'bg-teal-100 text-teal-800';
-      case 'content-review': return 'bg-fuchsia-100 text-fuchsia-800';
-      case 'live': return 'bg-rose-100 text-rose-800';
-      case 'monitoring': return 'bg-cyan-100 text-cyan-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: Campaign['status']) => {
-    switch (status) {
-      case 'creating': return '생성중';
-      case 'submitted': return '제출됨';
-      case 'recruiting': return '섭외중';
-      case 'proposing': return '제안중';
-      case 'revising': return '제안수정요청';
-      case 'revision-feedback': return '제안수정피드백';
-      case 'confirmed': return '확정됨';
-      case 'planning': return '콘텐츠 기획중';
-      case 'plan-review': return '콘텐츠 기획중';
-      case 'plan-revision': return '콘텐츠 기획중';
-      case 'plan-approved': return '콘텐츠 기획중';
-      case 'producing': return '제작중';
-      case 'content-review': return '콘텐츠검토';
-      case 'live': return '라이브';
-      case 'monitoring': return '모니터링';
-      case 'completed': return '완료됨';
-      default: return status;
-    }
-  };
-
-  const getNextAction = () => {
-    if (!campaign) return null;
-    
-    const stage = campaign.currentStage;
-    const status = campaign.status;
-    
-    switch (stage) {
-      case 1:
-        if (status === 'creating') return '캠페인 제출 필요';
-        if (status === 'recruiting') return '인플루언서 섭외 진행중';
-        if (status === 'proposing') return '제안 검토 필요';
-        if (status === 'confirmed') return '콘텐츠 기획 단계로 진행 가능';
-        break;
-      case 2:
-        return '콘텐츠 기획안 작성/검토';
-      case 3:
-        return '콘텐츠 제작/검수';
-      case 4:
-        return '성과 모니터링';
-    }
-    return null;
+  const handleDebugStorage = () => {
+    console.log('🔍 수동 디버깅 버튼 클릭');
+    contentService.debugContentPlanStorage();
   };
 
   if (isLoading) {
@@ -407,27 +347,13 @@ const CampaignDetail = () => {
       <div className="flex min-h-screen w-full">
         <BrandSidebar />
         <div className="flex-1 p-8">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
-              <Link to="/brand/campaigns">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  캠페인 목록으로
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold">{campaign.title}</h1>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className="bg-green-100 text-green-800">
-                    확정됨
-                  </Badge>
-                  <Badge variant="outline" className="text-blue-600">
-                    캠페인 진행 동의 필요
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </div>
+          <CampaignDetailHeader
+            campaign={campaign}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onSubmit={handleSubmit}
+            onFinalConfirmation={handleFinalConfirmation}
+          />
 
           <CampaignWorkflowSteps campaign={campaign} />
 
@@ -448,54 +374,13 @@ const CampaignDetail = () => {
     <div className="flex min-h-screen w-full">
       <BrandSidebar />
       <div className="flex-1 p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-4">
-            <Link to="/brand/campaigns">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                캠페인 목록으로
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold">{campaign.title}</h1>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className={getStatusColor(campaign.status)}>
-                  {getStatusText(campaign.status)}
-                </Badge>
-                {getNextAction() && (
-                  <Badge variant="outline" className="text-blue-600">
-                    {getNextAction()}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex space-x-2">
-            {isCreating && (
-              <>
-                <Button onClick={handleEdit} variant="outline">
-                  <Edit className="w-4 h-4 mr-2" />
-                  수정
-                </Button>
-                <Button onClick={handleDelete} variant="destructive">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  삭제
-                </Button>
-                <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-                  <Send className="w-4 h-4 mr-2" />
-                  제출
-                </Button>
-              </>
-            )}
-            {isConfirmed && (
-              <Button onClick={handleFinalConfirmation} className="bg-blue-600 hover:bg-blue-700">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                최종 확정
-              </Button>
-            )}
-          </div>
-        </div>
+        <CampaignDetailHeader
+          campaign={campaign}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onSubmit={handleSubmit}
+          onFinalConfirmation={handleFinalConfirmation}
+        />
 
         <CampaignWorkflowSteps campaign={campaign} />
 
@@ -510,83 +395,7 @@ const CampaignDetail = () => {
 
           
           <TabsContent value="basic" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>기본 정보</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">브랜드</label>
-                    <p className="text-lg">{campaign.brandName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">제품</label>
-                    <p className="text-lg">{campaign.productName}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">예산</label>
-                      <p className="text-lg">{campaign.budget.toLocaleString()}원</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">캠페인 기간</label>
-                      <p className="text-lg">{campaign.campaignStartDate} ~ {campaign.campaignEndDate}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">제안 마감일</label>
-                    <p className="text-lg">{campaign.proposalDeadline}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">광고 유형</label>
-                    <p className="text-lg">{campaign.adType === 'branding' ? '브랜딩' : '라이브커머스'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>타겟 콘텐츠 정보</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">인플루언서 카테고리</label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {campaign.targetContent.influencerCategories.map((category) => (
-                        <Badge key={category} variant="outline">
-                          {category}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">타겟 연령층</label>
-                    <p className="text-lg">{campaign.targetContent.targetAge}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">USP 중요도</label>
-                    <p className="text-lg">{campaign.targetContent.uspImportance}/10</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">인플루언서 영향력</label>
-                    <p className="text-lg">{campaign.targetContent.influencerImpact}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">추가 설명</label>
-                    <p className="text-lg">{campaign.targetContent.additionalDescription || '없음'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">2차 콘텐츠 활용</label>
-                    <p className="text-lg">{campaign.targetContent.secondaryContentUsage ? '예' : '아니오'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <CampaignOverview campaign={campaign} />
           </TabsContent>
 
           <TabsContent value="influencers" className="mt-6">
@@ -599,64 +408,21 @@ const CampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            {isContentLoading ? (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <div className="text-lg">콘텐츠 기획안을 불러오는 중...</div>
-                  <p className="text-sm text-gray-500 mt-2">데이터를 동기화하고 있습니다.</p>
-                  <div className="mt-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div>
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    💡 현재 {contentPlans.length}개의 기획안이 로딩되었습니다. 
-                    {contentPlans.length === 0 && " 시스템 관리자가 기획안을 작성하면 여기에 표시됩니다."}
-                  </p>
-                  <button 
-                    onClick={() => {
-                      console.log('🔍 수동 디버깅 버튼 클릭');
-                      contentService.debugContentPlanStorage();
-                    }}
-                    className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
-                  >
-                    🔍 스토리지 상태 확인
-                  </button>
-                </div>
-                <BrandContentPlanReview
-                  plans={contentPlans}
-                  confirmedInfluencers={confirmedInfluencers}
-                  onApprove={handleContentPlanApprove}
-                  onRequestRevision={handleContentPlanRevision}
-                />
-              </div>
-            )}
+            <CampaignPlanningTab
+              contentPlans={contentPlans}
+              confirmedInfluencers={confirmedInfluencers}
+              isContentLoading={isContentLoading}
+              onApprove={handleContentPlanApprove}
+              onRequestRevision={handleContentPlanRevision}
+              onDebugStorage={handleDebugStorage}
+            />
           </TabsContent>
 
           <TabsContent value="production" className="mt-6">
-            {isProducing || campaign.currentStage >= 3 ? (
-              <BrandContentProductionTab
-                campaignId={campaign.id}
-                confirmedInfluencers={confirmedInfluencers}
-              />
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Video className="w-5 h-5 mr-2" />
-                    콘텐츠 제작
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12 text-gray-500">
-                    콘텐츠 제작 단계가 아직 시작되지 않았습니다.
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <CampaignProductionTab
+              campaign={campaign}
+              confirmedInfluencers={confirmedInfluencers}
+            />
           </TabsContent>
 
           <TabsContent value="content" className="mt-6">
