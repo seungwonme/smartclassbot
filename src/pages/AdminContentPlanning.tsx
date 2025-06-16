@@ -341,6 +341,12 @@ const AdminContentPlanning = () => {
             hasPlanContent={() => true}
             renderFieldWithFeedback={renderFieldWithFeedback}
             plans={plans}
+            editingField={editingField}
+            editingValue={editingValue}
+            setEditingValue={setEditingValue}
+            onStartEdit={startEditing}
+            onSaveEdit={saveEdit}
+            onCancelEdit={cancelEdit}
           />
         </div>
       </div>

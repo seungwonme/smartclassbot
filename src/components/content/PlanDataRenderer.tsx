@@ -6,6 +6,13 @@ import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content
 interface PlanDataRendererProps {
   plan: ContentPlanDetail;
   renderFieldWithFeedback: any;
+  // 편집 관련 props 추가
+  editingField?: string | null;
+  editingValue?: any;
+  setEditingValue?: (value: any) => void;
+  onStartEdit?: (planId: string, fieldName: string, currentValue: any) => void;
+  onSaveEdit?: (planId: string, fieldName: string) => void;
+  onCancelEdit?: () => void;
 }
 
 const PlanDataRenderer: React.FC<PlanDataRendererProps> = ({

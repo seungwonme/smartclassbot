@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,13 @@ interface ContentPlanDetailViewProps {
   hasPlanContent: (plan: ContentPlanDetail) => boolean;
   renderFieldWithFeedback: any;
   plans: ContentPlanDetail[];
+  // 편집 관련 props 추가
+  editingField?: string | null;
+  editingValue?: any;
+  setEditingValue?: (value: any) => void;
+  onStartEdit?: (planId: string, fieldName: string, currentValue: any) => void;
+  onSaveEdit?: (planId: string, fieldName: string) => void;
+  onCancelEdit?: () => void;
 }
 
 const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
@@ -35,7 +41,13 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   canReviewPlan,
   hasPlanContent,
   renderFieldWithFeedback,
-  plans
+  plans,
+  editingField,
+  editingValue,
+  setEditingValue,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit
 }) => {
   const [revisionFeedback, setRevisionFeedback] = React.useState('');
 
@@ -109,7 +121,16 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             </h3>
           </div>
 
-          <PlanDataRenderer plan={selectedPlan} renderFieldWithFeedback={renderFieldWithFeedback} />
+          <PlanDataRenderer 
+            plan={selectedPlan} 
+            renderFieldWithFeedback={renderFieldWithFeedback}
+            editingField={editingField}
+            editingValue={editingValue}
+            setEditingValue={setEditingValue}
+            onStartEdit={onStartEdit}
+            onSaveEdit={onSaveEdit}
+            onCancelEdit={onCancelEdit}
+          />
           
           {selectedPlan.revisions && selectedPlan.revisions.length > 0 && (
             <ContentRevisionTimeline revisions={selectedPlan.revisions} />
