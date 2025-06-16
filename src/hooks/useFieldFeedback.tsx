@@ -16,7 +16,7 @@ interface UseFieldFeedbackProps {
   handleCancelInlineComment: () => void;
   getFieldComment: (planId: string, fieldLabel: string) => any;
   canReviewPlan: (plan: ContentPlanDetail) => boolean;
-  // 편집 기능을 위한 새로운 props
+  // 편집 기능을 위한 props (시스템 관리자용)
   editingField?: string | null;
   editingValue?: any;
   setEditingValue?: (value: any) => void;
@@ -58,6 +58,8 @@ export const useFieldFeedback = ({
 
     // 브랜드 관리자인지 확인 (URL 기반)
     const isBrandView = window.location.pathname.includes('/brand/');
+    // 시스템 관리자인지 확인 (URL 기반)
+    const isAdminView = window.location.pathname.includes('/admin/');
 
     return (
       <div className="space-y-2">
@@ -65,8 +67,8 @@ export const useFieldFeedback = ({
           <Label className="font-medium">{fieldLabel}</Label>
           {canAddFeedback && canReviewPlan(plan) && (
             <div className="flex gap-2">
-              {/* 브랜드 관리자용 수정하기 버튼 */}
-              {isBrandView && onStartEdit && !isEditing && (
+              {/* 시스템 관리자용 수정하기 버튼 */}
+              {isAdminView && onStartEdit && !isEditing && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -78,8 +80,8 @@ export const useFieldFeedback = ({
                 </Button>
               )}
               
-              {/* 기존 수정코멘트 버튼 (시스템 관리자용) */}
-              {!isBrandView && (
+              {/* 브랜드 관리자용 수정코멘트 버튼 */}
+              {isBrandView && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -99,12 +101,34 @@ export const useFieldFeedback = ({
                   )}
                 </Button>
               )}
+
+              {/* 시스템 관리자용 코멘트 버튼 (기존 수정코멘트 기능) */}
+              {isAdminView && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleInlineComment(plan.id, fieldName, fieldLabel)}
+                  className="text-xs px-2 py-1 h-6"
+                >
+                  {existingComment ? (
+                    <>
+                      <Edit className="w-3 h-3 mr-1" />
+                      코멘트 수정
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3 h-3 mr-1" />
+                      코멘트
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           )}
         </div>
 
-        {/* 편집 모드 */}
-        {isEditing && isBrandView ? (
+        {/* 시스템 관리자용 편집 모드 */}
+        {isEditing && isAdminView ? (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded">
             <div className="space-y-2">
               <Label className="text-sm font-medium text-blue-700">필드 수정</Label>

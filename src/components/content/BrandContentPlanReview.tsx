@@ -1,10 +1,9 @@
+
 import React, { useState } from 'react';
 import { ContentPlanDetail } from '@/types/content';
 import { useToast } from '@/hooks/use-toast';
 import { useInlineComments } from '@/hooks/useInlineComments';
 import { useFieldFeedback } from '@/hooks/useFieldFeedback';
-import { useFieldEditing } from '@/hooks/useFieldEditing';
-import { contentService } from '@/services/content.service';
 import InfluencerListForReview from './InfluencerListForReview';
 import ContentPlanDetailView from './ContentPlanDetailView';
 
@@ -36,63 +35,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     getFieldComment,
     resetComments
   } = useInlineComments();
-
-  const handleSaveFieldEdit = async (planId: string, fieldName: string, newValue: any) => {
-    try {
-      const plan = contentPlans.find(p => p.id === planId);
-      if (!plan) return;
-
-      // planData 업데이트
-      const updatedPlanData = {
-        ...plan.planData,
-        [fieldName]: newValue
-      };
-
-      const updatedPlan = {
-        ...plan,
-        planData: updatedPlanData,
-        updatedAt: new Date().toISOString()
-      };
-
-      // 서버에 저장
-      await contentService.updateContentPlan(plan.campaignId, planId, {
-        planData: updatedPlanData,
-        updatedAt: new Date().toISOString()
-      });
-
-      // 로컬 상태 업데이트
-      setContentPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
-      
-      if (selectedPlan?.id === planId) {
-        setSelectedPlan(updatedPlan);
-      }
-
-      toast({
-        title: "수정 완료",
-        description: "필드가 성공적으로 수정되었습니다."
-      });
-
-    } catch (error) {
-      console.error('필드 수정 실패:', error);
-      toast({
-        title: "수정 실패",
-        description: "필드 수정에 실패했습니다.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const {
-    editingField,
-    editingValue,
-    setEditingValue,
-    startEditing,
-    saveEdit,
-    cancelEdit,
-    isEditing
-  } = useFieldEditing({
-    onSaveEdit: handleSaveFieldEdit
-  });
 
   const getStatusColor = (status: ContentPlanDetail['status']) => {
     switch (status) {
@@ -163,6 +105,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     return completedBrandRevisions > 0 ? `${completedBrandRevisions}차 완료` : null;
   };
 
+  // 브랜드 관리자는 직접 편집 기능 없이 수정코멘트 기능만 사용
   const { renderFieldWithFeedback } = useFieldFeedback({
     activeCommentField,
     currentComment,
@@ -170,13 +113,8 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     handleSaveInlineComment,
     handleCancelInlineComment,
     getFieldComment,
-    canReviewPlan,
-    editingField,
-    editingValue,
-    setEditingValue,
-    onStartEdit: startEditing,
-    onSaveEdit: saveEdit,
-    onCancelEdit: cancelEdit
+    canReviewPlan
+    // 편집 관련 props는 브랜드 관리자에게는 제공하지 않음
   });
 
   const handleApprove = (planId: string) => {
