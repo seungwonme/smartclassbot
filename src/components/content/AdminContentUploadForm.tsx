@@ -47,7 +47,8 @@ const AdminContentUploadForm: React.FC<AdminContentUploadFormProps> = ({
         name: file.name,
         url: fileUrl,
         type: contentType,
-        size: file.size
+        size: file.size,
+        uploadedAt: new Date().toISOString()
       };
 
       newFiles.push(contentFile);
