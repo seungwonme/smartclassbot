@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BrandSidebar from '@/components/BrandSidebar';
@@ -12,6 +11,7 @@ import BrandCampaignSelector from '@/components/analytics/BrandCampaignSelector'
 import CompactRealTimeStatus from '@/components/analytics/CompactRealTimeStatus';
 import CampaignOverviewPanel from '@/components/analytics/CampaignOverviewPanel';
 import InfluencerPerformanceOverview from '@/components/analytics/InfluencerPerformanceOverview';
+import PerformanceSummaryCards from '@/components/analytics/PerformanceSummaryCards';
 import { performanceTrackerService } from '@/services/performanceTracker.service';
 
 const BrandAnalytics = () => {
@@ -87,9 +87,10 @@ const BrandAnalytics = () => {
 
         {/* 데스크톱/태블릿 레이아웃 */}
         <div className="hidden lg:block">
-          {/* 상단 선택 및 상태 영역 */}
+          {/* 상단 선택 및 상태 영역 - 새로운 4칸 레이아웃 */}
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-6">
-            <div className="xl:col-span-3">
+            {/* 브랜드/캠페인/인플루언서 선택 - 2칸 */}
+            <div className="xl:col-span-2">
               <BrandCampaignSelector
                 selectedBrand={selectedBrand}
                 selectedCampaign={selectedCampaign}
@@ -102,6 +103,16 @@ const BrandAnalytics = () => {
               />
             </div>
             
+            {/* 종합성과 요약 - 1칸 */}
+            <div className="xl:col-span-1">
+              <PerformanceSummaryCards
+                selectedBrand={selectedBrand}
+                selectedCampaign={selectedCampaign}
+                selectedInfluencer={selectedInfluencer}
+              />
+            </div>
+
+            {/* 실시간 상태 및 알림 - 1칸 */}
             <div className="xl:col-span-1 space-y-4">
               <CompactRealTimeStatus
                 isTracking={isTracking}
