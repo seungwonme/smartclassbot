@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Plus, AlertCircle } from 'lucide-react';
-import { detectChinesePlatform, validatePlatformUrl, getPlatformDisplayName, ChinesePlatform, PlatformUrlData } from '@/utils/chinesePlatformUtils';
+import { ChinesePlatform, PlatformUrlData } from '@/utils/chinesePlatformUtils';
+import PlatformUrlValidator from './PlatformUrlValidator';
+import ChinesePlatformDetector from './ChinesePlatformDetector';
 
 interface ChinesePlatformUrlInputProps {
   confirmedInfluencers: Array<{
@@ -18,6 +19,14 @@ interface ChinesePlatformUrlInputProps {
   onAddUrl: (urlData: Omit<PlatformUrlData, 'id' | 'addedAt'>) => void;
 }
 
+interface UrlValidationResult {
+  isValid: boolean;
+  platform: ChinesePlatform | null;
+  contentId: string | null;
+  error: string | null;
+  suggestion: string | null;
+}
+
 const ChinesePlatformUrlInput: React.FC<ChinesePlatformUrlInputProps> = ({
   confirmedInfluencers,
   onAddUrl
@@ -25,45 +34,45 @@ const ChinesePlatformUrlInput: React.FC<ChinesePlatformUrlInputProps> = ({
   const [url, setUrl] = useState('');
   const [selectedInfluencer, setSelectedInfluencer] = useState('');
   const [contentTitle, setContentTitle] = useState('');
-  const [detectedPlatform, setDetectedPlatform] = useState<ChinesePlatform | null>(null);
-  const [urlError, setUrlError] = useState('');
+  const [validationResult, setValidationResult] = useState<UrlValidationResult>({
+    isValid: false,
+    platform: null,
+    contentId: null,
+    error: null,
+    suggestion: null
+  });
+  const [submitError, setSubmitError] = useState('');
 
   const handleUrlChange = (value: string) => {
     setUrl(value);
-    setUrlError('');
-    
-    if (value.trim()) {
-      const platform = detectChinesePlatform(value);
-      setDetectedPlatform(platform);
-      
-      if (platform && !validatePlatformUrl(value)) {
-        setUrlError('올바른 URL 형식이 아닙니다.');
-      }
-    } else {
-      setDetectedPlatform(null);
-    }
+    setSubmitError('');
+  };
+
+  const handleValidationChange = (result: UrlValidationResult) => {
+    setValidationResult(result);
+    setSubmitError('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!url.trim()) {
-      setUrlError('URL을 입력해주세요.');
+      setSubmitError('URL을 입력해주세요.');
       return;
     }
     
     if (!selectedInfluencer) {
-      setUrlError('인플루언서를 선택해주세요.');
+      setSubmitError('인플루언서를 선택해주세요.');
       return;
     }
     
-    if (!detectedPlatform) {
-      setUrlError('지원하지 않는 플랫폼입니다. 샤오홍슈 또는 도우인 URL만 입력 가능합니다.');
+    if (!validationResult.isValid) {
+      setSubmitError('올바른 URL을 입력해주세요.');
       return;
     }
-    
-    if (!validatePlatformUrl(url)) {
-      setUrlError('올바른 URL 형식이 아닙니다.');
+
+    if (!validationResult.platform) {
+      setSubmitError('플랫폼을 감지할 수 없습니다.');
       return;
     }
     
@@ -72,7 +81,7 @@ const ChinesePlatformUrlInput: React.FC<ChinesePlatformUrlInputProps> = ({
     
     onAddUrl({
       url: url.trim(),
-      platform: detectedPlatform,
+      platform: validationResult.platform,
       influencerId: selectedInfluencer,
       influencerName: influencer.name,
       contentTitle: contentTitle.trim() || undefined
@@ -82,8 +91,14 @@ const ChinesePlatformUrlInput: React.FC<ChinesePlatformUrlInputProps> = ({
     setUrl('');
     setSelectedInfluencer('');
     setContentTitle('');
-    setDetectedPlatform(null);
-    setUrlError('');
+    setValidationResult({
+      isValid: false,
+      platform: null,
+      contentId: null,
+      error: null,
+      suggestion: null
+    });
+    setSubmitError('');
   };
 
   return (
@@ -120,19 +135,22 @@ const ChinesePlatformUrlInput: React.FC<ChinesePlatformUrlInputProps> = ({
                 value={url}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 placeholder="https://www.xiaohongshu.com/discovery/item/... 또는 https://www.douyin.com/video/..."
-                className={urlError ? 'border-red-500' : ''}
+                className={submitError || validationResult.error ? 'border-red-500' : ''}
               />
               
-              {detectedPlatform && !urlError && (
-                <Badge className={detectedPlatform === 'xiaohongshu' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}>
-                  감지된 플랫폼: {getPlatformDisplayName(detectedPlatform)}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <ChinesePlatformDetector url={url} />
+              </div>
               
-              {urlError && (
+              <PlatformUrlValidator 
+                url={url} 
+                onValidationChange={handleValidationChange}
+              />
+              
+              {submitError && (
                 <div className="flex items-center gap-1 text-sm text-red-600">
                   <AlertCircle className="w-4 h-4" />
-                  {urlError}
+                  {submitError}
                 </div>
               )}
             </div>
@@ -151,7 +169,7 @@ const ChinesePlatformUrlInput: React.FC<ChinesePlatformUrlInputProps> = ({
           <Button 
             type="submit" 
             className="w-full"
-            disabled={!url.trim() || !selectedInfluencer || !detectedPlatform || !!urlError}
+            disabled={!url.trim() || !selectedInfluencer || !validationResult.isValid}
           >
             URL 등록
           </Button>

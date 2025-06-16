@@ -27,6 +27,7 @@ import ChinesePlatformUrlInput from '@/components/analytics/ChinesePlatformUrlIn
 import MonitoringUrlList from '@/components/analytics/MonitoringUrlList';
 import { PlatformUrlData } from '@/types/analytics';
 import { analyticsService } from '@/services/analytics.service';
+import ChinesePlatformStats from '@/components/analytics/ChinesePlatformStats';
 
 const AdminCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -945,6 +946,9 @@ const AdminCampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="monitoring" className="mt-6">
+            {/* 상단: 통계 카드 */}
+            <ChinesePlatformStats urls={monitoringUrls} />
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 좌측: URL 입력 */}
               <div>
