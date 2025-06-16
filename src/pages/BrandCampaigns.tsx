@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, Download } from 'lucide-react';
 import BrandSidebar from '@/components/BrandSidebar';
 import CampaignDashboard from '@/components/campaign/CampaignDashboard';
 import { Campaign } from '@/types/campaign';
@@ -89,6 +88,25 @@ const BrandCampaigns = () => {
     navigate(`/brand/campaigns/edit/${campaignId}`);
   };
 
+  const handleExportData = async () => {
+    try {
+      const { dataManagerService } = await import('@/services/dataManager.service');
+      const data = dataManagerService.exportCurrentData();
+      dataManagerService.downloadDataAsFile(data, 'brand-campaigns-backup.json');
+      
+      toast({
+        title: "데이터 백업 완료",
+        description: "현재 캠페인 데이터가 다운로드되었습니다."
+      });
+    } catch (error) {
+      toast({
+        title: "백업 실패",
+        description: "데이터 백업 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -119,6 +137,14 @@ const BrandCampaigns = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={handleExportData}
+              variant="outline"
+              className="text-purple-600 border-purple-600 hover:bg-purple-50"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              데이터 백업
+            </Button>
             <Button
               onClick={handleForceReinitialize}
               variant="outline"
