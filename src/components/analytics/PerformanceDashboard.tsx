@@ -9,11 +9,13 @@ import { performanceTrackerService } from '@/services/performanceTracker.service
 interface PerformanceDashboardProps {
   campaignId?: string;
   isRealTime?: boolean;
+  isAdmin?: boolean;
 }
 
 const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ 
   campaignId, 
-  isRealTime = false 
+  isRealTime = false,
+  isAdmin = false
 }) => {
   const [summary, setSummary] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -73,7 +75,9 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-green-600 animate-pulse" />
-                <span className="text-sm font-medium text-green-800">실시간 모니터링 중</span>
+                <span className="text-sm font-medium text-green-800">
+                  {isAdmin ? '전체 시스템 실시간 모니터링 중' : '실시간 모니터링 중'}
+                </span>
               </div>
               <span className="text-xs text-green-600">마지막 업데이트: {lastUpdated}</span>
             </div>
@@ -160,6 +164,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
               플랫폼별 성과
+              {isAdmin && <Badge variant="outline" className="ml-2">관리자 뷰</Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent>

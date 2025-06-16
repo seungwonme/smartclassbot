@@ -31,6 +31,35 @@ const BrandAnalytics = () => {
     { id: 'campaign3', title: '가을 시즌 브랜딩' }
   ];
 
+  // 모의 인플루언서 데이터
+  const mockInfluencers = [
+    { id: 'inf1', name: '샤오리', platform: 'xiaohongshu' },
+    { id: 'inf2', name: '리밍', platform: 'douyin' },
+    { id: 'inf3', name: '왕위안', platform: 'xiaohongshu' }
+  ];
+
+  // 모의 모니터링 URL 데이터
+  const mockMonitoringUrls = [
+    {
+      id: 'url1',
+      url: 'https://xiaohongshu.com/sample1',
+      platform: 'xiaohongshu' as const,
+      influencerId: 'inf1',
+      campaignId: 'campaign1',
+      addedAt: new Date().toISOString(),
+      contentTitle: '봄 신제품 소개'
+    },
+    {
+      id: 'url2', 
+      url: 'https://douyin.com/sample2',
+      platform: 'douyin' as const,
+      influencerId: 'inf2',
+      campaignId: 'campaign1',
+      addedAt: new Date().toISOString(),
+      contentTitle: '제품 언박싱 영상'
+    }
+  ];
+
   return (
     <div className="flex min-h-screen w-full">
       <BrandSidebar />
@@ -71,7 +100,11 @@ const BrandAnalytics = () => {
             </TabsContent>
 
             <TabsContent value="monitoring" className="mt-6">
-              <BrandMonitoringView />
+              <BrandMonitoringView 
+                campaignId={selectedCampaign === 'all' ? 'campaign1' : selectedCampaign}
+                confirmedInfluencers={mockInfluencers}
+                monitoringUrls={mockMonitoringUrls}
+              />
             </TabsContent>
 
             <TabsContent value="comments" className="mt-6">

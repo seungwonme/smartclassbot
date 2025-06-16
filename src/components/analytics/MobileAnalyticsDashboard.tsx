@@ -174,7 +174,6 @@ const MobileAnalyticsDashboard: React.FC<MobileAnalyticsDashboardProps> = ({
                       outerRadius={50}
                       dataKey="value"
                       label={({ name, value }) => `${name} ${value}%`}
-                      labelStyle={{ fontSize: '10px' }}
                     >
                       {platformData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
