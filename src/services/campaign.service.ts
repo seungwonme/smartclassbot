@@ -2,6 +2,16 @@ import { Campaign, CampaignInfluencer, Persona } from "@/types/campaign";
 import { mockCampaigns, mockInfluencers, mockPersonas } from "@/mocks/campaign.mock";
 import { storageService } from "./storage.service";
 
+// 강제 재초기화 함수 추가
+const forceReinitialize = () => {
+  console.log('=== 강제 데이터 재초기화 시작 ===');
+  storageService.clearAllData();
+  storageService.setCampaigns(mockCampaigns);
+  storageService.setInitialized();
+  console.log('=== 강제 데이터 재초기화 완료 ===');
+  console.log('업데이트된 캠페인 데이터:', storageService.getCampaigns());
+};
+
 // 초기 데이터 시드 함수 (개선된 버전)
 const initializeCampaignData = () => {
   console.log('=== 캠페인 데이터 초기화 시작 ===');
@@ -35,6 +45,9 @@ const initializeCampaignData = () => {
 initializeCampaignData();
 
 export const campaignService = {
+  // 강제 재초기화 함수 export
+  forceReinitialize,
+
   getCampaigns: async (): Promise<Campaign[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
