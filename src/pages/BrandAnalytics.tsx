@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +44,7 @@ const BrandAnalytics = () => {
       url: 'https://xiaohongshu.com/sample1',
       platform: 'xiaohongshu' as const,
       influencerId: 'inf1',
+      influencerName: '샤오리',
       campaignId: 'campaign1',
       addedAt: new Date().toISOString(),
       contentTitle: '봄 신제품 소개'
@@ -54,6 +54,7 @@ const BrandAnalytics = () => {
       url: 'https://douyin.com/sample2',
       platform: 'douyin' as const,
       influencerId: 'inf2',
+      influencerName: '리밍',
       campaignId: 'campaign1',
       addedAt: new Date().toISOString(),
       contentTitle: '제품 언박싱 영상'
