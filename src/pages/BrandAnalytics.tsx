@@ -5,20 +5,16 @@ import BrandSidebar from '@/components/BrandSidebar';
 import PerformanceDashboard from '@/components/analytics/PerformanceDashboard';
 import ChineseCommentAnalyzer from '@/components/analytics/ChineseCommentAnalyzer';
 import PerformanceReportGenerator from '@/components/analytics/PerformanceReportGenerator';
-import NotificationSystem from '@/components/analytics/NotificationSystem';
 import MobileAnalyticsDashboard from '@/components/analytics/MobileAnalyticsDashboard';
 import BrandCampaignSelector from '@/components/analytics/BrandCampaignSelector';
-import CompactRealTimeStatus from '@/components/analytics/CompactRealTimeStatus';
 import CampaignOverviewPanel from '@/components/analytics/CampaignOverviewPanel';
 import InfluencerPerformanceOverview from '@/components/analytics/InfluencerPerformanceOverview';
-import { performanceTrackerService } from '@/services/performanceTracker.service';
+import HorizontalNotificationSystem from '@/components/analytics/HorizontalNotificationSystem';
 
 const BrandAnalytics = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>('brand1');
   const [selectedCampaign, setSelectedCampaign] = useState<string>('campaign1');
   const [selectedInfluencer, setSelectedInfluencer] = useState<string>('inf1');
-  const [isTracking, setIsTracking] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<string>('');
 
   // 모의 캠페인 데이터
   const campaigns = [
@@ -33,17 +29,6 @@ const BrandAnalytics = () => {
     { id: 'inf2', name: '리밍', platform: 'douyin' },
     { id: 'inf3', name: '왕위안', platform: 'xiaohongshu' }
   ];
-
-  const handleStartTracking = () => {
-    performanceTrackerService.startTracking();
-    setIsTracking(true);
-    setLastUpdate(new Date().toLocaleTimeString('ko-KR'));
-  };
-
-  const handleStopTracking = () => {
-    performanceTrackerService.stopTracking();
-    setIsTracking(false);
-  };
 
   const selectedCampaignData = campaigns.find(c => c.id === selectedCampaign);
   const selectedInfluencerData = mockInfluencers.find(inf => inf.id === selectedInfluencer);
@@ -61,44 +46,31 @@ const BrandAnalytics = () => {
         <MobileAnalyticsDashboard />
 
         {/* 데스크톱/태블릿 레이아웃 */}
-        <div className="hidden lg:block">
-          {/* 상단 선택 및 상태 영역 */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-6">
-            <div className="xl:col-span-3">
-              <BrandCampaignSelector
-                selectedBrand={selectedBrand}
-                selectedCampaign={selectedCampaign}
-                selectedInfluencer={selectedInfluencer}
-                campaigns={campaigns}
-                influencers={mockInfluencers}
-                onBrandChange={setSelectedBrand}
-                onCampaignChange={setSelectedCampaign}
-                onInfluencerChange={setSelectedInfluencer}
-              />
-            </div>
-            
-            <div className="xl:col-span-1 space-y-4">
-              <CompactRealTimeStatus
-                isTracking={isTracking}
-                lastUpdate={lastUpdate}
-                onStartTracking={handleStartTracking}
-                onStopTracking={handleStopTracking}
-              />
-              <NotificationSystem />
-            </div>
-          </div>
+        <div className="hidden lg:block space-y-6">
+          {/* 1. 실시간 알림 섹션 - 맨 상단 */}
+          <HorizontalNotificationSystem />
 
-          {/* 캠페인 종합 성과 (선택된 캠페인이 전체가 아닐 때만 표시) */}
+          {/* 2. 캠페인 종합 성과 */}
           {selectedCampaign !== 'all' && selectedCampaignData && (
-            <div className="mb-6">
-              <CampaignOverviewPanel
-                campaignId={selectedCampaign}
-                campaignTitle={selectedCampaignData.title}
-              />
-            </div>
+            <CampaignOverviewPanel
+              campaignId={selectedCampaign}
+              campaignTitle={selectedCampaignData.title}
+            />
           )}
 
-          {/* 메인 분석 탭 - 3개 탭으로 축소 */}
+          {/* 3. 브랜드/캠페인/인플루언서 선택 섹션 */}
+          <BrandCampaignSelector
+            selectedBrand={selectedBrand}
+            selectedCampaign={selectedCampaign}
+            selectedInfluencer={selectedInfluencer}
+            campaigns={campaigns}
+            influencers={mockInfluencers}
+            onBrandChange={setSelectedBrand}
+            onCampaignChange={setSelectedCampaign}
+            onInfluencerChange={setSelectedInfluencer}
+          />
+
+          {/* 4. 메인 분석 탭 */}
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">
