@@ -86,11 +86,62 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   };
 
   const renderContent = () => {
-    // 브랜드 관리자의 수정요청 폼만 전체 화면으로 표시
-    if (showRevisionForm && selectedPlan && isBrandView) {
+    if (showRevisionForm && selectedPlan) {
+      const hasJustEdited = justEditedField && justEditedField.startsWith(selectedPlan.id);
+      
       return (
         <div className="space-y-4">
-          {inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
+          {/* 편집 완료 후 자동 표시되는 피드백 섹션 */}
+          {hasJustEdited && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Edit className="w-5 h-5 text-blue-600" />
+                <h4 className="font-medium text-blue-800">
+                  {(selectedPlan.currentRevisionNumber || 0)}차 수정피드백
+                </h4>
+              </div>
+              
+              <div className="mb-3 p-2 bg-white rounded border">
+                <p className="text-sm font-medium text-gray-700 mb-2">방금 수정한 필드:</p>
+                <div className="text-sm text-blue-600">
+                  {justEditedField?.split('-')[1]} 필드가 수정되었습니다.
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="auto-revision-feedback" className="text-sm font-medium">
+                  수정피드백 내용
+                </Label>
+                <Textarea
+                  id="auto-revision-feedback"
+                  value={revisionFeedback}
+                  onChange={(e) => setRevisionFeedback(e.target.value)}
+                  placeholder="수정한 내용에 대한 피드백을 작성해주세요..."
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={handleSubmitRevision}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  {(selectedPlan.currentRevisionNumber || 0)}차 피드백 전송
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onCancelRevision}
+                >
+                  취소
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 기존 인라인 코멘트 기반 피드백 섹션 */}
+          {!hasJustEdited && inlineComments.filter(c => c.planId === selectedPlan.id).length > 0 && (
             <div className="p-3 bg-blue-50 rounded-lg">
               <p className="text-sm font-medium text-blue-700 mb-2">필드별 수정 코멘트:</p>
               {inlineComments
@@ -103,12 +154,15 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             </div>
           )}
           
-          <RevisionRequestForm
-            revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
-            onSubmit={onSubmitRevision}
-            onCancel={onCancelRevision}
-            requestType="brand-request"
-          />
+          {/* 기존 수정요청 폼 (편집 완료 후가 아닌 경우에만 표시) */}
+          {!hasJustEdited && (
+            <RevisionRequestForm
+              revisionNumber={(selectedPlan.currentRevisionNumber || 0) + 1}
+              onSubmit={onSubmitRevision}
+              onCancel={onCancelRevision}
+              requestType={isAdminView ? "admin-feedback" : "brand-request"}
+            />
+          )}
         </div>
       );
     }
@@ -117,7 +171,6 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
       const savedComments = inlineComments.filter(c => c.planId === selectedPlan.id);
       const hasComments = savedComments.length > 0;
       const hasPendingRevision = selectedPlan.revisions?.some(rev => rev.status === 'pending');
-      const hasJustEdited = justEditedField && justEditedField.startsWith(selectedPlan.id);
 
       return (
         <div className="space-y-6">
@@ -147,57 +200,8 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             <ContentRevisionTimeline revisions={selectedPlan.revisions} />
           )}
 
-          {/* 시스템 관리자용: 편집 완료 후 피드백 섹션 */}
-          {isAdminView && hasJustEdited && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <Edit className="w-5 h-5 text-blue-600" />
-                <h4 className="font-medium text-blue-800">
-                  {(selectedPlan.currentRevisionNumber || 0)}차 수정피드백
-                </h4>
-              </div>
-              
-              <div className="mb-3 p-2 bg-white rounded border">
-                <p className="text-sm font-medium text-gray-700 mb-2">방금 수정한 필드:</p>
-                <div className="text-sm text-blue-600">
-                  {justEditedField?.split('-')[1]} 필드가 수정되었습니다.
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="admin-feedback" className="text-sm font-medium">
-                  수정피드백 내용
-                </Label>
-                <Textarea
-                  id="admin-feedback"
-                  value={revisionFeedback}
-                  onChange={(e) => setRevisionFeedback(e.target.value)}
-                  placeholder="수정한 내용에 대한 피드백을 작성해주세요..."
-                  rows={3}
-                  className="text-sm"
-                />
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <Button
-                  onClick={handleSubmitRevision}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {(selectedPlan.currentRevisionNumber || 0)}차 피드백 전송
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={onCancelRevision}
-                >
-                  나중에 전송
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* 시스템 관리자용: 수정피드백 섹션 (편집 완료 후가 아닌 경우) */}
-          {isAdminView && hasComments && hasPendingRevision && !showRevisionForm && !hasJustEdited && (
+          {/* 시스템 관리자용: 수정피드백 섹션 */}
+          {isAdminView && hasComments && hasPendingRevision && !showRevisionForm && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <MessageSquare className="w-5 h-5 text-blue-600" />
@@ -267,7 +271,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
           )}
 
           {/* 하단 액션 버튼 */}
-          {!showRevisionForm && !hasJustEdited && (
+          {!showRevisionForm && (
             <div className="pt-6 border-t bg-gray-50 -mx-6 px-6 pb-4 rounded-b-lg">
               <div className="flex justify-center gap-4">
                 {/* 브랜드 관리자만 승인 버튼 표시 */}
