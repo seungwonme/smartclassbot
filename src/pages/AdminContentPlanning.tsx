@@ -43,7 +43,9 @@ const AdminContentPlanning = () => {
   const handleSaveFieldEdit = async (planId: string, fieldName: string, newValue: any) => {
     try {
       const plan = plans.find(p => p.id === planId);
-      if (!plan) return;
+      if (!plan) {
+        throw new Error('기획안을 찾을 수 없습니다');
+      }
 
       // planData 업데이트
       const updatedPlanData = {
@@ -51,44 +53,32 @@ const AdminContentPlanning = () => {
         [fieldName]: newValue
       };
 
-      const updatedPlan = {
-        ...plan,
-        planData: updatedPlanData,
-        updatedAt: new Date().toISOString()
-      };
-
       // 서버에 저장
-      await contentService.updateContentPlan(plan.campaignId, planId, {
-        planData: updatedPlanData,
-        updatedAt: new Date().toISOString()
+      const updatedPlan = await contentService.updateContentPlan(plan.campaignId, planId, {
+        planData: updatedPlanData
       });
 
-      // 로컬 상태 업데이트 - 테이블 실시간 반영을 위해 즉시 업데이트
-      setPlans(prev => {
-        const updated = prev.map(p => p.id === planId ? updatedPlan : p);
-        return updated;
-      });
+      // 로컬 상태 업데이트
+      setPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
       
       // 선택된 플랜도 업데이트
       if (selectedPlan?.id === planId) {
         setSelectedPlan(updatedPlan);
       }
 
-      // 편집 모드 종료
-      cancelEdit();
-
       toast({
         title: "수정 완료",
-        description: "필드가 성공적으로 수정되었습니다."
+        description: `${fieldName} 필드가 성공적으로 수정되었습니다.`
       });
 
     } catch (error) {
       console.error('필드 수정 실패:', error);
       toast({
         title: "수정 실패",
-        description: "필드 수정에 실패했습니다.",
+        description: "필드 수정에 실패했습니다. 다시 시도해주세요.",
         variant: "destructive"
       });
+      throw error; // useFieldEditing에서 에러를 처리할 수 있도록
     }
   };
 
@@ -199,6 +189,8 @@ const AdminContentPlanning = () => {
   const handleSelectPlan = (plan: ContentPlanDetail) => {
     setSelectedPlan(plan);
     setShowRevisionForm(false);
+    // 기획안 선택 시 편집 모드 초기화
+    cancelEdit();
   };
 
   const handleApprove = (planId: string) => {

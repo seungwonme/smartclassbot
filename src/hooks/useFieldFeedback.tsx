@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -60,19 +59,6 @@ export const useFieldFeedback = ({
     const isBrandView = window.location.pathname.includes('/brand');
     // 시스템 관리자인지 확인 (URL 기반) - 더 포괄적으로 체크
     const isAdminView = window.location.pathname.startsWith('/admin');
-
-    // 디버깅을 위한 로그 (일시적)
-    console.log('Field debugging:', {
-      fieldName,
-      fieldLabel,
-      pathname: window.location.pathname,
-      isAdminView,
-      isBrandView,
-      canReviewPlan: canReviewPlan(plan),
-      onStartEdit: !!onStartEdit,
-      canAddFeedback,
-      isEditing
-    });
 
     return (
       <div className="space-y-2">
