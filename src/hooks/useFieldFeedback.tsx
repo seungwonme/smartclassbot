@@ -67,7 +67,7 @@ export const useFieldFeedback = ({
           <Label className="font-medium">{fieldLabel}</Label>
           {canAddFeedback && canReviewPlan(plan) && (
             <div className="flex gap-2">
-              {/* 시스템 관리자용 수정하기 버튼 */}
+              {/* 시스템 관리자용 수정하기 버튼만 표시 */}
               {isAdminView && onStartEdit && !isEditing && (
                 <Button
                   size="sm"
@@ -97,28 +97,6 @@ export const useFieldFeedback = ({
                     <>
                       <Plus className="w-3 h-3 mr-1" />
                       수정코멘트
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {/* 시스템 관리자용 코멘트 버튼 (기존 수정코멘트 기능) */}
-              {isAdminView && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleInlineComment(plan.id, fieldName, fieldLabel)}
-                  className="text-xs px-2 py-1 h-6"
-                >
-                  {existingComment ? (
-                    <>
-                      <Edit className="w-3 h-3 mr-1" />
-                      코멘트 수정
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3 h-3 mr-1" />
-                      코멘트
                     </>
                   )}
                 </Button>

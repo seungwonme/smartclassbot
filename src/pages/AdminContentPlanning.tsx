@@ -63,12 +63,19 @@ const AdminContentPlanning = () => {
         updatedAt: new Date().toISOString()
       });
 
-      // 로컬 상태 업데이트
-      setPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
+      // 로컬 상태 업데이트 - 테이블 실시간 반영을 위해 즉시 업데이트
+      setPlans(prev => {
+        const updated = prev.map(p => p.id === planId ? updatedPlan : p);
+        return updated;
+      });
       
+      // 선택된 플랜도 업데이트
       if (selectedPlan?.id === planId) {
         setSelectedPlan(updatedPlan);
       }
+
+      // 편집 모드 종료
+      cancelEdit();
 
       toast({
         title: "수정 완료",
