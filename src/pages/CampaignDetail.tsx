@@ -12,11 +12,14 @@ import CampaignDetailHeader from '@/components/campaign/CampaignDetailHeader';
 import CampaignOverview from '@/components/campaign/CampaignOverview';
 import CampaignPlanningTab from '@/components/campaign/CampaignPlanningTab';
 import CampaignProductionTab from '@/components/campaign/CampaignProductionTab';
+import BrandMonitoringView from '@/components/analytics/BrandMonitoringView';
 import { Campaign } from '@/types/campaign';
 import { ContentPlanDetail } from '@/types/content';
+import { PlatformUrlData } from '@/types/analytics';
 import { useCampaignDetail } from '@/hooks/useCampaignDetail';
 import { campaignService } from '@/services/campaign.service';
 import { contentService } from '@/services/content.service';
+import { analyticsService } from '@/services/analytics.service';
 import BrandContentReviewTab from '@/components/content/BrandContentReviewTab';
 
 const CampaignDetail = () => {
@@ -36,8 +39,8 @@ const CampaignDetail = () => {
 
   const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>([]);
   const [isContentLoading, setIsContentLoading] = useState(false);
+  const [monitoringUrls, setMonitoringUrls] = useState<PlatformUrlData[]>([]);
 
-  // Load content plans when campaign is loaded (강화된 로딩 및 디버깅)
   React.useEffect(() => {
     const loadContentPlans = async () => {
       if (campaign?.id) {
@@ -370,6 +373,36 @@ const CampaignDetail = () => {
 
   const confirmedInfluencers = campaign.influencers.filter(inf => inf.status === 'confirmed');
 
+  // 모니터링 URL 로딩
+  React.useEffect(() => {
+    const loadMonitoringUrls = () => {
+      if (!campaign?.id) return;
+      
+      try {
+        console.log('=== 브랜드 관리자 - 모니터링 URL 로딩 시작 ===');
+        console.log('캠페인 ID:', campaign.id);
+        
+        const urls = analyticsService.getMonitoringUrls(campaign.id);
+        setMonitoringUrls(urls);
+        
+        console.log('=== 로딩된 모니터링 URL ===');
+        console.log('URL 개수:', urls.length);
+        urls.forEach(url => {
+          console.log(`- ${url.platform}: ${url.influencerName} - ${url.url}`);
+        });
+      } catch (error) {
+        console.error('모니터링 URL 로딩 실패:', error);
+        toast({
+          title: "URL 로딩 실패",
+          description: "모니터링 URL을 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadMonitoringUrls();
+  }, [campaign?.id, toast]);
+
   return (
     <div className="flex min-h-screen w-full">
       <BrandSidebar />
@@ -435,19 +468,16 @@ const CampaignDetail = () => {
           </TabsContent>
 
           <TabsContent value="monitoring" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Video className="w-5 h-5 mr-2" />
-                  성과 모니터링
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  성과 모니터링 기능이 곧 추가될 예정입니다.
-                </div>
-              </CardContent>
-            </Card>
+            {/* 브랜드 관리자용 읽기 전용 모니터링 뷰 */}
+            <BrandMonitoringView
+              campaignId={campaign.id}
+              confirmedInfluencers={confirmedInfluencers.map(inf => ({
+                id: inf.id,
+                name: inf.name,
+                platform: inf.platform || '기타'
+              }))}
+              monitoringUrls={monitoringUrls}
+            />
           </TabsContent>
         </Tabs>
       </div>

@@ -950,7 +950,7 @@ const AdminCampaignDetail = () => {
             <ChinesePlatformStats urls={monitoringUrls} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 좌측: URL 입력 */}
+              {/* 좌측: URL 입력 - 시스템 관리자만 사용 가능 */}
               <div>
                 <ChinesePlatformUrlInput
                   confirmedInfluencers={confirmedInfluencers.map(inf => ({
@@ -962,7 +962,7 @@ const AdminCampaignDetail = () => {
                 />
               </div>
 
-              {/* 우측: URL 목록 */}
+              {/* 우측: URL 목록 - 시스템 관리자만 편집 가능 */}
               <div>
                 <MonitoringUrlList
                   urls={monitoringUrls}
