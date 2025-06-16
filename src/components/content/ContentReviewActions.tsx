@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, MessageSquare, Send } from 'lucide-react';
+import { CheckCircle, MessageSquare } from 'lucide-react';
 import { ContentReviewDetail } from '@/types/content';
 
 interface ContentReviewActionsProps {
@@ -18,7 +18,6 @@ const ContentReviewActions: React.FC<ContentReviewActionsProps> = ({
   selectedContent,
   onApprove,
   onRequestRevision,
-  onSubmitRevision,
   canReviewContent,
   hasContentFiles,
   showRevisionForm
@@ -58,31 +57,7 @@ const ContentReviewActions: React.FC<ContentReviewActionsProps> = ({
           </>
         )}
 
-        {/* 시스템 관리자 버튼들 */}
-        {isAdminView && hasPendingRevision && (
-          <Button
-            onClick={onSubmitRevision}
-            className="bg-blue-600 hover:bg-blue-700 px-8"
-            disabled={!showRevisionForm}
-          >
-            <Send className="w-4 h-4 mr-2" />
-            {selectedContent.currentReviewRevision}차 검수 피드백 전송
-          </Button>
-        )}
-
-        {/* 수정요청 전송 버튼 (피드백 작성 중) */}
-        {showRevisionForm && (
-          <Button
-            onClick={onSubmitRevision}
-            className={isBrandView ? "bg-orange-600 hover:bg-orange-700 px-8" : "bg-blue-600 hover:bg-blue-700 px-8"}
-          >
-            <Send className="w-4 h-4 mr-2" />
-            {isBrandView 
-              ? `${(selectedContent.currentReviewRevision || 0) + 1}차 수정요청 전송`
-              : `${selectedContent.currentReviewRevision}차 피드백 전송`
-            }
-          </Button>
-        )}
+        {/* 시스템 관리자는 피드백 섹션에서 처리하므로 여기서는 버튼 표시하지 않음 */}
       </div>
       
       <p className="text-xs text-gray-500 text-center">

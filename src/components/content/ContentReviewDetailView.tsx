@@ -64,14 +64,25 @@ const ContentReviewDetailView: React.FC<ContentReviewDetailViewProps> = ({
   const handleSubmitFeedback = () => {
     if (!selectedContent) return;
     
+    // 업로드된 파일이 있는지 확인
+    const uploadedFiles = (window as any).uploadedContentFiles || [];
+    
     if (isBrandView) {
       onRequestRevision(selectedContent.id, revisionFeedback);
     } else if (isAdminView) {
+      // 시스템 관리자의 경우 업로드된 파일과 함께 피드백 전송
+      if (uploadedFiles.length > 0) {
+        // contentReview.service.ts의 submitContentRevision 함수 호출
+        console.log('업로드된 파일과 함께 피드백 전송:', uploadedFiles);
+        // TODO: 실제 서비스 호출 시 파일 정보 전달
+      }
       onSubmitRevision(selectedContent.id, revisionFeedback);
     }
     
     setRevisionFeedback('');
     setShowRevisionForm(false);
+    // 업로드된 파일 정보 초기화
+    delete (window as any).uploadedContentFiles;
   };
 
   if (!selectedContent) {
@@ -88,6 +99,10 @@ const ContentReviewDetailView: React.FC<ContentReviewDetailViewProps> = ({
       </div>
     );
   }
+
+  // pending revision이 있는 시스템 관리자는 자동으로 피드백 폼 표시
+  const shouldShowFeedbackForm = showRevisionForm || 
+    (isAdminView && selectedContent.reviewRevisions?.some(rev => rev.status === 'pending'));
 
   return (
     <div className="h-full flex flex-col">
@@ -110,7 +125,7 @@ const ContentReviewDetailView: React.FC<ContentReviewDetailViewProps> = ({
 
         <CardContent className="flex-1 overflow-auto">
           <div className="space-y-6">
-            {/* 콘텐츠 미리보기 - 새로운 MediaPreview 컴포넌트 사용 */}
+            {/* 콘텐츠 미리보기 */}
             <MediaPreview files={selectedContent.contentFiles} />
 
             {/* 검수 히스토리 */}
@@ -121,30 +136,33 @@ const ContentReviewDetailView: React.FC<ContentReviewDetailViewProps> = ({
             {/* 피드백 섹션 */}
             <ContentReviewFeedbackSection
               selectedContent={selectedContent}
-              showRevisionForm={showRevisionForm}
+              showRevisionForm={shouldShowFeedbackForm}
               revisionFeedback={revisionFeedback}
               setRevisionFeedback={setRevisionFeedback}
               onSubmitFeedback={handleSubmitFeedback}
               onCancelRevision={() => {
                 setShowRevisionForm(false);
                 setRevisionFeedback('');
+                delete (window as any).uploadedContentFiles;
               }}
             />
           </div>
         </CardContent>
 
-        {/* 액션 버튼 - 고정 하단 */}
-        <div className="flex-shrink-0 border-t bg-gray-50 px-6 py-4">
-          <ContentReviewActions
-            selectedContent={selectedContent}
-            onApprove={onApprove}
-            onRequestRevision={() => setShowRevisionForm(true)}
-            onSubmitRevision={handleSubmitFeedback}
-            canReviewContent={canReviewContent}
-            hasContentFiles={hasContentFiles}
-            showRevisionForm={showRevisionForm}
-          />
-        </div>
+        {/* 액션 버튼 - 브랜드 관리자만 표시 */}
+        {isBrandView && (
+          <div className="flex-shrink-0 border-t bg-gray-50 px-6 py-4">
+            <ContentReviewActions
+              selectedContent={selectedContent}
+              onApprove={onApprove}
+              onRequestRevision={() => setShowRevisionForm(true)}
+              onSubmitRevision={handleSubmitFeedback}
+              canReviewContent={canReviewContent}
+              hasContentFiles={hasContentFiles}
+              showRevisionForm={showRevisionForm}
+            />
+          </div>
+        )}
       </Card>
     </div>
   );

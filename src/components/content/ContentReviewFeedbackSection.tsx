@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare } from 'lucide-react';
-import { ContentReviewDetail } from '@/types/content';
+import { MessageSquare, Send } from 'lucide-react';
+import { ContentReviewDetail, ContentFile } from '@/types/content';
+import AdminContentUploadForm from './AdminContentUploadForm';
 
 interface ContentReviewFeedbackSectionProps {
   selectedContent: ContentReviewDetail;
@@ -23,12 +24,23 @@ const ContentReviewFeedbackSection: React.FC<ContentReviewFeedbackSectionProps> 
   onSubmitFeedback,
   onCancelRevision
 }) => {
+  const [uploadedFiles, setUploadedFiles] = useState<ContentFile[]>([]);
+  
   // 시스템 관리자인지 확인 (URL 기반)
   const isAdminView = window.location.pathname.includes('/admin/');
   // 브랜드 관리자인지 확인 (URL 기반)
   const isBrandView = window.location.pathname.includes('/brand/');
 
   const hasPendingRevision = selectedContent.reviewRevisions?.some(rev => rev.status === 'pending');
+
+  const handleSubmitWithFiles = () => {
+    // 업로드된 파일이 있으면 onSubmitFeedback에 파일 정보 전달
+    if (uploadedFiles.length > 0) {
+      // 파일 정보를 전역 상태나 context에 저장하여 상위 컴포넌트에서 사용할 수 있도록 함
+      (window as any).uploadedContentFiles = uploadedFiles;
+    }
+    onSubmitFeedback();
+  };
 
   // 브랜드 관리자용: 수정요청 작성 폼
   if (isBrandView && showRevisionForm) {
@@ -75,7 +87,7 @@ const ContentReviewFeedbackSection: React.FC<ContentReviewFeedbackSectionProps> 
   }
 
   // 시스템 관리자용: 수정 피드백 폼 (pending revision이 있을 때)
-  if (isAdminView && hasPendingRevision && showRevisionForm) {
+  if (isAdminView && hasPendingRevision) {
     const pendingRevision = selectedContent.reviewRevisions?.find(rev => rev.status === 'pending');
     
     return (
@@ -88,7 +100,7 @@ const ContentReviewFeedbackSection: React.FC<ContentReviewFeedbackSectionProps> 
         </div>
         
         {pendingRevision && (
-          <div className="mb-3 p-2 bg-white rounded border">
+          <div className="mb-4 p-3 bg-white rounded border">
             <p className="text-sm font-medium text-gray-700 mb-2">브랜드의 수정요청:</p>
             <div className="text-sm text-gray-600">
               {pendingRevision.feedback}
@@ -96,9 +108,17 @@ const ContentReviewFeedbackSection: React.FC<ContentReviewFeedbackSectionProps> 
           </div>
         )}
 
+        {/* 수정된 콘텐츠 업로드 섹션 */}
+        <div className="mb-4">
+          <AdminContentUploadForm
+            onFilesChange={setUploadedFiles}
+            contentType={selectedContent.contentType}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="revision-response" className="text-sm font-medium">
-            수정 완료 피드백
+            수정 완료 피드백 (선택사항)
           </Label>
           <Textarea
             id="revision-response"
@@ -112,10 +132,12 @@ const ContentReviewFeedbackSection: React.FC<ContentReviewFeedbackSectionProps> 
 
         <div className="flex gap-2 mt-4">
           <Button
-            onClick={onSubmitFeedback}
+            onClick={handleSubmitWithFiles}
             className="bg-blue-600 hover:bg-blue-700"
+            disabled={uploadedFiles.length === 0}
           >
-            피드백 전송
+            <Send className="w-4 h-4 mr-2" />
+            {selectedContent.currentReviewRevision}차 검수 피드백 전송
           </Button>
           <Button
             variant="outline"
