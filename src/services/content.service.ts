@@ -1,4 +1,3 @@
-
 import { ContentPlanDetail, ImagePlanData, VideoPlanData } from '@/types/content';
 
 const CONTENT_PLANS_KEY = 'content_plans';
@@ -17,6 +16,44 @@ class ContentService {
           resolve([]);
         }
       }, 200);
+    });
+  };
+
+  getAllContentPlans = async (): Promise<ContentPlanDetail[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        try {
+          const stored = localStorage.getItem(CONTENT_PLANS_KEY);
+          const allPlans: ContentPlanDetail[] = stored ? JSON.parse(stored) : [];
+          resolve(allPlans);
+        } catch (error) {
+          console.error('전체 콘텐츠 기획안 로딩 실패:', error);
+          resolve([]);
+        }
+      }, 200);
+    });
+  };
+
+  deleteContentPlan = async (planId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const stored = localStorage.getItem(CONTENT_PLANS_KEY);
+          const allPlans: ContentPlanDetail[] = stored ? JSON.parse(stored) : [];
+          
+          const updatedPlans = allPlans.filter(plan => plan.id !== planId);
+          
+          if (updatedPlans.length === allPlans.length) {
+            throw new Error('삭제할 기획안을 찾을 수 없습니다');
+          }
+          
+          localStorage.setItem(CONTENT_PLANS_KEY, JSON.stringify(updatedPlans));
+          resolve();
+        } catch (error) {
+          console.error('콘텐츠 기획안 삭제 실패:', error);
+          reject(error);
+        }
+      }, 300);
     });
   };
 
