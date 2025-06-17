@@ -8,25 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Search, TrendingUp, MessageSquare, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MarketResearchReportModal from './MarketResearchReportModal';
-
-interface Brand {
-  id: string;
-  name: string;
-  category: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  brandId: string;
-}
+import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 
 interface MarketResearchCrawlerProps {
   selectedBrand: string;
   selectedProduct: string;
-  brands: Brand[];
-  products: Product[];
+  brands: BrandType[];
+  products: ProductType[];
   onBrandChange: (brandId: string) => void;
   onProductChange: (productId: string) => void;
   onResearchComplete: (reportData: any) => void;
@@ -125,7 +113,7 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
                 <SelectContent>
                   {brands.map((brand) => (
                     <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name} ({brand.category})
+                      {brand.name} ({brand.category || '카테고리 없음'})
                     </SelectItem>
                   ))}
                 </SelectContent>
