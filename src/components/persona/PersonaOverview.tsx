@@ -5,19 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Brain, Users, TrendingUp, Target } from 'lucide-react';
-
-interface Brand {
-  id: string;
-  name: string;
-  category: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  brandId: string;
-}
+import { Brand, Product } from '@/types/brand';
 
 interface PersonaOverviewProps {
   brands: Brand[];
@@ -67,7 +55,7 @@ const PersonaOverview: React.FC<PersonaOverviewProps> = ({
                 <SelectContent>
                   {brands.map((brand) => (
                     <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name} ({brand.category})
+                      {brand.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
