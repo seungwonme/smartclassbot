@@ -1,37 +1,58 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Brain, Eye, Edit3, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MarketInsightComparison from './MarketInsightComparison';
 import PersonaValidation from './PersonaValidation';
 
-interface Product {
+interface Brand {
   id: string;
   name: string;
   category: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  brandId: string;
+}
+
 interface PersonaGeneratorProps {
+  selectedBrand: string;
   selectedProduct: string;
+  brands: Brand[];
   products: Product[];
-  onProductChange: (productId: string) => void;
+  savedReports: any[];
+  onPersonaGenerated: (personaData: any) => void;
+  savedPersonas: any[];
 }
 
 const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
+  selectedBrand,
   selectedProduct,
+  brands,
   products,
-  onProductChange
+  savedReports,
+  onPersonaGenerated,
+  savedPersonas
 }) => {
   const { toast } = useToast();
+  const [selectedReport, setSelectedReport] = useState<string>('');
   const [generationProgress, setGenerationProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPersonas, setGeneratedPersonas] = useState<any[]>([]);
   const [selectedPersona, setSelectedPersona] = useState<any>(null);
+
+  // 선택된 브랜드와 제품에 해당하는 리포트 필터링
+  const filteredReports = savedReports.filter(report => 
+    report.brandId === selectedBrand && report.productId === selectedProduct
+  );
 
   // 모의 AI 생성 페르소나 데이터
   const mockGeneratedPersonas = [
@@ -119,6 +140,15 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   ];
 
   const handleGeneratePersonas = async () => {
+    if (!selectedReport) {
+      toast({
+        title: "시장조사 리포트를 선택해주세요",
+        description: "페르소나 생성을 위해 먼저 시장조사 리포트를 선택해야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setGenerationProgress(0);
 
@@ -137,8 +167,57 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
     });
   };
 
+  const handleSavePersona = (persona: any) => {
+    const savedPersona = {
+      ...persona,
+      id: Date.now().toString(),
+      brandId: selectedBrand,
+      productId: selectedProduct,
+      createdAt: new Date().toISOString(),
+    };
+
+    onPersonaGenerated(savedPersona);
+    
+    toast({
+      title: "페르소나 저장 완료",
+      description: `${persona.name} 페르소나가 저장되었습니다.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* 시장조사 리포트 선택 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5" />
+            시장조사 리포트 선택
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">저장된 시장조사 리포트</label>
+            <Select value={selectedReport} onValueChange={setSelectedReport}>
+              <SelectTrigger>
+                <SelectValue placeholder="시장조사 리포트를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredReports.map((report) => (
+                  <SelectItem key={report.id} value={report.id}>
+                    {report.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filteredReports.length === 0 && (
+              <p className="text-sm text-gray-500 mt-2">
+                선택된 브랜드와 제품에 대한 시장조사 리포트가 없습니다. 먼저 시장조사를 진행해주세요.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* AI 페르소나 생성 */}
       <Card>
         <CardHeader>
@@ -156,14 +235,14 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
               </div>
               <Progress value={generationProgress} />
               <div className="text-sm text-gray-600 text-center">
-                중국 시장 데이터를 분석하여 페르소나를 생성하고 있습니다...
+                시장조사 데이터를 분석하여 페르소나를 생성하고 있습니다...
               </div>
             </div>
           )}
 
           <Button 
             onClick={handleGeneratePersonas}
-            disabled={isGenerating}
+            disabled={isGenerating || !selectedReport}
             className="w-full"
           >
             {isGenerating ? 'AI 분석 중...' : 'AI 페르소나 생성 시작'}
@@ -202,6 +281,16 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
                   <div className="text-xs text-gray-500">
                     월 검색량: {persona.marketData.searchVolume.toLocaleString()}
                   </div>
+                  <Button 
+                    size="sm" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSavePersona(persona);
+                    }}
+                    className="w-full mt-2"
+                  >
+                    페르소나 저장
+                  </Button>
                 </CardContent>
               </Card>
             ))}

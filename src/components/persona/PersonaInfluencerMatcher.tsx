@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,11 +10,15 @@ import { useToast } from '@/hooks/use-toast';
 interface PersonaInfluencerMatcherProps {
   activePersona: string | null;
   selectedProduct: string;
+  savedPersonas: any[];
+  onPersonaSelect: (personaId: string) => void;
 }
 
 const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
   activePersona,
-  selectedProduct
+  selectedProduct,
+  savedPersonas,
+  onPersonaSelect
 }) => {
   const { toast } = useToast();
   const [budgetRange, setBudgetRange] = useState('');
@@ -130,6 +133,8 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
     return platform === '샤오홍슈' ? '📕' : '🎵';
   };
 
+  const selectedPersonaData = savedPersonas.find(p => p.id === activePersona);
+
   return (
     <div className="space-y-6">
       {/* 매칭 설정 */}
@@ -143,17 +148,27 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">활성 페르소나</label>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                {activePersona ? (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">선택됨</Badge>
-                    <span className="text-sm">젊은 뷰티 얼리어답터</span>
+              <label className="text-sm font-medium mb-2 block">페르소나 선택</label>
+              <Select value={activePersona || ''} onValueChange={onPersonaSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="페르소나를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedPersonas.map((persona) => (
+                    <SelectItem key={persona.id} value={persona.id}>
+                      {persona.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedPersonaData && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                  <div className="font-medium">{selectedPersonaData.name}</div>
+                  <div className="text-gray-600">
+                    {selectedPersonaData.demographics?.age} • {selectedPersonaData.demographics?.location}
                   </div>
-                ) : (
-                  <span className="text-sm text-gray-500">페르소나를 먼저 선택해주세요</span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">예산 범위</label>
