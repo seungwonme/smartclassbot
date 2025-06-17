@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,15 +17,25 @@ interface CampaignTargetContentStepProps {
   setFormData: React.Dispatch<React.SetStateAction<CampaignFormData>>;
   isPersonaBased?: boolean;
   personaData?: any;
+  applyTargetContentPersonaData?: () => void;
 }
 
 const CampaignTargetContentStep: React.FC<CampaignTargetContentStepProps> = ({
   formData,
   setFormData,
   isPersonaBased = false,
-  personaData
+  personaData,
+  applyTargetContentPersonaData
 }) => {
   const [customCategory, setCustomCategory] = useState('');
+
+  // Apply persona data when entering this step
+  useEffect(() => {
+    if (isPersonaBased && personaData && applyTargetContentPersonaData) {
+      console.log('🎯 타겟 콘텐츠 단계 진입 - 페르소나 데이터 적용');
+      applyTargetContentPersonaData();
+    }
+  }, [isPersonaBased, personaData, applyTargetContentPersonaData]);
 
   const handleCategoryToggle = (category: string) => {
     setFormData(prev => ({

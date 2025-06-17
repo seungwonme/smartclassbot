@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ interface CampaignInfluencerStepProps {
   handleInfluencerToggle: (influencerId: string) => void;
   isPersonaBased?: boolean;
   personaData?: any;
+  applyInfluencerPersonaData?: () => void;
 }
 
 const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
@@ -47,10 +48,19 @@ const CampaignInfluencerStep: React.FC<CampaignInfluencerStepProps> = ({
   handleAIRecommendation,
   handleInfluencerToggle,
   isPersonaBased = false,
-  personaData
+  personaData,
+  applyInfluencerPersonaData
 }) => {
   const [selectedPersona, setSelectedPersona] = useState<string>('');
   const [isPersonaDialogOpen, setIsPersonaDialogOpen] = useState(false);
+
+  // Apply persona data when entering this step
+  useEffect(() => {
+    if (isPersonaBased && personaData && applyInfluencerPersonaData) {
+      console.log('🎯 인플루언서 단계 진입 - 페르소나 데이터 적용');
+      applyInfluencerPersonaData();
+    }
+  }, [isPersonaBased, personaData, applyInfluencerPersonaData]);
 
   const formatFollowers = (count: number): string => {
     if (count >= 1000000) {

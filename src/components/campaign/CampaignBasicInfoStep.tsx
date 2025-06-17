@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +28,7 @@ interface CampaignBasicInfoStepProps {
   handleProductChange: (productId: string) => void;
   isPersonaBased?: boolean;
   personaData?: any;
+  applyBasicInfoPersonaData?: () => void;
 }
 
 const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
@@ -43,18 +43,16 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
   handleBrandChange,
   handleProductChange,
   isPersonaBased = false,
-  personaData
+  personaData,
+  applyBasicInfoPersonaData
 }) => {
-  console.log('🎬 CampaignBasicInfoStep 렌더링:', {
-    dataLoading,
-    brandsLoaded,
-    productsLoaded,
-    brandsCount: brands.length,
-    filteredProductsCount: filteredProducts.length,
-    selectedBrandId: formData.brandId,
-    selectedProductId: formData.productId,
-    isPersonaBased
-  });
+  // Apply persona data when entering this step
+  useEffect(() => {
+    if (isPersonaBased && personaData && applyBasicInfoPersonaData && brandsLoaded && productsLoaded) {
+      console.log('🎯 기본정보 단계 진입 - 페르소나 데이터 적용');
+      applyBasicInfoPersonaData();
+    }
+  }, [isPersonaBased, personaData, applyBasicInfoPersonaData, brandsLoaded, productsLoaded]);
 
   const handleRetryDataLoad = () => {
     console.log('🔄 데이터 재로딩 시도');

@@ -33,16 +33,11 @@ const CreateCampaign = () => {
     handlePersonaRecommendation,
     handleAIRecommendation,
     handleInfluencerToggle,
-    handleSubmit
+    handleSubmit,
+    applyBasicInfoPersonaData,
+    applyTargetContentPersonaData,
+    applyInfluencerPersonaData
   } = useCampaignForm();
-
-  console.log('🎬 CreateCampaign 렌더링:', {
-    dataLoading,
-    brandsLoaded,
-    productsLoaded,
-    currentStep,
-    isPersonaBased
-  });
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -61,6 +56,7 @@ const CreateCampaign = () => {
             handleProductChange={handleProductChange}
             isPersonaBased={isPersonaBased}
             personaData={personaData}
+            applyBasicInfoPersonaData={applyBasicInfoPersonaData}
           />
         );
       case 2:
@@ -70,6 +66,7 @@ const CreateCampaign = () => {
             setFormData={setFormData}
             isPersonaBased={isPersonaBased}
             personaData={personaData}
+            applyTargetContentPersonaData={applyTargetContentPersonaData}
           />
         );
       case 3:
@@ -84,6 +81,7 @@ const CreateCampaign = () => {
             handleInfluencerToggle={handleInfluencerToggle}
             isPersonaBased={isPersonaBased}
             personaData={personaData}
+            applyInfluencerPersonaData={applyInfluencerPersonaData}
           />
         );
       default:
