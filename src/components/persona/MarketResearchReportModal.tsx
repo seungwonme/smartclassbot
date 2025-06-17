@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +22,7 @@ const MarketResearchReportModal: React.FC<MarketResearchReportModalProps> = ({
   trigger
 }) => {
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSaveReport = () => {
     const currentDate = new Date().toISOString().split('T')[0];
@@ -43,6 +43,9 @@ const MarketResearchReportModal: React.FC<MarketResearchReportModalProps> = ({
       title: "시장조사 리포트 저장 완료",
       description: `${reportName} 리포트가 저장되었습니다.`,
     });
+
+    // 모달 닫기
+    setIsOpen(false);
   };
 
   const mockDetailedData = {
@@ -81,7 +84,7 @@ const MarketResearchReportModal: React.FC<MarketResearchReportModalProps> = ({
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">
