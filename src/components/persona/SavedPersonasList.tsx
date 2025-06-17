@@ -2,15 +2,24 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
 
 interface SavedPersonasListProps {
   savedPersonas: any[];
+  onPersonaDetail?: (persona: any) => void;
 }
 
 const SavedPersonasList: React.FC<SavedPersonasListProps> = ({
-  savedPersonas
+  savedPersonas,
+  onPersonaDetail
 }) => {
   if (savedPersonas.length === 0) return null;
+
+  const handleDetailClick = (persona: any) => {
+    if (onPersonaDetail) {
+      onPersonaDetail(persona);
+    }
+  };
 
   return (
     <Card>
@@ -32,7 +41,13 @@ const SavedPersonasList: React.FC<SavedPersonasListProps> = ({
                   </div>
                 )}
               </div>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleDetailClick(persona)}
+                className="flex items-center gap-2"
+              >
+                <Eye className="w-4 h-4" />
                 상세보기
               </Button>
             </div>

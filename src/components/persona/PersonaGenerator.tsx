@@ -6,6 +6,7 @@ import ReportPreview from './ReportPreview';
 import PersonaGenerationPanel from './PersonaGenerationPanel';
 import SavedPersonasList from './SavedPersonasList';
 import { storageService } from '@/services/storage.service';
+import PersonaDetailModal from './PersonaDetailModal';
 
 interface PersonaGeneratorProps {
   selectedBrand: string;
@@ -38,6 +39,8 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const [selectedReport, setSelectedReport] = useState<string>('');
   const [savedReports, setSavedReports] = useState(initialSavedReports);
   const [savedPersonas, setSavedPersonas] = useState(initialSavedPersonas);
+  const [selectedPersonaDetail, setSelectedPersonaDetail] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Props로 받은 데이터 동기화
   useEffect(() => {
@@ -113,7 +116,7 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const isRecentReport = (reportDate: string) => {
     const reportTime = new Date(reportDate).getTime();
     const thirtyDaysAgo = new Date().getTime() - (30 * 24 * 60 * 60 * 1000);
-    return reportTime > thirtyDaysAgo;
+    return reportTime > reportTime > thirtyDaysAgo;
   };
 
   const handleGeneratePersona = async () => {
@@ -198,6 +201,25 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
     }
   };
 
+  const handlePersonaDetail = (persona: any) => {
+    setSelectedPersonaDetail(persona);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleDetailModalClose = () => {
+    setIsDetailModalOpen(false);
+    setSelectedPersonaDetail(null);
+  };
+
+  const handleStartMatchingFromDetail = (personaId: string) => {
+    // 인플루언서 매칭 탭으로 이동하는 로직을 상위 컴포넌트에 위임
+    // 여기서는 단순히 토스트 메시지만 표시
+    toast({
+      title: "인플루언서 매칭",
+      description: "인플루언서 매칭 탭으로 이동하여 매칭을 진행해주세요.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PersonaSelectionControls
@@ -230,7 +252,17 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
         onSavePersona={handleSavePersona}
       />
 
-      <SavedPersonasList savedPersonas={savedPersonas} />
+      <SavedPersonasList 
+        savedPersonas={savedPersonas} 
+        onPersonaDetail={handlePersonaDetail}
+      />
+
+      <PersonaDetailModal
+        persona={selectedPersonaDetail}
+        isOpen={isDetailModalOpen}
+        onClose={handleDetailModalClose}
+        onStartMatching={handleStartMatchingFromDetail}
+      />
     </div>
   );
 };
