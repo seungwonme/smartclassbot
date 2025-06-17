@@ -8,7 +8,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, Users, Sparkles } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Calendar as CalendarIcon, Users, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,9 @@ interface CampaignBasicInfoStepProps {
   setFormData: React.Dispatch<React.SetStateAction<CampaignFormData>>;
   brands: Brand[];
   filteredProducts: Product[];
+  dataLoading?: boolean;
+  brandsLoaded?: boolean;
+  productsLoaded?: boolean;
   handleBudgetChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleBrandChange: (brandId: string) => void;
   handleProductChange: (productId: string) => void;
@@ -32,16 +36,157 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
   setFormData,
   brands,
   filteredProducts,
+  dataLoading = false,
+  brandsLoaded = false,
+  productsLoaded = false,
   handleBudgetChange,
   handleBrandChange,
   handleProductChange,
   isPersonaBased = false,
   personaData
 }) => {
-  console.log('CampaignBasicInfoStep - brands 데이터:', brands);
-  console.log('CampaignBasicInfoStep - filteredProducts 데이터:', filteredProducts);
-  console.log('CampaignBasicInfoStep - formData.brandId:', formData.brandId);
-  console.log('CampaignBasicInfoStep - isPersonaBased:', isPersonaBased);
+  console.log('🎬 CampaignBasicInfoStep 렌더링:', {
+    dataLoading,
+    brandsLoaded,
+    productsLoaded,
+    brandsCount: brands.length,
+    filteredProductsCount: filteredProducts.length,
+    selectedBrandId: formData.brandId,
+    selectedProductId: formData.productId,
+    isPersonaBased
+  });
+
+  const handleRetryDataLoad = () => {
+    console.log('🔄 데이터 재로딩 시도');
+    window.location.reload();
+  };
+
+  const renderBrandSelect = () => {
+    if (dataLoading || !brandsLoaded) {
+      return (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      );
+    }
+
+    if (brands.length === 0) {
+      return (
+        <div className="space-y-2">
+          <Label>브랜드</Label>
+          <div className="flex items-center gap-2">
+            <Select disabled>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="브랜드 데이터를 불러올 수 없습니다" />
+              </SelectTrigger>
+            </Select>
+            <Button onClick={handleRetryDataLoad} size="sm" variant="outline">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-red-600">
+            브랜드 데이터 로딩에 실패했습니다. 새로고침 버튼을 눌러주세요.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <Label htmlFor="brand" className="flex items-center gap-2">
+          브랜드
+          {isPersonaBased && formData.brandId && (
+            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+              자동 설정됨
+            </Badge>
+          )}
+        </Label>
+        <Select value={formData.brandId} onValueChange={handleBrandChange}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="브랜드를 선택하세요" />
+          </SelectTrigger>
+          <SelectContent className="bg-white border shadow-lg z-50">
+            {brands.map((brand) => (
+              <SelectItem key={brand.id} value={brand.id}>
+                {brand.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
+
+  const renderProductSelect = () => {
+    if (dataLoading || !productsLoaded) {
+      return (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      );
+    }
+
+    if (!formData.brandId) {
+      return (
+        <div>
+          <Label htmlFor="product">제품</Label>
+          <Select disabled>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="먼저 브랜드를 선택하세요" />
+            </SelectTrigger>
+          </Select>
+        </div>
+      );
+    }
+
+    if (filteredProducts.length === 0) {
+      return (
+        <div>
+          <Label htmlFor="product">제품</Label>
+          <div className="flex items-center gap-2">
+            <Select disabled>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="해당 브랜드에 제품이 없습니다" />
+              </SelectTrigger>
+            </Select>
+            <Button onClick={handleRetryDataLoad} size="sm" variant="outline">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-red-600">
+            선택한 브랜드에 제품이 없습니다. 데이터를 확인해주세요.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <Label htmlFor="product" className="flex items-center gap-2">
+          제품
+          {isPersonaBased && formData.productId && (
+            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+              자동 설정됨
+            </Badge>
+          )}
+        </Label>
+        <Select value={formData.productId} onValueChange={handleProductChange}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="제품을 선택하세요" />
+          </SelectTrigger>
+          <SelectContent className="bg-white border shadow-lg z-50">
+            {filteredProducts.map((product) => (
+              <SelectItem key={product.id} value={product.id}>
+                {product.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
 
   return (
     <Card>
@@ -53,6 +198,9 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
               <Users className="w-3 h-3 mr-1" />
               페르소나 기반
             </Badge>
+          )}
+          {dataLoading && (
+            <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
           )}
         </CardTitle>
         {isPersonaBased && personaData && (
@@ -80,66 +228,8 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="brand" className="flex items-center gap-2">
-              브랜드
-              {isPersonaBased && formData.brandId && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  자동 설정됨
-                </Badge>
-              )}
-            </Label>
-            <Select value={formData.brandId} onValueChange={handleBrandChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="브랜드를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {brands.length > 0 ? (
-                  brands.map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-brands" disabled>
-                    브랜드 데이터를 로드 중...
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="product" className="flex items-center gap-2">
-              제품
-              {isPersonaBased && formData.productId && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  자동 설정됨
-                </Badge>
-              )}
-            </Label>
-            <Select 
-              value={formData.productId} 
-              onValueChange={handleProductChange}
-              disabled={!formData.brandId}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="제품을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-products" disabled>
-                    {!formData.brandId ? "먼저 브랜드를 선택하세요" : "제품 데이터를 로드 중..."}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          {renderBrandSelect()}
+          {renderProductSelect()}
         </div>
 
         <div>
@@ -278,7 +368,7 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border shadow-lg z-50">
               <SelectItem value="branding">브랜딩</SelectItem>
               <SelectItem value="live-commerce">라이브커머스</SelectItem>
             </SelectContent>

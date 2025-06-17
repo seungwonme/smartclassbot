@@ -16,6 +16,9 @@ const CreateCampaign = () => {
     currentStep,
     setCurrentStep,
     isLoading,
+    dataLoading,
+    brandsLoaded,
+    productsLoaded,
     formData,
     setFormData,
     brands,
@@ -33,6 +36,14 @@ const CreateCampaign = () => {
     handleSubmit
   } = useCampaignForm();
 
+  console.log('🎬 CreateCampaign 렌더링:', {
+    dataLoading,
+    brandsLoaded,
+    productsLoaded,
+    currentStep,
+    isPersonaBased
+  });
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
@@ -42,6 +53,9 @@ const CreateCampaign = () => {
             setFormData={setFormData}
             brands={brands}
             filteredProducts={filteredProducts}
+            dataLoading={dataLoading}
+            brandsLoaded={brandsLoaded}
+            productsLoaded={productsLoaded}
             handleBudgetChange={handleBudgetChange}
             handleBrandChange={handleBrandChange}
             handleProductChange={handleProductChange}
@@ -134,6 +148,7 @@ const CreateCampaign = () => {
               <Button
                 onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
                 className="bg-green-600 hover:bg-green-700"
+                disabled={currentStep === 1 && (!formData.brandId || !formData.productId)}
               >
                 다음
               </Button>

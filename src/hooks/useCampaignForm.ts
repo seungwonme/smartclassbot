@@ -36,6 +36,9 @@ export const useCampaignForm = (campaignId?: string) => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [brandsLoaded, setBrandsLoaded] = useState(false);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [recommendedInfluencers, setRecommendedInfluencers] = useState<CampaignInfluencer[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -67,15 +70,62 @@ export const useCampaignForm = (campaignId?: string) => {
     selectedInfluencers: []
   });
 
-  // Check for persona-based campaign data on mount
+  // Step 1: Load brand and product data first with improved state management
+  useEffect(() => {
+    const loadBrandProductData = async () => {
+      console.log('🔄 브랜드/제품 데이터 로딩 시작');
+      setDataLoading(true);
+      setBrandsLoaded(false);
+      setProductsLoaded(false);
+      
+      try {
+        console.log('📊 브랜드 데이터 요청 중...');
+        const brandsData = await brandService.getBrands();
+        console.log('✅ 브랜드 데이터 로드 완료:', brandsData.length, '개');
+        setBrands(brandsData);
+        setBrandsLoaded(true);
+        
+        console.log('📊 제품 데이터 요청 중...');
+        const productsData = await brandService.getProducts();
+        console.log('✅ 제품 데이터 로드 완료:', productsData.length, '개');
+        setProducts(productsData);
+        setProductsLoaded(true);
+        
+      } catch (error) {
+        console.error('❌ 브랜드/제품 데이터 로딩 실패:', error);
+        toast({
+          title: "데이터 로딩 실패",
+          description: "브랜드와 제품 데이터를 불러오는데 실패했습니다. 페이지를 새로고침해주세요.",
+          variant: "destructive"
+        });
+      } finally {
+        setDataLoading(false);
+        console.log('🏁 브랜드/제품 데이터 로딩 완료');
+      }
+    };
+
+    loadBrandProductData();
+  }, [toast]);
+
+  // Step 2: Handle persona-based auto-fill only after data is loaded
   useEffect(() => {
     const checkPersonaBasedData = () => {
+      console.log('🎭 페르소나 기반 데이터 확인 시작:', {
+        brandsLoaded,
+        productsLoaded,
+        brandsCount: brands.length,
+        productsCount: products.length
+      });
+
+      if (!brandsLoaded || !productsLoaded || brands.length === 0 || products.length === 0) {
+        console.log('⏳ 브랜드/제품 데이터 로딩 대기 중...');
+        return;
+      }
+
       try {
-        // Check URL parameters first
         const isPersonaFromUrl = searchParams.get('persona') === 'true';
         
         if (isPersonaFromUrl) {
-          // Get data from sessionStorage
           const sessionData = sessionStorage.getItem('personaBasedCampaignData');
           const localData = localStorage.getItem('campaignInfluencerData');
           
@@ -83,19 +133,42 @@ export const useCampaignForm = (campaignId?: string) => {
                               localData ? JSON.parse(localData) : null;
 
           if (campaignData && campaignData.autoFillData) {
-            console.log('페르소나 기반 캠페인 데이터 감지:', campaignData);
+            console.log('🎭 페르소나 기반 캠페인 데이터 감지:', campaignData);
+            
+            // Validate brand and product exist in loaded data
+            const brandExists = brands.find(b => b.id === campaignData.autoFillData.brandId);
+            const productExists = products.find(p => p.id === campaignData.autoFillData.productId);
+            
+            console.log('🔍 데이터 유효성 검사:', {
+              brandId: campaignData.autoFillData.brandId,
+              brandExists: !!brandExists,
+              brandName: brandExists?.name,
+              productId: campaignData.autoFillData.productId,
+              productExists: !!productExists,
+              productName: productExists?.name
+            });
+
+            if (!brandExists || !productExists) {
+              console.warn('⚠️ 페르소나 데이터의 브랜드/제품이 현재 데이터에 존재하지 않음');
+              toast({
+                title: "데이터 불일치",
+                description: "페르소나 기반 브랜드/제품 정보가 현재 데이터와 일치하지 않습니다.",
+                variant: "destructive"
+              });
+              return;
+            }
             
             setIsPersonaBased(true);
             setPersonaData(campaignData);
             
-            // Auto-fill form data
+            // Auto-fill form data with validated information
             setFormData(prev => ({
               ...prev,
               title: `${campaignData.persona?.name || ''} 페르소나 기반 캠페인`,
               brandId: campaignData.autoFillData.brandId,
-              brandName: campaignData.autoFillData.brandName,
+              brandName: brandExists.name,
               productId: campaignData.autoFillData.productId,
-              productName: campaignData.autoFillData.productName,
+              productName: productExists.name,
               budget: campaignData.autoFillData.budget,
               adType: campaignData.autoFillData.adType,
               targetContent: {
@@ -127,17 +200,23 @@ export const useCampaignForm = (campaignId?: string) => {
 
             // Clean up the session data
             sessionStorage.removeItem('personaBasedCampaignData');
+            console.log('✅ 페르소나 기반 자동 입력 완료');
           }
         }
       } catch (error) {
-        console.error('페르소나 데이터 로드 실패:', error);
+        console.error('❌ 페르소나 데이터 로드 실패:', error);
+        toast({
+          title: "페르소나 데이터 오류",
+          description: "페르소나 기반 정보를 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
       }
     };
 
     if (!isEditMode) {
       checkPersonaBasedData();
     }
-  }, [searchParams, isEditMode, toast]);
+  }, [searchParams, isEditMode, toast, brandsLoaded, productsLoaded, brands, products]);
 
   useEffect(() => {
     if (campaignId && isEditMode) {
@@ -201,18 +280,31 @@ export const useCampaignForm = (campaignId?: string) => {
     loadData();
   }, [toast]);
 
+  // Step 3: Update filtered products logic with better dependency management
   useEffect(() => {
-    if (formData.brandId) {
+    console.log('🔄 필터링된 제품 업데이트:', {
+      brandId: formData.brandId,
+      productsLoaded,
+      totalProducts: products.length
+    });
+
+    if (formData.brandId && productsLoaded) {
       const brandProducts = products.filter(p => p.brandId === formData.brandId);
+      console.log('📊 브랜드별 제품 필터링 결과:', {
+        brandId: formData.brandId,
+        filteredCount: brandProducts.length,
+        productNames: brandProducts.map(p => p.name)
+      });
       setFilteredProducts(brandProducts);
       
       if (formData.productId && !brandProducts.find(p => p.id === formData.productId)) {
+        console.log('⚠️ 현재 선택된 제품이 브랜드와 일치하지 않아 초기화');
         setFormData(prev => ({ ...prev, productId: '', productName: '' }));
       }
     } else {
       setFilteredProducts([]);
     }
-  }, [formData.brandId, products, formData.productId]);
+  }, [formData.brandId, products, productsLoaded, formData.productId]);
 
   const formatBudget = (value: string) => {
     const numbers = value.replace(/[^\d]/g, '');
@@ -225,7 +317,10 @@ export const useCampaignForm = (campaignId?: string) => {
   };
 
   const handleBrandChange = (brandId: string) => {
+    console.log('🏢 브랜드 변경:', brandId);
     const selectedBrand = brands.find(b => b.id === brandId);
+    console.log('🔍 선택된 브랜드:', selectedBrand);
+    
     setFormData(prev => ({
       ...prev,
       brandId,
@@ -236,7 +331,10 @@ export const useCampaignForm = (campaignId?: string) => {
   };
 
   const handleProductChange = (productId: string) => {
+    console.log('📦 제품 변경:', productId);
     const selectedProduct = filteredProducts.find(p => p.id === productId);
+    console.log('🔍 선택된 제품:', selectedProduct);
+    
     setFormData(prev => ({
       ...prev,
       productId,
@@ -384,6 +482,9 @@ export const useCampaignForm = (campaignId?: string) => {
     currentStep,
     setCurrentStep,
     isLoading,
+    dataLoading,
+    brandsLoaded,
+    productsLoaded,
     formData,
     setFormData,
     brands,
