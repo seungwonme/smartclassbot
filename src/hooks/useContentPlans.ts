@@ -83,18 +83,11 @@ export const useContentPlans = (campaignId: string | undefined, activeTab: strin
     if (!campaignId) return;
 
     try {
-      console.log('✅ 콘텐츠 기획 승인 처리 시작:', planId);
-      
       await contentService.updateContentPlan(campaignId, planId, { status: 'approved' });
 
-      // 즉시 로컬 상태 업데이트
-      setContentPlans(prev => {
-        const updated = prev.map(plan =>
-          plan.id === planId ? { ...plan, status: 'approved' as const } : plan
-        );
-        console.log('🔄 로컬 상태 즉시 업데이트 완료');
-        return updated;
-      });
+      setContentPlans(prev => prev.map(plan =>
+        plan.id === planId ? { ...plan, status: 'approved' } : plan
+      ));
 
       toast({
         title: "콘텐츠 기획 승인 완료",
@@ -103,15 +96,6 @@ export const useContentPlans = (campaignId: string | undefined, activeTab: strin
 
     } catch (error) {
       console.error('콘텐츠 기획 승인 실패:', error);
-      
-      // 에러 발생 시 데이터 다시 로드하여 일관성 보장
-      try {
-        const plans = await contentService.getContentPlans(campaignId);
-        setContentPlans(plans);
-      } catch (reloadError) {
-        console.error('리로드 실패:', reloadError);
-      }
-      
       toast({
         title: "승인 실패",
         description: "콘텐츠 기획 승인에 실패했습니다.",
@@ -124,8 +108,6 @@ export const useContentPlans = (campaignId: string | undefined, activeTab: strin
     if (!campaignId) return;
 
     try {
-      console.log('📝 콘텐츠 기획 수정 요청 처리 시작:', { planId, feedback });
-      
       const targetPlan = contentPlans.find(p => p.id === planId);
       
       const revisionNumber = (targetPlan?.currentRevisionNumber || 0) + 1;
@@ -150,14 +132,9 @@ export const useContentPlans = (campaignId: string | undefined, activeTab: strin
 
       await contentService.updateContentPlan(campaignId, planId, updatedPlan);
 
-      // 즉시 로컬 상태 업데이트
-      setContentPlans(prev => {
-        const updated = prev.map(plan =>
-          plan.id === planId ? updatedPlan : plan
-        );
-        console.log('🔄 수정 요청 로컬 상태 즉시 업데이트 완료');
-        return updated;
-      });
+      setContentPlans(prev => prev.map(plan =>
+        plan.id === planId ? updatedPlan : plan
+      ));
 
       toast({
         title: "수정 요청 완료",
@@ -166,15 +143,6 @@ export const useContentPlans = (campaignId: string | undefined, activeTab: strin
 
     } catch (error) {
       console.error('콘텐츠 기획 수정 요청 실패:', error);
-      
-      // 에러 발생 시 데이터 다시 로드하여 일관성 보장
-      try {
-        const plans = await contentService.getContentPlans(campaignId);
-        setContentPlans(plans);
-      } catch (reloadError) {
-        console.error('리로드 실패:', reloadError);
-      }
-      
       toast({
         title: "수정 요청 실패",
         description: "콘텐츠 기획 수정 요청에 실패했습니다.",
@@ -187,8 +155,6 @@ export const useContentPlans = (campaignId: string | undefined, activeTab: strin
     contentPlans,
     isContentLoading,
     handleContentPlanApprove,
-    handleContentPlanRevision,
-    // 외부에서 직접 상태를 업데이트할 수 있는 함수 추가
-    updateContentPlans: setContentPlans
+    handleContentPlanRevision
   };
 };
