@@ -33,6 +33,7 @@ import AdminContentPlanning from "./pages/AdminContentPlanning";
 import BrandInfluencers from "./pages/BrandInfluencers";
 import BrandAnalytics from "./pages/BrandAnalytics";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import BrandPersonaManagement from "./pages/BrandPersonaManagement";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/brand/campaigns/edit/:id" element={<CampaignEdit />} />
           <Route path="/brand/influencers" element={<BrandInfluencers />} />
           <Route path="/brand/analytics" element={<BrandAnalytics />} />
+          <Route path="/brand/persona-management" element={<BrandPersonaManagement />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/brands" element={<AdminBrandManagement />} />
           <Route path="/admin/brands/create" element={<AdminCreateBrand />} />

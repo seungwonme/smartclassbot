@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Building2, 
-  TrendingUp, 
+  Brain, 
   Users, 
   Megaphone, 
   BarChart3, 
@@ -20,7 +19,7 @@ const BrandSidebar = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: '대시보드', href: '/brand/dashboard' },
     { icon: Building2, label: '브랜드 및 제품관리', href: '/brand/products' },
-    { icon: TrendingUp, label: '시장조사', href: '/brand/market-research' },
+    { icon: Brain, label: 'AI 페르소나 관리', href: '/brand/persona-management' },
     { icon: Users, label: '인플루언서', href: '/brand/influencers' },
     { icon: Megaphone, label: '캠페인관리', href: '/brand/campaigns' },
     { icon: BarChart3, label: '성과분석', href: '/brand/analytics' },
