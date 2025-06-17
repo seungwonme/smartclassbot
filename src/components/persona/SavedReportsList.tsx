@@ -3,8 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, FileText, Trash2 } from 'lucide-react';
+import { Calendar, FileText, Trash2, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import MarketResearchReportModal from './MarketResearchReportModal';
 
 interface SavedReportsListProps {
   savedReports: any[];
@@ -60,14 +61,27 @@ const SavedReportsList: React.FC<SavedReportsListProps> = ({
                   )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDeleteReport(report.id, report.name)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <MarketResearchReportModal
+                  reportData={report}
+                  selectedBrand={report.brandId}
+                  selectedProduct={report.productId}
+                  onSaveReport={() => {}} // 이미 저장된 리포트이므로 빈 함수
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  }
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteReport(report.id, report.name)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
