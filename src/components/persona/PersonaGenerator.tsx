@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Sparkles, Users, CheckCircle } from 'lucide-react';
+import { Brain, Sparkles, Users, CheckCircle, FileText, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 
@@ -33,9 +33,24 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationCompleted, setGenerationCompleted] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<any>(null);
+  const [selectedReport, setSelectedReport] = useState<string>('');
 
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
+
+  // Filter reports based on selected brand and product
+  const filteredReports = savedReports.filter(report => 
+    report.brandId === selectedBrand && report.productId === selectedProduct
+  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const selectedReportData = filteredReports.find(r => r.id === selectedReport);
+
+  // Check if report is recent (within last 30 days)
+  const isRecentReport = (reportDate: string) => {
+    const reportTime = new Date(reportDate).getTime();
+    const thirtyDaysAgo = new Date().getTime() - (30 * 24 * 60 * 60 * 1000);
+    return reportTime > thirtyDaysAgo;
+  };
 
   const handleGeneratePersona = async () => {
     if (!selectedBrand || !selectedProduct) {
@@ -47,10 +62,10 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
       return;
     }
 
-    if (savedReports.length === 0) {
+    if (!selectedReport) {
       toast({
-        title: "시장조사 데이터가 필요합니다",
-        description: "먼저 시장조사를 완료해주세요.",
+        title: "시장조사 보고서를 선택해주세요",
+        description: "페르소나 생성을 위해 시장조사 보고서를 선택해야 합니다.",
         variant: "destructive",
       });
       return;
@@ -62,7 +77,7 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
 
     // 시뮬레이션: AI 페르소나 생성 과정
     const steps = [
-      "시장조사 데이터 분석 중...",
+      "선택된 시장조사 데이터 분석 중...",
       "소비자 행동 패턴 파악 중...",
       "페르소나 프로필 생성 중...",
       "매칭 플랫폼 분석 중...",
@@ -79,8 +94,10 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
       name: "리우 샤오메이",
       brandId: selectedBrand,
       productId: selectedProduct,
+      reportId: selectedReport,
       brandName: selectedBrandData?.name,
       productName: selectedProductData?.name,
+      reportName: selectedReportData?.name,
       demographics: {
         age: "25-30세",
         gender: "여성",
@@ -89,7 +106,7 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
       },
       platforms: ["샤오홍슈", "도우인"],
       interests: ["뷰티", "라이프스타일", "건강"],
-      description: "중국 시장 데이터 기반으로 생성된 타겟 페르소나",
+      description: `${selectedReportData?.name} 기반으로 생성된 타겟 페르소나`,
       confidence: 92,
       completedAt: new Date().toISOString()
     };
@@ -100,7 +117,7 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
     
     toast({
       title: "AI 페르소나 생성 완료",
-      description: "중국 시장 데이터 기반 소비자 페르소나가 생성되었습니다.",
+      description: "선택된 시장조사 보고서 기반 소비자 페르소나가 생성되었습니다.",
     });
   };
 
@@ -115,7 +132,7 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">브랜드 선택</label>
               <Select value={selectedBrand} onValueChange={() => {}}>
@@ -146,20 +163,100 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">시장조사 보고서 선택</label>
+              <Select 
+                value={selectedReport} 
+                onValueChange={setSelectedReport}
+                disabled={!selectedBrand || !selectedProduct || filteredReports.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="보고서를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredReports.map((report) => (
+                    <SelectItem key={report.id} value={report.id}>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        <span>{report.name}</span>
+                        {isRecentReport(report.createdAt) && (
+                          <Badge variant="default" className="text-xs">최신</Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {selectedBrand && selectedProduct && (
+          {selectedBrand && selectedProduct && filteredReports.length === 0 && (
+            <div className="p-3 bg-yellow-50 rounded-lg">
+              <div className="text-sm text-yellow-700">
+                <strong>알림:</strong> 선택된 브랜드와 제품에 대한 시장조사 보고서가 없습니다.
+              </div>
+              <div className="text-xs text-yellow-600 mt-1">
+                먼저 시장조사를 완료하여 보고서를 생성해주세요.
+              </div>
+            </div>
+          )}
+
+          {selectedBrand && selectedProduct && selectedReport && (
             <div className="p-3 bg-purple-50 rounded-lg">
               <div className="text-sm text-purple-700">
                 <strong>페르소나 생성 대상:</strong> {selectedBrandData?.name} - {selectedProductData?.name}
               </div>
+              <div className="text-sm text-purple-700 mt-1">
+                <strong>사용할 보고서:</strong> {selectedReportData?.name}
+              </div>
               <div className="text-xs text-purple-600 mt-1">
-                시장조사 데이터를 기반으로 최적화된 소비자 페르소나를 생성합니다
+                선택된 시장조사 보고서 데이터를 기반으로 최적화된 소비자 페르소나를 생성합니다
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* 선택된 보고서 미리보기 */}
+      {selectedReportData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              선택된 보고서 미리보기
+              {isRecentReport(selectedReportData.createdAt) && (
+                <Badge variant="default">최신</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-lg font-bold text-blue-600">{selectedReportData.summary?.totalContent || 1250}</div>
+                <div className="text-sm text-gray-600">콘텐츠 수집</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-lg font-bold text-green-600">{selectedReportData.summary?.totalComments?.toLocaleString() || '8,420'}</div>
+                <div className="text-sm text-gray-600">댓글 분석</div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-lg font-bold text-purple-600">{selectedReportData.summary?.keywords || 156}</div>
+                <div className="text-sm text-gray-600">키워드 추출</div>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-lg font-bold text-orange-600">
+                  {selectedReportData.summary?.sentiment === 'positive' ? '긍정적' : '중립적'}
+                </div>
+                <div className="text-sm text-gray-600">전체 감성</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Calendar className="w-4 h-4" />
+              <span>보고서 생성일: {new Date(selectedReportData.createdAt).toLocaleDateString('ko-KR')}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 페르소나 생성 실행 */}
       <Card>
@@ -178,14 +275,14 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
               </div>
               <Progress value={generateProgress} />
               <div className="text-sm text-gray-600 text-center">
-                중국 시장 데이터를 분석하여 최적의 페르소나를 생성하고 있습니다...
+                선택된 시장조사 보고서를 분석하여 최적의 페르소나를 생성하고 있습니다...
               </div>
             </div>
           )}
 
           <Button 
             onClick={handleGeneratePersona}
-            disabled={isGenerating || !selectedBrand || !selectedProduct || savedReports.length === 0}
+            disabled={isGenerating || !selectedBrand || !selectedProduct || !selectedReport}
             className="w-full"
           >
             {isGenerating ? 'AI 페르소나 생성 중...' : '페르소나 생성하기'}
@@ -237,6 +334,9 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
                 <div className="text-sm">
                   <strong>신뢰도:</strong> {currentPersona.confidence}%
                 </div>
+                <div className="text-sm">
+                  <strong>기반 보고서:</strong> {currentPersona.reportName}
+                </div>
               </div>
             </div>
             
@@ -272,6 +372,11 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
                     <div className="text-sm text-gray-600">
                       {new Date(persona.completedAt).toLocaleDateString('ko-KR')} - 신뢰도: {persona.confidence}%
                     </div>
+                    {persona.reportName && (
+                      <div className="text-xs text-gray-500">
+                        기반 보고서: {persona.reportName}
+                      </div>
+                    )}
                   </div>
                   <Button variant="outline" size="sm">
                     상세보기
