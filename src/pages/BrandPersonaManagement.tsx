@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,7 +7,7 @@ import MarketResearchCrawler from '@/components/persona/MarketResearchCrawler';
 import PersonaGenerator from '@/components/persona/PersonaGenerator';
 import PersonaInfluencerMatcher from '@/components/persona/PersonaInfluencerMatcher';
 import { brandService } from '@/services/brand.service';
-import { Brand, Product } from '@/types/brand';
+import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 import { useToast } from '@/hooks/use-toast';
 
 const BrandPersonaManagement = () => {
@@ -21,8 +20,8 @@ const BrandPersonaManagement = () => {
   const [savedPersonas, setSavedPersonas] = useState<any[]>([]);
   
   // 실제 데이터 상태
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [brands, setBrands] = useState<BrandType[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   

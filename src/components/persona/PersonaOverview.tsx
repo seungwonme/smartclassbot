@@ -5,11 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Brain, Users, TrendingUp, Target } from 'lucide-react';
-import { Brand, Product } from '@/types/brand';
+import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 
 interface PersonaOverviewProps {
-  brands: Brand[];
-  products: Product[];
+  brands: BrandType[];
+  products: ProductType[];
   selectedBrand: string;
   selectedProduct: string;
   onBrandChange: (brandId: string) => void;
