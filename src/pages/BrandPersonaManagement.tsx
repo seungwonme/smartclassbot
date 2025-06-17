@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -411,6 +410,9 @@ const BrandPersonaManagement = () => {
               selectedProduct={selectedProduct}
               savedPersonas={savedPersonas}
               onPersonaSelect={setActivePersona}
+              selectedBrand={selectedBrand}
+              brands={brands}
+              products={products}
             />
           </TabsContent>
 
