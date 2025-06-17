@@ -20,6 +20,7 @@ interface MarketResearchCrawlerProps {
   onProductChange: (productId: string) => void;
   onResearchComplete: (reportData: any) => void;
   savedReports: any[];
+  onReportDeleted?: (reportId: string, reportName: string) => void;
 }
 
 const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
@@ -30,7 +31,8 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
   onBrandChange,
   onProductChange,
   onResearchComplete,
-  savedReports: initialSavedReports
+  savedReports: initialSavedReports,
+  onReportDeleted
 }) => {
   const { toast } = useToast();
   const [crawlProgress, setCrawlProgress] = useState(0);
@@ -39,19 +41,11 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
   const [savedReports, setSavedReports] = useState(initialSavedReports);
 
-  // 저장된 리포트 로드
+  // Props로 받은 savedReports 동기화
   useEffect(() => {
-    const loadSavedReports = () => {
-      try {
-        const reports = storageService.getMarketReports();
-        setSavedReports(reports);
-      } catch (error) {
-        console.error('저장된 리포트 로드 실패:', error);
-      }
-    };
-
-    loadSavedReports();
-  }, []);
+    console.log('🔄 MarketResearchCrawler: savedReports props 업데이트됨:', initialSavedReports.length);
+    setSavedReports(initialSavedReports);
+  }, [initialSavedReports]);
 
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
@@ -129,9 +123,17 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
 
   const handleDeleteReport = (reportId: string) => {
     try {
+      const reportToDelete = savedReports.find(report => report.id === reportId);
+      const reportName = reportToDelete?.name || '리포트';
+      
       if (storageService.deleteMarketReport(reportId)) {
         const updatedReports = storageService.getMarketReports();
         setSavedReports(updatedReports);
+        
+        // 상위 컴포넌트에 삭제 알림
+        if (onReportDeleted) {
+          onReportDeleted(reportId, reportName);
+        }
       }
     } catch (error) {
       console.error('리포트 삭제 실패:', error);

@@ -9,6 +9,7 @@ import PersonaInfluencerMatcher from '@/components/persona/PersonaInfluencerMatc
 import { brandService } from '@/services/brand.service';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 import { useToast } from '@/hooks/use-toast';
+import { storageService } from '@/services/storage.service';
 
 const BrandPersonaManagement = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>('');
@@ -26,6 +27,20 @@ const BrandPersonaManagement = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  // 저장된 데이터 로드 함수
+  const loadStoredData = () => {
+    try {
+      const reports = storageService.getMarketReports();
+      const personas = storageService.getPersonas();
+      console.log('📊 로드된 리포트:', reports.length, '개');
+      console.log('👥 로드된 페르소나:', personas.length, '개');
+      setSavedReports(reports);
+      setSavedPersonas(personas);
+    } catch (error) {
+      console.error('저장된 데이터 로드 실패:', error);
+    }
+  };
 
   // 데이터 로드
   useEffect(() => {
@@ -51,6 +66,9 @@ const BrandPersonaManagement = () => {
         if (brandsData.length > 0 && !selectedBrand) {
           setSelectedBrand(brandsData[0].id);
         }
+        
+        // 저장된 데이터 로드
+        loadStoredData();
         
       } catch (err) {
         console.error('데이터 로딩 오류:', err);
@@ -80,13 +98,41 @@ const BrandPersonaManagement = () => {
   };
 
   const handleMarketResearchComplete = (reportData: any) => {
+    console.log('✅ 시장조사 완료 이벤트 수신:', reportData);
     setMarketResearchCompleted(true);
-    setSavedReports(prev => [...prev, reportData]);
+    
+    // 저장된 데이터 다시 로드하여 실시간 업데이트
+    loadStoredData();
+    
+    toast({
+      title: "시장조사 완료",
+      description: `${reportData.name} 리포트가 저장되었습니다.`,
+    });
   };
 
   const handlePersonaGenerated = (personaData: any) => {
+    console.log('✅ 페르소나 생성 완료 이벤트 수신:', personaData);
     setPersonaGenerationCompleted(true);
-    setSavedPersonas(prev => [...prev, personaData]);
+    
+    // 저장된 데이터 다시 로드하여 실시간 업데이트
+    loadStoredData();
+    
+    toast({
+      title: "페르소나 생성 완료",
+      description: `${personaData.name} 페르소나가 저장되었습니다.`,
+    });
+  };
+
+  const handleReportDeleted = (reportId: string, reportName: string) => {
+    console.log('🗑️ 리포트 삭제 이벤트 수신:', reportId);
+    
+    // 저장된 데이터 다시 로드하여 실시간 업데이트
+    loadStoredData();
+    
+    toast({
+      title: "리포트 삭제 완료",
+      description: `${reportName} 리포트가 삭제되었습니다.`,
+    });
   };
 
   // 로딩 상태 렌더링
@@ -162,6 +208,7 @@ const BrandPersonaManagement = () => {
               onProductChange={setSelectedProduct}
               onResearchComplete={handleMarketResearchComplete}
               savedReports={savedReports}
+              onReportDeleted={handleReportDeleted}
             />
           </TabsContent>
 

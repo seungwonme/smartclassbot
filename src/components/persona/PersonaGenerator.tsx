@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
@@ -36,21 +35,24 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const [savedReports, setSavedReports] = useState(initialSavedReports);
   const [savedPersonas, setSavedPersonas] = useState(initialSavedPersonas);
 
-  // 저장된 리포트와 페르소나 로드
+  // Props로 받은 데이터 동기화
   useEffect(() => {
-    const loadData = () => {
-      try {
-        const reports = storageService.getMarketReports();
-        const personas = storageService.getPersonas();
-        setSavedReports(reports);
-        setSavedPersonas(personas);
-      } catch (error) {
-        console.error('데이터 로드 실패:', error);
-      }
-    };
+    console.log('🔄 PersonaGenerator: savedReports props 업데이트됨:', initialSavedReports.length);
+    setSavedReports(initialSavedReports);
+  }, [initialSavedReports]);
 
-    loadData();
-  }, []);
+  useEffect(() => {
+    console.log('🔄 PersonaGenerator: savedPersonas props 업데이트됨:', initialSavedPersonas.length);
+    setSavedPersonas(initialSavedPersonas);
+  }, [initialSavedPersonas]);
+
+  // 선택된 리포트가 삭제된 경우 선택 해제
+  useEffect(() => {
+    if (selectedReport && !savedReports.find(report => report.id === selectedReport)) {
+      console.log('⚠️ 선택된 리포트가 삭제됨 - 선택 해제:', selectedReport);
+      setSelectedReport('');
+    }
+  }, [savedReports, selectedReport]);
 
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);

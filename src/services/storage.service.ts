@@ -143,7 +143,7 @@ export const storageService = {
     }
   },
 
-  // 시장조사 리포트 관리 (신규)
+  // 시장조사 리포트 관리 (강화된 중복 방지)
   getMarketReports: (): any[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.MARKET_REPORTS);
@@ -170,33 +170,62 @@ export const storageService = {
     }
   },
 
+  generateUniqueReportName: (brandId: string, productId: string, baseDate?: string): string => {
+    try {
+      const existingReports = storageService.getMarketReports();
+      const currentDate = baseDate || new Date().toISOString().split('T')[0];
+      const baseReportName = `${brandId}_${productId}_${currentDate}`;
+      
+      // 같은 패턴의 리포트 찾기
+      const similarReports = existingReports.filter(report => 
+        report.name && report.name.startsWith(baseReportName)
+      );
+      
+      console.log('🔍 유사한 리포트명 검색:', baseReportName, '→', similarReports.length, '개 발견');
+      
+      if (similarReports.length === 0) {
+        console.log('✅ 고유 리포트명 생성:', baseReportName);
+        return baseReportName;
+      }
+      
+      // 순차 번호 찾기
+      let counter = 1;
+      let uniqueName = `${baseReportName}_${counter}`;
+      
+      while (similarReports.some(report => report.name === uniqueName)) {
+        counter++;
+        uniqueName = `${baseReportName}_${counter}`;
+      }
+      
+      console.log('✅ 중복 방지 리포트명 생성:', uniqueName);
+      return uniqueName;
+    } catch (error) {
+      console.error('❌ 고유 리포트명 생성 실패:', error);
+      return `${brandId}_${productId}_${Date.now()}`;
+    }
+  },
+
   addMarketReport: (reportData: any): string => {
     try {
       const existingReports = storageService.getMarketReports();
       
-      // 중복 파일명 방지 로직
-      const currentDate = new Date().toISOString().split('T')[0];
-      const baseReportName = `${reportData.brandId}_${reportData.productId}_${currentDate}`;
-      
-      let reportName = baseReportName;
-      let counter = 1;
-      
-      while (existingReports.some(report => report.name === reportName)) {
-        reportName = `${baseReportName}_${counter}`;
-        counter++;
-      }
+      // 고유한 리포트명 생성
+      const uniqueReportName = storageService.generateUniqueReportName(
+        reportData.brandId, 
+        reportData.productId
+      );
       
       const newReport = {
         ...reportData,
         id: Date.now().toString(),
-        name: reportName,
+        name: uniqueReportName,
         createdAt: new Date().toISOString(),
       };
       
       const updatedReports = [...existingReports, newReport];
       
       if (storageService.setMarketReports(updatedReports)) {
-        console.log('✅ 시장조사 리포트 추가 완료:', reportName);
+        console.log('✅ 시장조사 리포트 추가 완료:', uniqueReportName);
         return newReport.id;
       }
       
@@ -210,10 +239,11 @@ export const storageService = {
   deleteMarketReport: (reportId: string): boolean => {
     try {
       const existingReports = storageService.getMarketReports();
+      const reportToDelete = existingReports.find(report => report.id === reportId);
       const updatedReports = existingReports.filter(report => report.id !== reportId);
       
       if (storageService.setMarketReports(updatedReports)) {
-        console.log('✅ 시장조사 리포트 삭제 완료:', reportId);
+        console.log('✅ 시장조사 리포트 삭제 완료:', reportToDelete?.name || reportId);
         return true;
       }
       
