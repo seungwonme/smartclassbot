@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +6,8 @@ import PerformanceDashboard from '@/components/analytics/PerformanceDashboard';
 import ChineseCommentAnalyzer from '@/components/analytics/ChineseCommentAnalyzer';
 import PerformanceReportGenerator from '@/components/analytics/PerformanceReportGenerator';
 import MobileAnalyticsDashboard from '@/components/analytics/MobileAnalyticsDashboard';
-import BrandCampaignSelector from '@/components/analytics/BrandCampaignSelector';
+import BrandCampaignFilterSelector from '@/components/analytics/BrandCampaignFilterSelector';
+import InfluencerSelector from '@/components/analytics/InfluencerSelector';
 import CampaignOverviewPanel from '@/components/analytics/CampaignOverviewPanel';
 import InfluencerPerformanceOverview from '@/components/analytics/InfluencerPerformanceOverview';
 import HorizontalNotificationSystem from '@/components/analytics/HorizontalNotificationSystem';
@@ -207,7 +207,17 @@ const BrandAnalytics = () => {
           {/* 1. 실시간 알림 섹션 - 맨 상단 */}
           <HorizontalNotificationSystem />
 
-          {/* 2. 캠페인 종합 성과 */}
+          {/* 2. 브랜드/캠페인 선택 섹션 */}
+          <BrandCampaignFilterSelector
+            selectedBrand={selectedBrand}
+            selectedCampaign={selectedCampaign}
+            campaigns={filteredCampaigns.map(c => ({ id: c.id, title: c.title }))}
+            brands={brands}
+            onBrandChange={handleBrandChange}
+            onCampaignChange={handleCampaignChange}
+          />
+
+          {/* 3. 캠페인 종합 성과 */}
           {selectedCampaign !== 'all' && selectedCampaignData && (
             <CampaignOverviewPanel
               campaignId={selectedCampaign}
@@ -215,20 +225,14 @@ const BrandAnalytics = () => {
             />
           )}
 
-          {/* 3. 브랜드/캠페인/인플루언서 선택 섹션 */}
-          <BrandCampaignSelector
-            selectedBrand={selectedBrand}
-            selectedCampaign={selectedCampaign}
+          {/* 4. 인플루언서 선택 섹션 */}
+          <InfluencerSelector
             selectedInfluencer={selectedInfluencer}
-            campaigns={filteredCampaigns.map(c => ({ id: c.id, title: c.title }))}
             influencers={availableInfluencers}
-            brands={brands}
-            onBrandChange={handleBrandChange}
-            onCampaignChange={handleCampaignChange}
             onInfluencerChange={handleInfluencerChange}
           />
 
-          {/* 4. 메인 분석 탭 */}
+          {/* 5. 메인 분석 탭 */}
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">
