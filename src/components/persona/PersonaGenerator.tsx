@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 import PersonaSelectionControls from './PersonaSelectionControls';
 import ReportPreview from './ReportPreview';
 import PersonaGenerationPanel from './PersonaGenerationPanel';
 import SavedPersonasList from './SavedPersonasList';
+import { storageService } from '@/services/storage.service';
 
 interface PersonaGeneratorProps {
   selectedBrand: string;
@@ -22,9 +23,9 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   selectedProduct,
   brands,
   products,
-  savedReports,
+  savedReports: initialSavedReports,
   onPersonaGenerated,
-  savedPersonas
+  savedPersonas: initialSavedPersonas
 }) => {
   const { toast } = useToast();
   const [generateProgress, setGenerateProgress] = useState(0);
@@ -32,6 +33,24 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const [generationCompleted, setGenerationCompleted] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<any>(null);
   const [selectedReport, setSelectedReport] = useState<string>('');
+  const [savedReports, setSavedReports] = useState(initialSavedReports);
+  const [savedPersonas, setSavedPersonas] = useState(initialSavedPersonas);
+
+  // 저장된 리포트와 페르소나 로드
+  useEffect(() => {
+    const loadData = () => {
+      try {
+        const reports = storageService.getMarketReports();
+        const personas = storageService.getPersonas();
+        setSavedReports(reports);
+        setSavedPersonas(personas);
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
@@ -112,11 +131,24 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   };
 
   const handleSavePersona = (personaData: any) => {
-    onPersonaGenerated(personaData);
-    toast({
-      title: "페르소나 저장 완료",
-      description: "인플루언서 매칭을 진행할 수 있습니다.",
-    });
+    try {
+      storageService.addPersona(personaData);
+      const updatedPersonas = storageService.getPersonas();
+      setSavedPersonas(updatedPersonas);
+      
+      onPersonaGenerated(personaData);
+      toast({
+        title: "페르소나 저장 완료",
+        description: "인플루언서 매칭을 진행할 수 있습니다.",
+      });
+    } catch (error) {
+      console.error('페르소나 저장 실패:', error);
+      toast({
+        title: "저장 실패",
+        description: "페르소나 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

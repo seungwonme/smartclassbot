@@ -1,14 +1,15 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Search, TrendingUp, MessageSquare, CheckCircle } from 'lucide-react';
+import { Search, Globe, MessageSquare, TrendingUp, Users, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import MarketResearchReportModal from './MarketResearchReportModal';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
+import MarketResearchReportModal from './MarketResearchReportModal';
+import SavedReportsList from './SavedReportsList';
+import { storageService } from '@/services/storage.service';
 
 interface MarketResearchCrawlerProps {
   selectedBrand: string;
@@ -29,22 +30,44 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
   onBrandChange,
   onProductChange,
   onResearchComplete,
-  savedReports
+  savedReports: initialSavedReports
 }) => {
   const { toast } = useToast();
   const [crawlProgress, setCrawlProgress] = useState(0);
   const [isCrawling, setIsCrawling] = useState(false);
-  const [researchCompleted, setResearchCompleted] = useState(false);
-  const [currentReport, setCurrentReport] = useState<any>(null);
+  const [crawlCompleted, setCrawlCompleted] = useState(false);
+  const [currentReportData, setCurrentReportData] = useState<any>(null);
+  const [savedReports, setSavedReports] = useState(initialSavedReports);
+
+  // 저장된 리포트 로드
+  useEffect(() => {
+    const loadSavedReports = () => {
+      try {
+        const reports = storageService.getMarketReports();
+        setSavedReports(reports);
+      } catch (error) {
+        console.error('저장된 리포트 로드 실패:', error);
+      }
+    };
+
+    loadSavedReports();
+  }, []);
 
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
 
-  const handleStartResearch = async () => {
+  // Check if report is recent (within last 30 days)
+  const isRecentReport = (reportDate: string) => {
+    const reportTime = new Date(reportDate).getTime();
+    const thirtyDaysAgo = new Date().getTime() - (30 * 24 * 60 * 60 * 1000);
+    return reportTime > thirtyDaysAgo;
+  };
+
+  const handleStartCrawling = async () => {
     if (!selectedBrand || !selectedProduct) {
       toast({
         title: "브랜드와 제품을 선택해주세요",
-        description: "시장조사를 진행하기 위해 브랜드와 제품을 모두 선택해야 합니다.",
+        description: "시장조사를 위해 브랜드와 제품을 모두 선택해야 합니다.",
         variant: "destructive",
       });
       return;
@@ -52,44 +75,72 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
 
     setIsCrawling(true);
     setCrawlProgress(0);
-    setResearchCompleted(false);
+    setCrawlCompleted(false);
 
-    // 시뮬레이션: 실제로는 자동화된 채널 선택 및 크롤링
-    const steps = [
-      "최적 채널 자동 선택 중...",
-      "시장 데이터 수집 중...",
-      "소비자 반응 분석 중...",
-      "경쟁사 동향 파악 중...",
-      "종합 리포트 생성 중..."
-    ];
-
+    // 시뮬레이션: 시장조사 진행률
     for (let i = 0; i <= 100; i += 20) {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 500));
       setCrawlProgress(i);
     }
+
+    // 가상의 플랫폼 데이터 및 요약 정보
+    const mockPlatforms = ['샤오홍슈', '도우인', '티몰', '타오바오'];
+    const mockSummary = {
+      totalContent: 1250,
+      totalComments: 8420,
+      keywords: 156,
+      sentiment: 'positive'
+    };
 
     const reportData = {
       brandId: selectedBrand,
       productId: selectedProduct,
       brandName: selectedBrandData?.name,
       productName: selectedProductData?.name,
-      completedAt: new Date().toISOString(),
-      summary: {
-        totalContent: 1250,
-        totalComments: 8420,
-        keywords: 156,
-        sentiment: 'positive'
-      }
+      platforms: mockPlatforms,
+      summary: mockSummary,
+      completedAt: new Date().toISOString()
     };
 
-    setCurrentReport(reportData);
-    setResearchCompleted(true);
+    setCurrentReportData(reportData);
+    setCrawlCompleted(true);
     setIsCrawling(false);
     
     toast({
       title: "시장조사 완료",
-      description: "중국 시장 데이터 수집 및 분석이 완료되었습니다.",
+      description: "중국 주요 플랫폼에서 데이터 수집이 완료되었습니다.",
     });
+  };
+
+  const handleSaveReport = (reportData: any) => {
+    try {
+      // localStorage에 저장
+      const reports = storageService.getMarketReports();
+      setSavedReports(reports);
+      
+      // 상위 컴포넌트에 알림
+      onResearchComplete(reportData);
+      
+      console.log('리포트 저장 완료:', reportData);
+    } catch (error) {
+      console.error('리포트 저장 처리 실패:', error);
+    }
+  };
+
+  const handleDeleteReport = (reportId: string) => {
+    try {
+      if (storageService.deleteMarketReport(reportId)) {
+        const updatedReports = storageService.getMarketReports();
+        setSavedReports(updatedReports);
+      }
+    } catch (error) {
+      console.error('리포트 삭제 실패:', error);
+      toast({
+        title: "삭제 실패",
+        description: "리포트 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -121,11 +172,7 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">제품 선택</label>
-              <Select 
-                value={selectedProduct} 
-                onValueChange={onProductChange}
-                disabled={!selectedBrand}
-              >
+              <Select value={selectedProduct} onValueChange={onProductChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="제품을 선택하세요" />
                 </SelectTrigger>
@@ -139,136 +186,87 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
               </Select>
             </div>
           </div>
-
-          {selectedBrand && selectedProduct && (
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="text-sm text-blue-700">
-                <strong>선택된 분석 대상:</strong> {selectedBrandData?.name} - {selectedProductData?.name}
-              </div>
-              <div className="text-xs text-blue-600 mt-1">
-                시스템이 자동으로 최적 채널을 선택하여 시장조사를 진행합니다
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* 시장조사 실행 */}
+      {/* 시장조사 실행 및 결과 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            AI 기반 시장조사 실행
+            <Globe className="w-5 h-5" />
+            중국 시장조사
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {isCrawling && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>AI 시장조사 진행률</span>
+                <span>시장조사 진행률</span>
                 <span>{crawlProgress}%</span>
               </div>
               <Progress value={crawlProgress} />
               <div className="text-sm text-gray-600 text-center">
-                중국 주요 플랫폼에서 데이터를 수집하고 분석하고 있습니다...
+                중국 주요 플랫폼에서 브랜드 및 제품 관련 데이터를 수집하고 있습니다...
               </div>
             </div>
           )}
 
           <Button 
-            onClick={handleStartResearch}
+            onClick={handleStartCrawling}
             disabled={isCrawling || !selectedBrand || !selectedProduct}
             className="w-full"
           >
-            {isCrawling ? 'AI 시장조사 진행 중...' : '시장조사 시작하기'}
+            {isCrawling ? '시장조사 진행 중...' : '시장조사 시작하기'}
           </Button>
+
+          {crawlCompleted && currentReportData && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold">
+                  {selectedBrandData?.name} - {selectedProductData?.name}
+                </h4>
+                <Badge variant="outline">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  완료
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">
+                    총 {currentReportData.summary.totalComments.toLocaleString()}개 댓글 분석
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">
+                    {currentReportData.platforms.length}개 플랫폼에서 데이터 수집
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">
+                    {currentReportData.summary.keywords}개 키워드 추출
+                  </span>
+                </div>
+              </div>
+              <MarketResearchReportModal 
+                reportData={currentReportData}
+                selectedBrand={selectedBrand}
+                selectedProduct={selectedProduct}
+                onSaveReport={handleSaveReport}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* 수집 결과 미리보기 */}
-      {researchCompleted && currentReport && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              <span>수집 결과 미리보기</span>
-              <Badge variant="outline" className="ml-2">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                완료
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{currentReport.summary.totalContent}</div>
-                <div className="text-sm text-gray-600">콘텐츠 수집</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{currentReport.summary.totalComments.toLocaleString()}</div>
-                <div className="text-sm text-gray-600">댓글 분석</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{currentReport.summary.keywords}</div>
-                <div className="text-sm text-gray-600">키워드 추출</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">긍정적</div>
-                <div className="text-sm text-gray-600">전체 감성</div>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <MarketResearchReportModal
-                reportData={currentReport}
-                selectedBrand={selectedBrandData?.name || ''}
-                selectedProduct={selectedProductData?.name || ''}
-                onSaveReport={(reportData) => {
-                  onResearchComplete(reportData);
-                  toast({
-                    title: "리포트 저장 완료",
-                    description: "다음 단계인 AI 페르소나 생성을 진행할 수 있습니다.",
-                  });
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* 저장된 리포트 목록 */}
-      {savedReports.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>저장된 시장조사 리포트</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {savedReports.map((report, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <div className="font-medium">{report.name}</div>
-                    <div className="text-sm text-gray-600">
-                      {new Date(report.createdAt).toLocaleDateString('ko-KR')}
-                    </div>
-                  </div>
-                  <MarketResearchReportModal
-                    reportData={report}
-                    selectedBrand={report.brandName}
-                    selectedProduct={report.productName}
-                    onSaveReport={() => {}}
-                    trigger={
-                      <Button variant="outline" size="sm">
-                        보기
-                      </Button>
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <SavedReportsList
+        savedReports={savedReports}
+        onDeleteReport={handleDeleteReport}
+        isRecentReport={isRecentReport}
+      />
     </div>
   );
 };

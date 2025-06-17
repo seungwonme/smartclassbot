@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Download, Save, TrendingUp, Users, MessageSquare, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { storageService } from '@/services/storage.service';
 
 interface MarketResearchReportModalProps {
   reportData: any;
@@ -25,27 +26,41 @@ const MarketResearchReportModal: React.FC<MarketResearchReportModalProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSaveReport = () => {
-    const currentDate = new Date().toISOString().split('T')[0];
-    const reportName = `${selectedBrand}_${selectedProduct}_${currentDate}`;
-    
-    const savedReport = {
-      ...reportData,
-      id: Date.now().toString(),
-      name: reportName,
-      brandId: selectedBrand,
-      productId: selectedProduct,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const reportToSave = {
+        ...reportData,
+        brandId: selectedBrand,
+        productId: selectedProduct,
+        summary: mockDetailedData.overview
+      };
 
-    onSaveReport(savedReport);
-    
-    toast({
-      title: "시장조사 리포트 저장 완료",
-      description: `${reportName} 리포트가 저장되었습니다.`,
-    });
+      const reportId = storageService.addMarketReport(reportToSave);
+      
+      // 상위 컴포넌트에도 알림
+      const savedReport = {
+        ...reportToSave,
+        id: reportId,
+        name: reportToSave.name || `${selectedBrand}_${selectedProduct}_${new Date().toISOString().split('T')[0]}`,
+        createdAt: new Date().toISOString(),
+      };
 
-    // 모달 닫기
-    setIsOpen(false);
+      onSaveReport(savedReport);
+      
+      toast({
+        title: "시장조사 리포트 저장 완료",
+        description: `${savedReport.name} 리포트가 저장되었습니다.`,
+      });
+
+      // 모달 닫기
+      setIsOpen(false);
+    } catch (error) {
+      console.error('리포트 저장 실패:', error);
+      toast({
+        title: "저장 실패",
+        description: "리포트 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const mockDetailedData = {

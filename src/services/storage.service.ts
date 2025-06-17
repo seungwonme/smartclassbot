@@ -1,4 +1,3 @@
-
 import { Campaign } from '@/types/campaign';
 import { Brand, Product } from '@/types/brand';
 import { ContentPlanDetail } from '@/types/content';
@@ -8,6 +7,8 @@ const STORAGE_KEYS = {
   BRANDS: 'lovable_brands',
   PRODUCTS: 'lovable_products',
   CONTENT_PLANS: 'lovable_content_plans',
+  MARKET_REPORTS: 'lovable_market_reports',
+  PERSONAS: 'lovable_personas',
   INITIALIZED: 'lovable_initialized',
   BACKUP: 'lovable_data_backup'
 };
@@ -142,6 +143,137 @@ export const storageService = {
     }
   },
 
+  // 시장조사 리포트 관리 (신규)
+  getMarketReports: (): any[] => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.MARKET_REPORTS);
+      const reports = data ? JSON.parse(data) : [];
+      console.log('🔍 저장된 시장조사 리포트:', reports.length, '개');
+      return reports;
+    } catch (error) {
+      console.error('❌ 시장조사 리포트 로드 실패:', error);
+      return [];
+    }
+  },
+
+  setMarketReports: (reports: any[]): boolean => {
+    try {
+      console.log('💾 시장조사 리포트 저장 시작:', reports.length, '개');
+      storageService.createBackup();
+      localStorage.setItem(STORAGE_KEYS.MARKET_REPORTS, JSON.stringify(reports));
+      console.log('✅ 시장조사 리포트 저장 완료');
+      return true;
+    } catch (error) {
+      console.error('❌ 시장조사 리포트 저장 실패:', error);
+      storageService.restoreFromBackup();
+      return false;
+    }
+  },
+
+  addMarketReport: (reportData: any): string => {
+    try {
+      const existingReports = storageService.getMarketReports();
+      
+      // 중복 파일명 방지 로직
+      const currentDate = new Date().toISOString().split('T')[0];
+      const baseReportName = `${reportData.brandId}_${reportData.productId}_${currentDate}`;
+      
+      let reportName = baseReportName;
+      let counter = 1;
+      
+      while (existingReports.some(report => report.name === reportName)) {
+        reportName = `${baseReportName}_${counter}`;
+        counter++;
+      }
+      
+      const newReport = {
+        ...reportData,
+        id: Date.now().toString(),
+        name: reportName,
+        createdAt: new Date().toISOString(),
+      };
+      
+      const updatedReports = [...existingReports, newReport];
+      
+      if (storageService.setMarketReports(updatedReports)) {
+        console.log('✅ 시장조사 리포트 추가 완료:', reportName);
+        return newReport.id;
+      }
+      
+      throw new Error('리포트 저장 실패');
+    } catch (error) {
+      console.error('❌ 시장조사 리포트 추가 실패:', error);
+      throw error;
+    }
+  },
+
+  deleteMarketReport: (reportId: string): boolean => {
+    try {
+      const existingReports = storageService.getMarketReports();
+      const updatedReports = existingReports.filter(report => report.id !== reportId);
+      
+      if (storageService.setMarketReports(updatedReports)) {
+        console.log('✅ 시장조사 리포트 삭제 완료:', reportId);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('❌ 시장조사 리포트 삭제 실패:', error);
+      return false;
+    }
+  },
+
+  // 페르소나 관리 (신규)
+  getPersonas: (): any[] => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PERSONAS);
+      const personas = data ? JSON.parse(data) : [];
+      console.log('🔍 저장된 페르소나:', personas.length, '개');
+      return personas;
+    } catch (error) {
+      console.error('❌ 페르소나 로드 실패:', error);
+      return [];
+    }
+  },
+
+  setPersonas: (personas: any[]): boolean => {
+    try {
+      console.log('💾 페르소나 저장 시작:', personas.length, '개');
+      storageService.createBackup();
+      localStorage.setItem(STORAGE_KEYS.PERSONAS, JSON.stringify(personas));
+      console.log('✅ 페르소나 저장 완료');
+      return true;
+    } catch (error) {
+      console.error('❌ 페르소나 저장 실패:', error);
+      storageService.restoreFromBackup();
+      return false;
+    }
+  },
+
+  addPersona: (personaData: any): string => {
+    try {
+      const existingPersonas = storageService.getPersonas();
+      const newPersona = {
+        ...personaData,
+        id: personaData.id || Date.now().toString(),
+        createdAt: personaData.completedAt || new Date().toISOString(),
+      };
+      
+      const updatedPersonas = [...existingPersonas, newPersona];
+      
+      if (storageService.setPersonas(updatedPersonas)) {
+        console.log('✅ 페르소나 추가 완료:', newPersona.id);
+        return newPersona.id;
+      }
+      
+      throw new Error('페르소나 저장 실패');
+    } catch (error) {
+      console.error('❌ 페르소나 추가 실패:', error);
+      throw error;
+    }
+  },
+
   // 초기화 관련
   isInitialized: (): boolean => {
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
@@ -164,6 +296,8 @@ export const storageService = {
         brands: storageService.getBrands(),
         products: storageService.getProducts(),
         contentPlans: storageService.getContentPlans(),
+        marketReports: storageService.getMarketReports(),
+        personas: storageService.getPersonas(),
         initialized: storageService.isInitialized()
       };
       
@@ -198,6 +332,14 @@ export const storageService = {
       localStorage.setItem(STORAGE_KEYS.BRANDS, JSON.stringify(backup.brands));
       localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(backup.products));
       localStorage.setItem(STORAGE_KEYS.CONTENT_PLANS, JSON.stringify(backup.contentPlans));
+      
+      if (backup.marketReports) {
+        localStorage.setItem(STORAGE_KEYS.MARKET_REPORTS, JSON.stringify(backup.marketReports));
+      }
+      
+      if (backup.personas) {
+        localStorage.setItem(STORAGE_KEYS.PERSONAS, JSON.stringify(backup.personas));
+      }
       
       if (backup.initialized) {
         localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
