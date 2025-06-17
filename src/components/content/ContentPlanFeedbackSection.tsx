@@ -16,6 +16,7 @@ interface ContentPlanFeedbackSectionProps {
   setRevisionFeedback: (value: string) => void;
   onSubmitRevision: () => void;
   onCancelRevision: () => void;
+  isProcessing?: boolean;
 }
 
 const ContentPlanFeedbackSection: React.FC<ContentPlanFeedbackSectionProps> = ({
@@ -27,7 +28,8 @@ const ContentPlanFeedbackSection: React.FC<ContentPlanFeedbackSectionProps> = ({
   revisionFeedback,
   setRevisionFeedback,
   onSubmitRevision,
-  onCancelRevision
+  onCancelRevision,
+  isProcessing = false
 }) => {
   // 시스템 관리자인지 확인 (URL 기반)
   const isAdminView = window.location.pathname.includes('/admin/');
@@ -63,6 +65,7 @@ const ContentPlanFeedbackSection: React.FC<ContentPlanFeedbackSectionProps> = ({
             placeholder="수정한 내용에 대한 피드백을 작성해주세요..."
             rows={3}
             className="text-sm"
+            disabled={isProcessing}
           />
         </div>
 
@@ -70,13 +73,15 @@ const ContentPlanFeedbackSection: React.FC<ContentPlanFeedbackSectionProps> = ({
           <Button
             onClick={onSubmitRevision}
             className="bg-blue-600 hover:bg-blue-700"
+            disabled={isProcessing}
           >
             <Send className="w-4 h-4 mr-2" />
-            {(selectedPlan.currentRevisionNumber || 0)}차 피드백 전송
+            {isProcessing ? '전송 중...' : `${(selectedPlan.currentRevisionNumber || 0)}차 피드백 전송`}
           </Button>
           <Button
             variant="outline"
             onClick={onCancelRevision}
+            disabled={isProcessing}
           >
             취소
           </Button>
@@ -116,6 +121,7 @@ const ContentPlanFeedbackSection: React.FC<ContentPlanFeedbackSectionProps> = ({
             placeholder="필드별 코멘트 외에 추가적인 피드백이 있다면 작성해주세요..."
             rows={3}
             className="text-sm"
+            disabled={isProcessing}
           />
         </div>
       </div>
@@ -153,6 +159,7 @@ const ContentPlanFeedbackSection: React.FC<ContentPlanFeedbackSectionProps> = ({
             placeholder="필드별 수정코멘트 외에 추가적인 수정요청 사항이 있다면 작성해주세요..."
             rows={3}
             className="text-sm"
+            disabled={isProcessing}
           />
         </div>
       </div>

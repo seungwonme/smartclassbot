@@ -11,7 +11,7 @@ interface RevisionRequestFormProps {
   onSubmit: (feedback: string) => void;
   onCancel: () => void;
   requestType: 'brand-request' | 'admin-feedback' | 'brand-revision';
-  isSubmitting?: boolean;
+  isProcessing?: boolean;
 }
 
 const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
@@ -19,7 +19,7 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
   onSubmit,
   onCancel,
   requestType,
-  isSubmitting = false
+  isProcessing = false
 }) => {
   const [feedback, setFeedback] = useState('');
 
@@ -90,13 +90,13 @@ const RevisionRequestForm: React.FC<RevisionRequestFormProps> = ({
           <div className="flex gap-2">
             <Button 
               onClick={handleSubmit}
-              disabled={!feedback.trim() || isSubmitting}
+              disabled={!feedback.trim() || isProcessing}
               className={requestType === 'admin-feedback' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-orange-600 hover:bg-orange-700'}
             >
               <Send className="w-4 h-4 mr-2" />
-              {isSubmitting ? '전송 중...' : getButtonText()}
+              {isProcessing ? '전송 중...' : getButtonText()}
             </Button>
-            <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            <Button variant="outline" onClick={onCancel} disabled={isProcessing}>
               <X className="w-4 h-4 mr-2" />
               취소
             </Button>
