@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Users, Target, DollarSign, TrendingUp, Star, Zap, Crown, Award } from 'lucide-react';
+import { Users, Target, DollarSign, TrendingUp, Star, Zap, Crown, Award, Video, Megaphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import InfluencerMixRecommendations from './InfluencerMixRecommendations';
 
@@ -26,6 +26,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
 }) => {
   const { toast } = useToast();
   const [budget, setBudget] = useState('');
+  const [adType, setAdType] = useState<'branding' | 'live-commerce' | ''>('');
   const [isMatching, setIsMatching] = useState(false);
   const [matchProgress, setMatchProgress] = useState(0);
   const [matchResults, setMatchResults] = useState<any[]>([]);
@@ -126,6 +127,15 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       return;
     }
 
+    if (!adType) {
+      toast({
+        title: "광고 유형을 선택해주세요",
+        description: "인플루언서 매칭을 위해 광고 유형을 선택해야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsMatching(true);
     setMatchProgress(0);
 
@@ -201,6 +211,34 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
               )}
             </div>
             <div>
+              <Label className="text-sm font-medium mb-2 block">광고 유형</Label>
+              <Select value={adType} onValueChange={(value: 'branding' | 'live-commerce') => setAdType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="광고 유형을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="branding">
+                    <div className="flex items-center gap-2">
+                      <Megaphone className="w-4 h-4" />
+                      <span>브랜딩</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="live-commerce">
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      <span>라이브커머스</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                선택한 광고 유형에 맞는 인플루언서를 우선적으로 추천합니다
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Label className="text-sm font-medium mb-2 block">캠페인 예산 (원)</Label>
               <Input
                 type="number"
@@ -213,6 +251,26 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
                 입력하신 예산을 기반으로 최적의 인플루언서 믹스를 추천해드립니다
               </p>
             </div>
+            <div className="flex items-end">
+              {adType && (
+                <div className="w-full">
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    {adType === 'branding' ? <Megaphone className="w-5 h-5 text-blue-600" /> : <Video className="w-5 h-5 text-blue-600" />}
+                    <div>
+                      <div className="font-medium text-blue-900">
+                        {adType === 'branding' ? '브랜딩 캠페인' : '라이브커머스 캠페인'}
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        {adType === 'branding' 
+                          ? '브랜드 인지도와 이미지 구축에 최적화' 
+                          : '실시간 판매와 전환율에 최적화'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {isMatching && (
@@ -223,14 +281,17 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
               </div>
               <Progress value={matchProgress} />
               <div className="text-sm text-gray-600 text-center">
-                페르소나 특성과 예산을 기반으로 최적의 인플루언서를 분석하고 있습니다...
+                {adType === 'branding' 
+                  ? '브랜딩에 최적화된 인플루언서를 분석하고 있습니다...'
+                  : '라이브커머스에 최적화된 인플루언서를 분석하고 있습니다...'
+                }
               </div>
             </div>
           )}
 
           <Button 
             onClick={handleStartMatching}
-            disabled={isMatching || !activePersona}
+            disabled={isMatching || !activePersona || !adType}
             className="w-full"
           >
             {isMatching ? '매칭 중...' : '인플루언서 매칭 시작'}
