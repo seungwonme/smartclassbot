@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -50,11 +50,27 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const [selectedPersona, setSelectedPersona] = useState<any>(null);
 
   // 선택된 브랜드와 제품에 해당하는 리포트 필터링
-  const filteredReports = savedReports.filter(report => 
-    report.brandId === selectedBrand && report.productId === selectedProduct
-  );
+  const filteredReports = savedReports.filter(report => {
+    console.log('Filtering report:', report, 'Brand:', selectedBrand, 'Product:', selectedProduct);
+    return report.brandId === selectedBrand && report.productId === selectedProduct;
+  });
 
-  // 모의 AI 생성 페르소나 데이터
+  // 브랜드나 제품이 변경되면 선택된 리포트 초기화
+  useEffect(() => {
+    console.log('Brand or product changed, resetting selected report');
+    setSelectedReport('');
+    setGeneratedPersonas([]);
+    setSelectedPersona(null);
+  }, [selectedBrand, selectedProduct]);
+
+  // 리포트 목록이 변경되면 첫 번째 리포트를 자동 선택 (있는 경우)
+  useEffect(() => {
+    if (filteredReports.length > 0 && !selectedReport) {
+      console.log('Auto-selecting first available report:', filteredReports[0]);
+      setSelectedReport(filteredReports[0].id);
+    }
+  }, [filteredReports, selectedReport]);
+
   const mockGeneratedPersonas = [
     {
       id: 'ai-persona-1',
@@ -184,8 +200,30 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
     });
   };
 
+  const selectedBrandData = brands.find(b => b.id === selectedBrand);
+  const selectedProductData = products.find(p => p.id === selectedProduct);
+
+  console.log('Current state:', {
+    selectedBrand,
+    selectedProduct,
+    savedReports: savedReports.length,
+    filteredReports: filteredReports.length,
+    selectedReport
+  });
+
   return (
     <div className="space-y-6">
+      {/* 현재 선택 상태 표시 */}
+      {selectedBrand && selectedProduct && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-4">
+            <div className="text-sm text-blue-700">
+              <strong>선택된 분석 대상:</strong> {selectedBrandData?.name} - {selectedProductData?.name}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 시장조사 리포트 선택 */}
       <Card>
         <CardHeader>
@@ -204,21 +242,36 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
               <SelectContent>
                 {filteredReports.map((report) => (
                   <SelectItem key={report.id} value={report.id}>
-                    {report.name}
+                    {report.name} ({new Date(report.createdAt).toLocaleDateString('ko-KR')})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {filteredReports.length === 0 && (
-              <p className="text-sm text-gray-500 mt-2">
-                선택된 브랜드와 제품에 대한 시장조사 리포트가 없습니다. 먼저 시장조사를 진행해주세요.
-              </p>
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                  <p className="text-sm text-yellow-700">
+                    선택된 브랜드와 제품에 대한 시장조사 리포트가 없습니다. 
+                    먼저 시장조사 탭에서 시장조사를 진행해주세요.
+                  </p>
+                </div>
+              </div>
+            )}
+            {filteredReports.length > 0 && selectedReport && (
+              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <p className="text-sm text-green-700">
+                    시장조사 리포트가 선택되었습니다. AI 페르소나 생성을 진행할 수 있습니다.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* AI 페르소나 생성 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
