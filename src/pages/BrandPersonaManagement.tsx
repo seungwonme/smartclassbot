@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,8 +38,63 @@ const BrandPersonaManagement = () => {
       console.log('👥 로드된 페르소나:', personas.length, '개');
       setSavedReports(reports);
       setSavedPersonas(personas);
+      
+      // 전체 리포트가 있으면 시장조사 완료로 간주
+      if (reports.length > 0) {
+        setMarketResearchCompleted(true);
+        console.log('✅ 시장조사 리포트 존재로 인해 탭 활성화');
+      }
+      
+      // 전체 페르소나가 있으면 페르소나 생성 완료로 간주
+      if (personas.length > 0) {
+        setPersonaGenerationCompleted(true);
+        console.log('✅ 페르소나 존재로 인해 인플루언서 매칭 탭 활성화');
+      }
     } catch (error) {
       console.error('저장된 데이터 로드 실패:', error);
+    }
+  };
+
+  // 브랜드/제품 조합에 따른 탭 활성화 상태 업데이트
+  const updateTabStates = () => {
+    if (!selectedBrand || !selectedProduct) {
+      setMarketResearchCompleted(false);
+      setPersonaGenerationCompleted(false);
+      return;
+    }
+
+    // 선택된 브랜드/제품에 해당하는 리포트 확인
+    const hasReportsForSelection = savedReports.some(report => 
+      report.brandId === selectedBrand && report.productId === selectedProduct
+    );
+
+    // 선택된 브랜드/제품에 해당하는 페르소나 확인
+    const hasPersonasForSelection = savedPersonas.some(persona => 
+      persona.brandId === selectedBrand && persona.productId === selectedProduct
+    );
+
+    console.log('🔄 탭 상태 업데이트:', {
+      selectedBrand,
+      selectedProduct,
+      hasReportsForSelection,
+      hasPersonasForSelection
+    });
+
+    setMarketResearchCompleted(hasReportsForSelection);
+    setPersonaGenerationCompleted(hasPersonasForSelection);
+
+    if (hasReportsForSelection && !hasPersonasForSelection) {
+      toast({
+        title: "AI 페르소나 생성 가능",
+        description: "저장된 시장조사 리포트를 기반으로 페르소나를 생성할 수 있습니다.",
+      });
+    }
+
+    if (hasPersonasForSelection) {
+      toast({
+        title: "인플루언서 매칭 가능",
+        description: "생성된 페르소나를 기반으로 인플루언서 매칭을 진행할 수 있습니다.",
+      });
     }
   };
 
@@ -84,6 +140,11 @@ const BrandPersonaManagement = () => {
 
     loadData();
   }, []);
+
+  // 저장된 데이터 변경 시 탭 상태 업데이트
+  useEffect(() => {
+    updateTabStates();
+  }, [savedReports, savedPersonas, selectedBrand, selectedProduct]);
 
   // 선택된 브랜드의 제품들만 필터링
   const filteredProducts = selectedBrand 
@@ -182,6 +243,7 @@ const BrandPersonaManagement = () => {
               value="generate" 
               disabled={!marketResearchCompleted}
               className={!marketResearchCompleted ? 'opacity-50' : ''}
+              title={!marketResearchCompleted ? '시장조사 리포트가 필요합니다' : ''}
             >
               AI 페르소나 생성
             </TabsTrigger>
@@ -189,6 +251,7 @@ const BrandPersonaManagement = () => {
               value="matching" 
               disabled={!personaGenerationCompleted}
               className={!personaGenerationCompleted ? 'opacity-50' : ''}
+              title={!personaGenerationCompleted ? '페르소나 생성이 필요합니다' : ''}
             >
               인플루언서 매칭
             </TabsTrigger>
