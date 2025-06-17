@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,13 +15,19 @@ interface PersonaInfluencerMatcherProps {
   selectedProduct: string;
   savedPersonas: any[];
   onPersonaSelect: (personaId: string) => void;
+  selectedBrand?: string;
+  brands?: any[];
+  products?: any[];
 }
 
 const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
   activePersona,
   selectedProduct,
   savedPersonas,
-  onPersonaSelect
+  onPersonaSelect,
+  selectedBrand,
+  brands = [],
+  products = []
 }) => {
   const { toast } = useToast();
   const [budget, setBudget] = useState('');
@@ -32,7 +37,6 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
   const [matchResults, setMatchResults] = useState<any[]>([]);
   const [showMixRecommendations, setShowMixRecommendations] = useState(false);
 
-  // Enhanced mock influencer data with tiers (converted to KRW)
   const mockInfluencers = [
     {
       id: 'inf-mega-1',
@@ -41,7 +45,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 1250000,
       engagement: 5.8,
       tier: 'mega',
-      estimatedCost: 59850000, // ~45,000 CNY * 133 (exchange rate)
+      estimatedCost: 59850000,
       avatar: '👑'
     },
     {
@@ -51,7 +55,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 450000,
       engagement: 8.2,
       tier: 'macro',
-      estimatedCost: 23940000, // ~18,000 CNY * 133
+      estimatedCost: 23940000,
       avatar: '⭐'
     },
     {
@@ -61,7 +65,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 280000,
       engagement: 9.1,
       tier: 'macro',
-      estimatedCost: 15960000, // ~12,000 CNY * 133
+      estimatedCost: 15960000,
       avatar: '🌟'
     },
     {
@@ -71,7 +75,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 85000,
       engagement: 12.4,
       tier: 'micro',
-      estimatedCost: 5985000, // ~4,500 CNY * 133
+      estimatedCost: 5985000,
       avatar: '💎'
     },
     {
@@ -81,7 +85,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 62000,
       engagement: 14.2,
       tier: 'micro',
-      estimatedCost: 5054000, // ~3,800 CNY * 133
+      estimatedCost: 5054000,
       avatar: '🎯'
     },
     {
@@ -91,7 +95,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 48000,
       engagement: 16.1,
       tier: 'micro',
-      estimatedCost: 3857000, // ~2,900 CNY * 133
+      estimatedCost: 3857000,
       avatar: '🔥'
     },
     {
@@ -101,12 +105,14 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 25000,
       engagement: 18.5,
       tier: 'nano',
-      estimatedCost: 1995000, // ~1,500 CNY * 133
+      estimatedCost: 1995000,
       avatar: '💫'
     }
   ];
 
   const selectedPersonaData = savedPersonas.find(p => p.id === activePersona);
+  const selectedBrandData = brands.find(b => b.id === selectedBrand);
+  const selectedProductData = products.find(p => p.id === selectedProduct);
 
   const handleStartMatching = async () => {
     if (!activePersona) {
@@ -139,7 +145,6 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
     setIsMatching(true);
     setMatchProgress(0);
 
-    // 매칭 진행 시뮬레이션
     for (let i = 0; i <= 100; i += 25) {
       await new Promise(resolve => setTimeout(resolve, 600));
       setMatchProgress(i);
@@ -177,7 +182,6 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 매칭 설정 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -299,7 +303,6 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
         </CardContent>
       </Card>
 
-      {/* 발견된 인플루언서 목록 */}
       {matchResults.length > 0 && !showMixRecommendations && (
         <Card>
           <CardHeader>
@@ -341,16 +344,17 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
         </Card>
       )}
 
-      {/* 믹스 추천 */}
       {showMixRecommendations && matchResults.length > 0 && (
         <InfluencerMixRecommendations
           budget={parseFloat(budget)}
           influencers={matchResults}
           persona={selectedPersonaData}
+          adType={adType as 'branding' | 'live-commerce'}
+          brandInfo={selectedBrandData ? { id: selectedBrandData.id, name: selectedBrandData.name } : undefined}
+          productInfo={selectedProductData ? { id: selectedProductData.id, name: selectedProductData.name } : undefined}
         />
       )}
 
-      {/* 매칭 없음 상태 */}
       {!activePersona && matchResults.length === 0 && (
         <Card className="text-center py-12">
           <CardContent>

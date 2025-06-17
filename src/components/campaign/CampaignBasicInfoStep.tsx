@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar as CalendarIcon, Users, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,8 @@ interface CampaignBasicInfoStepProps {
   handleBudgetChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleBrandChange: (brandId: string) => void;
   handleProductChange: (productId: string) => void;
+  isPersonaBased?: boolean;
+  personaData?: any;
 }
 
 const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
@@ -31,17 +34,39 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
   filteredProducts,
   handleBudgetChange,
   handleBrandChange,
-  handleProductChange
+  handleProductChange,
+  isPersonaBased = false,
+  personaData
 }) => {
-  // 디버깅을 위한 로그 추가
   console.log('CampaignBasicInfoStep - brands 데이터:', brands);
   console.log('CampaignBasicInfoStep - filteredProducts 데이터:', filteredProducts);
   console.log('CampaignBasicInfoStep - formData.brandId:', formData.brandId);
+  console.log('CampaignBasicInfoStep - isPersonaBased:', isPersonaBased);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>캠페인 기본정보</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          캠페인 기본정보
+          {isPersonaBased && (
+            <Badge className="bg-green-100 text-green-800 border-green-200">
+              <Users className="w-3 h-3 mr-1" />
+              페르소나 기반
+            </Badge>
+          )}
+        </CardTitle>
+        {isPersonaBased && personaData && (
+          <div className="text-sm text-gray-600 bg-green-50 p-3 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-4 h-4 text-green-600" />
+              <span className="font-medium">페르소나 기반 자동 설정</span>
+            </div>
+            <p>
+              <strong>{personaData.persona?.name}</strong> 페르소나의 정보를 기반으로 
+              브랜드, 제품, 예산, 광고 유형이 자동으로 설정되었습니다.
+            </p>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -56,7 +81,14 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="brand">브랜드</Label>
+            <Label htmlFor="brand" className="flex items-center gap-2">
+              브랜드
+              {isPersonaBased && formData.brandId && (
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  자동 설정됨
+                </Badge>
+              )}
+            </Label>
             <Select value={formData.brandId} onValueChange={handleBrandChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="브랜드를 선택하세요" />
@@ -77,7 +109,14 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
             </Select>
           </div>
           <div>
-            <Label htmlFor="product">제품</Label>
+            <Label htmlFor="product" className="flex items-center gap-2">
+              제품
+              {isPersonaBased && formData.productId && (
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  자동 설정됨
+                </Badge>
+              )}
+            </Label>
             <Select 
               value={formData.productId} 
               onValueChange={handleProductChange}
@@ -104,13 +143,25 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="budget">예산 (한화)</Label>
+          <Label htmlFor="budget" className="flex items-center gap-2">
+            예산 (한화)
+            {isPersonaBased && formData.budget && (
+              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                믹스 전략 기반
+              </Badge>
+            )}
+          </Label>
           <Input
             id="budget"
             value={formData.budget}
             onChange={handleBudgetChange}
             placeholder="5,000,000"
           />
+          {isPersonaBased && formData.budget && (
+            <p className="text-xs text-green-600 mt-1">
+              선택한 인플루언서 믹스 전략에 따라 자동 설정된 예산입니다.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-4">
@@ -210,7 +261,14 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="adType">광고 유형</Label>
+          <Label htmlFor="adType" className="flex items-center gap-2">
+            광고 유형
+            {isPersonaBased && formData.adType && (
+              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                자동 설정됨
+              </Badge>
+            )}
+          </Label>
           <Select
             value={formData.adType}
             onValueChange={(value: 'branding' | 'live-commerce') => 
@@ -225,6 +283,11 @@ const CampaignBasicInfoStep: React.FC<CampaignBasicInfoStepProps> = ({
               <SelectItem value="live-commerce">라이브커머스</SelectItem>
             </SelectContent>
           </Select>
+          {isPersonaBased && formData.adType && (
+            <p className="text-xs text-green-600 mt-1">
+              페르소나 매칭 시 선택한 광고 유형이 자동으로 설정되었습니다.
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

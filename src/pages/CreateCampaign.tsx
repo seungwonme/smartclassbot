@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,8 @@ const CreateCampaign = () => {
     filteredProducts,
     recommendedInfluencers,
     personas,
+    isPersonaBased,
+    personaData,
     handleBudgetChange,
     handleBrandChange,
     handleProductChange,
@@ -42,6 +45,8 @@ const CreateCampaign = () => {
             handleBudgetChange={handleBudgetChange}
             handleBrandChange={handleBrandChange}
             handleProductChange={handleProductChange}
+            isPersonaBased={isPersonaBased}
+            personaData={personaData}
           />
         );
       case 2:
@@ -49,6 +54,8 @@ const CreateCampaign = () => {
           <CampaignTargetContentStep
             formData={formData}
             setFormData={setFormData}
+            isPersonaBased={isPersonaBased}
+            personaData={personaData}
           />
         );
       case 3:
@@ -61,6 +68,8 @@ const CreateCampaign = () => {
             handlePersonaRecommendation={handlePersonaRecommendation}
             handleAIRecommendation={handleAIRecommendation}
             handleInfluencerToggle={handleInfluencerToggle}
+            isPersonaBased={isPersonaBased}
+            personaData={personaData}
           />
         );
       default:
@@ -81,7 +90,9 @@ const CreateCampaign = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             돌아가기
           </Button>
-          <h1 className="text-3xl font-bold">캠페인 생성</h1>
+          <h1 className="text-3xl font-bold">
+            {isPersonaBased ? '페르소나 기반 캠페인 생성' : '캠페인 생성'}
+          </h1>
         </div>
 
         <div className="flex items-center justify-center mb-8">

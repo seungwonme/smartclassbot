@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { Campaign, CampaignInfluencer, Persona } from '@/types/campaign';
 import { Brand, Product } from '@/types/brand';
@@ -32,6 +32,7 @@ export interface CampaignFormData {
 export const useCampaignForm = (campaignId?: string) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +42,8 @@ export const useCampaignForm = (campaignId?: string) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isEditMode, setIsEditMode] = useState(!!campaignId);
+  const [isPersonaBased, setIsPersonaBased] = useState(false);
+  const [personaData, setPersonaData] = useState<any>(null);
   
   const [formData, setFormData] = useState<CampaignFormData>({
     title: '',
@@ -63,6 +66,78 @@ export const useCampaignForm = (campaignId?: string) => {
     },
     selectedInfluencers: []
   });
+
+  // Check for persona-based campaign data on mount
+  useEffect(() => {
+    const checkPersonaBasedData = () => {
+      try {
+        // Check URL parameters first
+        const isPersonaFromUrl = searchParams.get('persona') === 'true';
+        
+        if (isPersonaFromUrl) {
+          // Get data from sessionStorage
+          const sessionData = sessionStorage.getItem('personaBasedCampaignData');
+          const localData = localStorage.getItem('campaignInfluencerData');
+          
+          const campaignData = sessionData ? JSON.parse(sessionData) : 
+                              localData ? JSON.parse(localData) : null;
+
+          if (campaignData && campaignData.autoFillData) {
+            console.log('페르소나 기반 캠페인 데이터 감지:', campaignData);
+            
+            setIsPersonaBased(true);
+            setPersonaData(campaignData);
+            
+            // Auto-fill form data
+            setFormData(prev => ({
+              ...prev,
+              title: `${campaignData.persona?.name || ''} 페르소나 기반 캠페인`,
+              brandId: campaignData.autoFillData.brandId,
+              brandName: campaignData.autoFillData.brandName,
+              productId: campaignData.autoFillData.productId,
+              productName: campaignData.autoFillData.productName,
+              budget: campaignData.autoFillData.budget,
+              adType: campaignData.autoFillData.adType,
+              targetContent: {
+                ...campaignData.autoFillData.targetContent
+              },
+              selectedInfluencers: campaignData.autoFillData.selectedInfluencers
+            }));
+
+            // Set recommended influencers
+            if (campaignData.selectedInfluencers) {
+              const influencersForCampaign = campaignData.selectedInfluencers.map((inf: any) => ({
+                id: inf.id,
+                name: inf.name,
+                profileImage: inf.avatar || '',
+                profileImageUrl: inf.avatar || '',
+                followers: inf.followers,
+                engagementRate: inf.engagement,
+                category: inf.platform || '뷰티',
+                platform: inf.platform || '샤오홍슈',
+                isSelected: true
+              }));
+              setRecommendedInfluencers(influencersForCampaign);
+            }
+
+            toast({
+              title: "페르소나 기반 캠페인 생성",
+              description: `${campaignData.persona?.name} 페르소나의 정보로 캠페인 양식이 자동 입력되었습니다.`,
+            });
+
+            // Clean up the session data
+            sessionStorage.removeItem('personaBasedCampaignData');
+          }
+        }
+      } catch (error) {
+        console.error('페르소나 데이터 로드 실패:', error);
+      }
+    };
+
+    if (!isEditMode) {
+      checkPersonaBasedData();
+    }
+  }, [searchParams, isEditMode, toast]);
 
   useEffect(() => {
     if (campaignId && isEditMode) {
@@ -284,7 +359,9 @@ export const useCampaignForm = (campaignId?: string) => {
         
         toast({
           title: "캠페인 생성 완료",
-          description: "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
+          description: isPersonaBased 
+            ? "페르소나 기반 캠페인이 성공적으로 생성되었습니다." 
+            : "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
         });
         
         navigate(`/brand/campaigns/${newCampaignId}`);
@@ -314,6 +391,8 @@ export const useCampaignForm = (campaignId?: string) => {
     recommendedInfluencers,
     personas,
     isEditMode,
+    isPersonaBased,
+    personaData,
     handleBudgetChange,
     handleBrandChange,
     handleProductChange,

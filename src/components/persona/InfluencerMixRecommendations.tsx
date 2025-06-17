@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,9 @@ interface InfluencerMixRecommendationsProps {
   budget: number;
   influencers: any[];
   persona: any;
+  adType?: 'branding' | 'live-commerce';
+  brandInfo?: { id: string; name: string };
+  productInfo?: { id: string; name: string };
 }
 
 interface MixStrategy {
@@ -42,13 +44,15 @@ interface MixStrategy {
 const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> = ({
   budget,
   influencers,
-  persona
+  persona,
+  adType,
+  brandInfo,
+  productInfo
 }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedMix, setSelectedMix] = useState<string>('');
 
-  // 인플루언서를 티어별로 분류
   const influencersByTier = useMemo(() => {
     return {
       mega: influencers.filter(inf => inf.tier === 'mega'),
@@ -58,17 +62,15 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
     };
   }, [influencers]);
 
-  // 믹스 전략 생성 (한화 기준으로 계산)
   const mixStrategies = useMemo((): MixStrategy[] => {
     const strategies: MixStrategy[] = [];
 
-    // 전략 1: 메가 인플루언서 중심 (브랜드 인지도 극대화)
-    if (influencersByTier.mega.length > 0 && budget >= 53200000) { // ~40,000 CNY in KRW
+    if (influencersByTier.mega.length > 0 && budget >= 53200000) {
       const megaInfluencer = influencersByTier.mega[0];
       const remainingBudget = budget - megaInfluencer.estimatedCost;
       const additionalMicros = influencersByTier.micro
         .filter(inf => inf.estimatedCost <= remainingBudget)
-        .slice(0, Math.floor(remainingBudget / 5320000)); // ~4,000 CNY in KRW
+        .slice(0, Math.floor(remainingBudget / 5320000));
 
       strategies.push({
         id: 'mega-focused',
@@ -84,8 +86,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
       });
     }
 
-    // 전략 2: 마이크로 인플루언서 다수 (참여율 극대화)
-    const microBudgetCount = Math.floor(budget / 4655000); // ~3,500 CNY in KRW
+    const microBudgetCount = Math.floor(budget / 4655000);
     const selectedMicros = influencersByTier.micro.slice(0, Math.min(microBudgetCount, 6));
     
     if (selectedMicros.length >= 3) {
@@ -103,13 +104,12 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
       });
     }
 
-    // 전략 3: 하이브리드 전략 (매크로 + 마이크로)
-    if (influencersByTier.macro.length > 0 && budget >= 26600000) { // ~20,000 CNY in KRW
+    if (influencersByTier.macro.length > 0 && budget >= 26600000) {
       const macroInfluencer = influencersByTier.macro[0];
       const remainingBudget = budget - macroInfluencer.estimatedCost;
       const additionalMicros = influencersByTier.micro
         .filter(inf => inf.estimatedCost <= remainingBudget)
-        .slice(0, Math.floor(remainingBudget / 4655000)); // ~3,500 CNY in KRW
+        .slice(0, Math.floor(remainingBudget / 4655000));
 
       strategies.push({
         id: 'hybrid-balanced',
@@ -125,13 +125,12 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
       });
     }
 
-    // 전략 4: 니치 타겟팅 (나노 + 마이크로)
-    if (influencersByTier.nano.length > 0 && budget >= 19950000) { // ~15,000 CNY in KRW
+    if (influencersByTier.nano.length > 0 && budget >= 19950000) {
       const nanoInfluencers = influencersByTier.nano.slice(0, 2);
       const remainingBudget = budget - nanoInfluencers.reduce((sum, inf) => sum + inf.estimatedCost, 0);
       const additionalMicros = influencersByTier.micro
         .filter(inf => inf.estimatedCost <= remainingBudget)
-        .slice(0, Math.floor(remainingBudget / 4655000)); // ~3,500 CNY in KRW
+        .slice(0, Math.floor(remainingBudget / 4655000));
 
       strategies.push({
         id: 'niche-targeting',
@@ -149,7 +148,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
       });
     }
 
-    return strategies.filter(strategy => strategy.totalCost <= budget * 1.1); // 10% 여유 허용
+    return strategies.filter(strategy => strategy.totalCost <= budget * 1.1);
   }, [budget, influencersByTier]);
 
   const getTierIcon = (tier: string) => {
@@ -176,19 +175,45 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
       persona: persona,
       selectedInfluencers: strategy.influencers,
       mixStrategy: strategy,
-      estimatedBudget: strategy.totalCost
+      estimatedBudget: strategy.totalCost,
+      adType: adType,
+      brandInfo: brandInfo,
+      productInfo: productInfo,
+      autoFillData: {
+        brandId: brandInfo?.id || '',
+        brandName: brandInfo?.name || '',
+        productId: productInfo?.id || '',
+        productName: productInfo?.name || '',
+        budget: strategy.totalCost.toLocaleString(),
+        adType: adType || 'branding',
+        selectedInfluencers: strategy.influencers.map(inf => inf.id),
+        targetContent: {
+          influencerCategories: persona?.interests || [],
+          targetAge: persona?.demographics?.age || '',
+          uspImportance: adType === 'branding' ? 8 : 6,
+          influencerImpact: '',
+          additionalDescription: `${persona?.name} 페르소나 기반 ${strategy.name}`,
+          secondaryContentUsage: false
+        }
+      }
     };
 
-    // localStorage에 임시 저장하여 캠페인 생성 페이지에서 사용
+    sessionStorage.setItem('personaBasedCampaignData', JSON.stringify(campaignData));
+    
     localStorage.setItem('campaignInfluencerData', JSON.stringify(campaignData));
 
     toast({
-      title: "캠페인 생성 페이지로 이동",
-      description: `${strategy.name}으로 캠페인을 생성합니다.`,
+      title: "페르소나 기반 캠페인 생성",
+      description: `${persona?.name} 페르소나와 ${strategy.name}으로 캠페인을 생성합니다.`,
     });
 
-    // 캠페인 생성 페이지로 이동
-    navigate('/brand/campaigns/create');
+    const params = new URLSearchParams({
+      persona: 'true',
+      mixStrategy: strategy.id,
+      adType: adType || 'branding'
+    });
+    
+    navigate(`/brand/campaigns/create?${params.toString()}`);
   };
 
   return (
@@ -201,6 +226,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
           </CardTitle>
           <div className="text-sm text-gray-600">
             예산: {budget.toLocaleString()}원 | 페르소나: {persona?.name}
+            {adType && <span> | 광고 유형: {adType === 'branding' ? '브랜딩' : '라이브커머스'}</span>}
           </div>
         </CardHeader>
         <CardContent>
@@ -217,7 +243,6 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
               {mixStrategies.map((strategy) => (
                 <TabsContent key={strategy.id} value={strategy.id} className="space-y-4">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* 전략 개요 */}
                     <Card className="lg:col-span-1">
                       <CardHeader>
                         <CardTitle className="text-lg">{strategy.name}</CardTitle>
@@ -265,7 +290,6 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
                       </CardContent>
                     </Card>
 
-                    {/* 선택된 인플루언서 목록 */}
                     <Card className="lg:col-span-2">
                       <CardHeader>
                         <CardTitle className="text-lg">선택된 인플루언서 ({strategy.influencers.length}명)</CardTitle>
