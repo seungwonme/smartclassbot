@@ -1,11 +1,15 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Users, Target, DollarSign, TrendingUp, Star } from 'lucide-react';
+import { Users, Target, DollarSign, TrendingUp, Star, Zap, Crown, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import InfluencerMixRecommendations from './InfluencerMixRecommendations';
 
 interface PersonaInfluencerMatcherProps {
   activePersona: string | null;
@@ -21,84 +25,102 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
   onPersonaSelect
 }) => {
   const { toast } = useToast();
-  const [budgetRange, setBudgetRange] = useState('');
+  const [budget, setBudget] = useState('');
   const [isMatching, setIsMatching] = useState(false);
   const [matchProgress, setMatchProgress] = useState(0);
   const [matchResults, setMatchResults] = useState<any[]>([]);
+  const [showMixRecommendations, setShowMixRecommendations] = useState(false);
 
-  // 모의 매칭 결과 데이터
-  const mockMatchResults = [
+  // Enhanced mock influencer data with tiers
+  const mockInfluencers = [
     {
-      id: 'inf-match-1',
+      id: 'inf-mega-1',
       name: '리 샤오메이',
       platform: '샤오홍슈',
-      followers: 125000,
-      engagement: 8.4,
-      matchScore: 94,
-      estimatedCost: 15000,
-      matchReasons: [
-        '타겟 페르소나와 팔로워 연령대 92% 일치',
-        '뷰티 콘텐츠 전문성',
-        'K-뷰티 리뷰 경험 다수'
-      ],
-      recentPosts: [
-        { title: '한국 스킨케어 루틴', views: 45000, likes: 3200 },
-        { title: '세럼 성분 분석', views: 38000, likes: 2800 }
-      ],
-      avatar: '👩‍💼'
+      followers: 1250000,
+      engagement: 5.8,
+      tier: 'mega',
+      estimatedCost: 45000,
+      avatar: '👑'
     },
     {
-      id: 'inf-match-2',
+      id: 'inf-macro-1',
       name: '왕 위웨이',
       platform: '도우인',
-      followers: 89000,
-      engagement: 12.1,
-      matchScore: 89,
-      estimatedCost: 12000,
-      matchReasons: [
-        '페르소나 관심사와 콘텐츠 주제 일치',
-        '높은 참여율과 신뢰도',
-        '타겟 지역 팔로워 비율 높음'
-      ],
-      recentPosts: [
-        { title: '뷰티 제품 테스트', views: 67000, likes: 8100 },
-        { title: '스킨케어 팁', views: 52000, likes: 6300 }
-      ],
-      avatar: '🧑‍💻'
+      followers: 450000,
+      engagement: 8.2,
+      tier: 'macro',
+      estimatedCost: 18000,
+      avatar: '⭐'
     },
     {
-      id: 'inf-match-3',
+      id: 'inf-macro-2',
       name: '장 시아오리',
       platform: '샤오홍슈',
-      followers: 156000,
-      engagement: 6.8,
-      matchScore: 85,
-      estimatedCost: 18000,
-      matchReasons: [
-        '브랜드 협업 경험 풍부',
-        '페르소나 선호 콘텐츠 스타일',
-        '안정적인 팔로워 성장세'
-      ],
-      recentPosts: [
-        { title: '아침 루틴 제품 추천', views: 73000, likes: 4900 },
-        { title: '피부 타입별 관리법', views: 61000, likes: 4200 }
-      ],
-      avatar: '👩‍🎨'
+      followers: 280000,
+      engagement: 9.1,
+      tier: 'macro',
+      estimatedCost: 12000,
+      avatar: '🌟'
+    },
+    {
+      id: 'inf-micro-1',
+      name: '천 메이메이',
+      platform: '샤오홍슈',
+      followers: 85000,
+      engagement: 12.4,
+      tier: 'micro',
+      estimatedCost: 4500,
+      avatar: '💎'
+    },
+    {
+      id: 'inf-micro-2',
+      name: '루 샤오펑',
+      platform: '도우인',
+      followers: 62000,
+      engagement: 14.2,
+      tier: 'micro',
+      estimatedCost: 3800,
+      avatar: '🎯'
+    },
+    {
+      id: 'inf-micro-3',
+      name: '쉬 지아',
+      platform: '샤오홍슈',
+      followers: 48000,
+      engagement: 16.1,
+      tier: 'micro',
+      estimatedCost: 2900,
+      avatar: '🔥'
+    },
+    {
+      id: 'inf-nano-1',
+      name: '고 샤오밍',
+      platform: '도우인',
+      followers: 25000,
+      engagement: 18.5,
+      tier: 'nano',
+      estimatedCost: 1500,
+      avatar: '💫'
     }
   ];
 
-  const budgetOptions = [
-    { value: '5000-10000', label: '5,000 - 10,000위안' },
-    { value: '10000-20000', label: '10,000 - 20,000위안' },
-    { value: '20000-50000', label: '20,000 - 50,000위안' },
-    { value: '50000+', label: '50,000위안 이상' }
-  ];
+  const selectedPersonaData = savedPersonas.find(p => p.id === activePersona);
 
   const handleStartMatching = async () => {
     if (!activePersona) {
       toast({
         title: "페르소나를 선택해주세요",
         description: "매칭을 위해 먼저 페르소나를 선택해야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!budget || parseFloat(budget) <= 0) {
+      toast({
+        title: "예산을 입력해주세요",
+        description: "인플루언서 매칭을 위해 예산을 입력해야 합니다.",
         variant: "destructive",
       });
       return;
@@ -113,27 +135,35 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       setMatchProgress(i);
     }
 
-    setMatchResults(mockMatchResults);
+    setMatchResults(mockInfluencers);
+    setShowMixRecommendations(true);
     setIsMatching(false);
     
     toast({
       title: "인플루언서 매칭 완료",
-      description: `${mockMatchResults.length}명의 최적 인플루언서를 찾았습니다.`,
+      description: `${mockInfluencers.length}명의 인플루언서를 발견했습니다. 예산 기반 믹스를 확인해보세요.`,
     });
   };
 
-  const getMatchScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600 bg-green-100';
-    if (score >= 80) return 'text-blue-600 bg-blue-100';
-    if (score >= 70) return 'text-yellow-600 bg-yellow-100';
-    return 'text-gray-600 bg-gray-100';
+  const getTierIcon = (tier: string) => {
+    switch (tier) {
+      case 'mega': return <Crown className="w-4 h-4 text-purple-600" />;
+      case 'macro': return <Award className="w-4 h-4 text-blue-600" />;
+      case 'micro': return <Star className="w-4 h-4 text-green-600" />;
+      case 'nano': return <Zap className="w-4 h-4 text-orange-600" />;
+      default: return <Users className="w-4 h-4" />;
+    }
   };
 
-  const getPlatformIcon = (platform: string) => {
-    return platform === '샤오홍슈' ? '📕' : '🎵';
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case 'mega': return 'border-purple-200 bg-purple-50';
+      case 'macro': return 'border-blue-200 bg-blue-50';
+      case 'micro': return 'border-green-200 bg-green-50';
+      case 'nano': return 'border-orange-200 bg-orange-50';
+      default: return 'border-gray-200 bg-gray-50';
+    }
   };
-
-  const selectedPersonaData = savedPersonas.find(p => p.id === activePersona);
 
   return (
     <div className="space-y-6">
@@ -148,7 +178,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">페르소나 선택</label>
+              <Label className="text-sm font-medium mb-2 block">페르소나 선택</Label>
               <Select value={activePersona || ''} onValueChange={onPersonaSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="페르소나를 선택하세요" />
@@ -171,19 +201,17 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">예산 범위</label>
-              <Select value={budgetRange} onValueChange={setBudgetRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="예산 범위 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {budgetOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-sm font-medium mb-2 block">캠페인 예산 (위안)</Label>
+              <Input
+                type="number"
+                placeholder="예: 50000"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                입력하신 예산을 기반으로 최적의 인플루언서 믹스를 추천해드립니다
+              </p>
             </div>
           </div>
 
@@ -195,7 +223,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
               </div>
               <Progress value={matchProgress} />
               <div className="text-sm text-gray-600 text-center">
-                페르소나 특성과 인플루언서 프로필을 분석하고 있습니다...
+                페르소나 특성과 예산을 기반으로 최적의 인플루언서를 분석하고 있습니다...
               </div>
             </div>
           )}
@@ -210,96 +238,55 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
         </CardContent>
       </Card>
 
-      {/* 매칭 결과 */}
-      {matchResults.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">매칭 결과 ({matchResults.length}명)</h3>
-          
-          <div className="space-y-4">
-            {matchResults.map((influencer) => (
-              <Card key={influencer.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* 인플루언서 기본 정보 */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="text-3xl">{influencer.avatar}</div>
-                        <div>
-                          <h4 className="font-semibold">{influencer.name}</h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>{getPlatformIcon(influencer.platform)}</span>
-                            <span>{influencer.platform}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Users className="w-4 h-4" />
-                          <span>{influencer.followers.toLocaleString()} 팔로워</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <TrendingUp className="w-4 h-4" />
-                          <span>참여율 {influencer.engagement}%</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <DollarSign className="w-4 h-4" />
-                          <span>예상 비용: {influencer.estimatedCost.toLocaleString()}위안</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 매칭 점수 및 이유 */}
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <div className={`inline-block px-4 py-2 rounded-full ${getMatchScoreColor(influencer.matchScore)}`}>
-                          <span className="font-semibold">매칭 점수: {influencer.matchScore}%</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h5 className="font-medium text-sm mb-2">매칭 근거</h5>
-                        <ul className="space-y-1">
-                          {influencer.matchReasons.map((reason: string, index: number) => (
-                            <li key={index} className="flex items-start gap-2 text-xs">
-                              <Star className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
-                              <span>{reason}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* 최근 성과 */}
-                    <div className="space-y-4">
-                      <h5 className="font-medium text-sm">최근 콘텐츠 성과</h5>
-                      <div className="space-y-3">
-                        {influencer.recentPosts.map((post: any, index: number) => (
-                          <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                            <div className="font-medium text-sm">{post.title}</div>
-                            <div className="flex justify-between text-xs text-gray-600 mt-1">
-                              <span>조회수: {post.views.toLocaleString()}</span>
-                              <span>좋아요: {post.likes.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          상세보기
-                        </Button>
-                        <Button size="sm">
-                          캠페인 초대
-                        </Button>
+      {/* 발견된 인플루언서 목록 */}
+      {matchResults.length > 0 && !showMixRecommendations && (
+        <Card>
+          <CardHeader>
+            <CardTitle>발견된 인플루언서 ({matchResults.length}명)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {matchResults.map((influencer) => (
+                <div key={influencer.id} className={`p-4 rounded-lg border-2 ${getTierColor(influencer.tier)}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="text-2xl">{influencer.avatar}</div>
+                    <div>
+                      <h4 className="font-semibold">{influencer.name}</h4>
+                      <div className="flex items-center gap-2">
+                        {getTierIcon(influencer.tier)}
+                        <span className="text-sm capitalize">{influencer.tier}</span>
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>팔로워:</span>
+                      <span>{influencer.followers.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>참여율:</span>
+                      <span>{influencer.engagement}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>예상 비용:</span>
+                      <span className="font-semibold">{influencer.estimatedCost.toLocaleString()}위안</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 믹스 추천 */}
+      {showMixRecommendations && matchResults.length > 0 && (
+        <InfluencerMixRecommendations
+          budget={parseFloat(budget)}
+          influencers={matchResults}
+          persona={selectedPersonaData}
+        />
       )}
 
       {/* 매칭 없음 상태 */}

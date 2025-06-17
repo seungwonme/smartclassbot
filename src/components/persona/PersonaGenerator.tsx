@@ -112,11 +112,11 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
 
   const selectedReportData = filteredReports.find(r => r.id === selectedReport);
 
-  // Check if report is recent (within last 30 days)
+  // Check if report is recent (within last 30 days) - FIXED
   const isRecentReport = (reportDate: string) => {
     const reportTime = new Date(reportDate).getTime();
     const thirtyDaysAgo = new Date().getTime() - (30 * 24 * 60 * 60 * 1000);
-    return reportTime > reportTime > thirtyDaysAgo;
+    return reportTime > thirtyDaysAgo;
   };
 
   const handleGeneratePersona = async () => {
@@ -156,7 +156,6 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
       reportId: selectedReport,
       brandName: selectedBrandData?.name,
       productName: selectedProductData?.name,
-      reportName: selectedReportData?.name,
       demographics: {
         age: "25-30세",
         gender: "여성",
