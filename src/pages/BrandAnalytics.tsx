@@ -265,7 +265,10 @@ const BrandAnalytics = () => {
             </TabsContent>
 
             <TabsContent value="reports" className="mt-6 space-y-6">
-              <PerformanceReportGenerator />
+              <PerformanceReportGenerator 
+                campaignId={selectedCampaign === 'all' ? undefined : selectedCampaign}
+                selectedInfluencer={selectedInfluencer === 'all' ? undefined : selectedInfluencerData}
+              />
             </TabsContent>
           </Tabs>
         </div>

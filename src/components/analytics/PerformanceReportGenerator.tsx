@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Download, FileText, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import { Download, FileText, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { performanceTrackerService } from '@/services/performanceTracker.service';
@@ -14,17 +14,25 @@ import { downloadFile } from '@/utils/fileUtils';
 
 interface PerformanceReportGeneratorProps {
   campaignId?: string;
+  selectedInfluencer?: {
+    id: string;
+    name: string;
+    platform: string;
+  };
   isAdmin?: boolean;
 }
 
 const PerformanceReportGenerator: React.FC<PerformanceReportGeneratorProps> = ({ 
   campaignId, 
+  selectedInfluencer,
   isAdmin = false 
 }) => {
   const [reportType, setReportType] = useState<'summary' | 'detailed' | 'comparison'>('summary');
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
-  const [platform, setPlatform] = useState<'all' | 'xiaohongshu' | 'douyin'>('all');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // 선택된 인플루언서에 따라 플랫폼 자동 결정
+  const targetPlatform = selectedInfluencer?.platform || 'all';
 
   const generateReport = async () => {
     setIsGenerating(true);
@@ -34,20 +42,31 @@ const PerformanceReportGenerator: React.FC<PerformanceReportGeneratorProps> = ({
       const summary = performanceTrackerService.getPerformanceSummary(campaignId);
       const metrics = performanceTrackerService.getPerformanceMetrics(campaignId);
       
+      // 선택된 인플루언서나 플랫폼에 따른 필터링
+      let filteredMetrics = metrics;
+      if (selectedInfluencer && selectedInfluencer.id !== 'all') {
+        // 특정 인플루언서 선택된 경우
+        filteredMetrics = metrics.filter(m => m.influencerId === selectedInfluencer.id);
+      } else if (targetPlatform !== 'all') {
+        // 플랫폼별 필터링
+        filteredMetrics = metrics.filter(m => m.platform === targetPlatform);
+      }
+      
       // 리포트 데이터 구성
       const reportData = {
         reportType,
         generatedAt: new Date().toISOString(),
         dateRange,
-        platform,
+        targetPlatform,
+        selectedInfluencer: selectedInfluencer?.id !== 'all' ? selectedInfluencer : null,
         summary,
-        metrics: platform === 'all' ? metrics : metrics.filter(m => m.platform === platform),
+        metrics: filteredMetrics,
         insights: {
-          topPerformingContent: metrics.sort((a, b) => 
+          topPerformingContent: filteredMetrics.sort((a, b) => 
             (b.xiaohongshuMetrics?.exposure || b.douyinMetrics?.views || 0) - 
             (a.xiaohongshuMetrics?.exposure || a.douyinMetrics?.views || 0)
           ).slice(0, 5),
-          engagementTrends: generateEngagementTrends(metrics),
+          engagementTrends: generateEngagementTrends(filteredMetrics),
           platformComparison: generatePlatformComparison(summary)
         }
       };
@@ -57,14 +76,18 @@ const PerformanceReportGenerator: React.FC<PerformanceReportGeneratorProps> = ({
       const reportBase64 = btoa(unescape(encodeURIComponent(reportJson)));
       
       // 파일명 생성
-      const fileName = `성과리포트_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.json`;
+      const influencerSuffix = selectedInfluencer && selectedInfluencer.id !== 'all' 
+        ? `_${selectedInfluencer.name}` 
+        : '';
+      const fileName = `성과리포트${influencerSuffix}_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.json`;
       
       // 다운로드 실행
       downloadFile(`data:application/json;base64,${reportBase64}`, fileName);
       
       console.log('=== 성과 리포트 생성 완료 ===');
       console.log('리포트 타입:', reportType);
-      console.log('플랫폼:', platform);
+      console.log('대상 플랫폼:', targetPlatform);
+      console.log('선택된 인플루언서:', selectedInfluencer?.name || '전체');
       console.log('데이터 범위:', dateRange);
       
     } catch (error) {
@@ -133,56 +156,42 @@ const PerformanceReportGenerator: React.FC<PerformanceReportGeneratorProps> = ({
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">플랫폼</label>
-            <Select value={platform} onValueChange={(value: any) => setPlatform(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 플랫폼</SelectItem>
-                <SelectItem value="xiaohongshu">샤오홍슈</SelectItem>
-                <SelectItem value="douyin">도우인</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+            <label className="text-sm font-medium mb-2 block">기간 선택</label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange.from ? format(dateRange.from, 'MM/dd', { locale: ko }) : '시작일'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.from}
+                    onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
 
-        <div>
-          <label className="text-sm font-medium mb-2 block">기간 선택</label>
-          <div className="flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? format(dateRange.from, 'PPP', { locale: ko }) : '시작일'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.from}
-                  onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.to ? format(dateRange.to, 'PPP', { locale: ko }) : '종료일'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.to}
-                  onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange.to ? format(dateRange.to, 'MM/dd', { locale: ko }) : '종료일'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.to}
+                    onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 
@@ -190,9 +199,11 @@ const PerformanceReportGenerator: React.FC<PerformanceReportGeneratorProps> = ({
           <Badge variant="outline">
             유형: {reportType === 'summary' ? '요약' : reportType === 'detailed' ? '상세' : '비교'}
           </Badge>
-          <Badge variant="outline">
-            플랫폼: {platform === 'all' ? '전체' : platform === 'xiaohongshu' ? '샤오홍슈' : '도우인'}
-          </Badge>
+          {selectedInfluencer && selectedInfluencer.id !== 'all' && (
+            <Badge variant="outline">
+              인플루언서: {selectedInfluencer.name} ({selectedInfluencer.platform === 'xiaohongshu' ? '샤오홍슈' : '도우인'})
+            </Badge>
+          )}
           {dateRange.from && (
             <Badge variant="outline">
               {format(dateRange.from, 'MM/dd', { locale: ko })} ~ {dateRange.to ? format(dateRange.to, 'MM/dd', { locale: ko }) : '현재'}
