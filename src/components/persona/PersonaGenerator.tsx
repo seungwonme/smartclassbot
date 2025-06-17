@@ -61,10 +61,39 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
 
-  // Filter reports based on selected brand and product
-  const filteredReports = savedReports.filter(report => 
-    report.brandId === selectedBrand && report.productId === selectedProduct
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // 리포트 필터링 로직 개선 - 더 유연한 매칭
+  const filteredReports = savedReports.filter(report => {
+    console.log('🔍 리포트 필터링 체크:', {
+      reportId: report.id,
+      reportName: report.name,
+      reportBrandId: report.brandId,
+      reportProductId: report.productId,
+      selectedBrand,
+      selectedProduct,
+      brandMatch: report.brandId === selectedBrand,
+      productMatch: report.productId === selectedProduct
+    });
+    
+    return report.brandId === selectedBrand && report.productId === selectedProduct;
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  console.log('📊 PersonaGenerator 필터링 결과:', {
+    totalReports: savedReports.length,
+    filteredReports: filteredReports.length,
+    selectedBrand,
+    selectedProduct,
+    selectedBrandName: selectedBrandData?.name,
+    selectedProductName: selectedProductData?.name
+  });
+
+  // 필터링된 리포트가 있는데 선택된 리포트가 없으면 첫 번째 리포트 자동 선택
+  useEffect(() => {
+    if (filteredReports.length > 0 && !selectedReport) {
+      const firstReport = filteredReports[0];
+      console.log('🎯 첫 번째 리포트 자동 선택:', firstReport.name);
+      setSelectedReport(firstReport.id);
+    }
+  }, [filteredReports, selectedReport]);
 
   const selectedReportData = filteredReports.find(r => r.id === selectedReport);
 
