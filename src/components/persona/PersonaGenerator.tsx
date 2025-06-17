@@ -61,20 +61,32 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
 
-  // 리포트 필터링 로직 개선 - 더 유연한 매칭
+  // 개선된 리포트 필터링 로직 - ID와 이름 매칭 모두 지원
   const filteredReports = savedReports.filter(report => {
+    // ID 기반 매칭 (새로운 형식)
+    const idMatch = report.brandId === selectedBrand && report.productId === selectedProduct;
+    
+    // 이름 기반 매칭 (기존 데이터 호환성)
+    const nameMatch = selectedBrandData && selectedProductData && 
+      report.brandName === selectedBrandData.name && report.productName === selectedProductData.name;
+    
     console.log('🔍 리포트 필터링 체크:', {
       reportId: report.id,
       reportName: report.name,
       reportBrandId: report.brandId,
       reportProductId: report.productId,
+      reportBrandName: report.brandName,
+      reportProductName: report.productName,
       selectedBrand,
       selectedProduct,
-      brandMatch: report.brandId === selectedBrand,
-      productMatch: report.productId === selectedProduct
+      selectedBrandName: selectedBrandData?.name,
+      selectedProductName: selectedProductData?.name,
+      idMatch,
+      nameMatch,
+      finalMatch: idMatch || nameMatch
     });
     
-    return report.brandId === selectedBrand && report.productId === selectedProduct;
+    return idMatch || nameMatch;
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   console.log('📊 PersonaGenerator 필터링 결과:', {

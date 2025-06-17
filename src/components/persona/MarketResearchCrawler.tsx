@@ -86,15 +86,23 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
       sentiment: 'positive'
     };
 
+    // 수정: 브랜드/제품 ID를 올바르게 저장
     const reportData = {
-      brandId: selectedBrand,
-      productId: selectedProduct,
+      brandId: selectedBrand, // ID로 저장
+      productId: selectedProduct, // ID로 저장
       brandName: selectedBrandData?.name,
       productName: selectedProductData?.name,
       platforms: mockPlatforms,
       summary: mockSummary,
       completedAt: new Date().toISOString()
     };
+
+    console.log('📝 시장조사 리포트 데이터 생성:', {
+      brandId: reportData.brandId,
+      productId: reportData.productId,
+      brandName: reportData.brandName,
+      productName: reportData.productName
+    });
 
     setCurrentReportData(reportData);
     setCrawlCompleted(true);
