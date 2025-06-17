@@ -9,6 +9,7 @@ export interface Brand {
   marketing?: string;
   socialChannels?: string[];
   activeCampaigns?: number;
+  category?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +30,7 @@ export interface Product {
   targetGender?: string;
   targetAge?: string;
   activeCampaigns?: number;
+  category?: string;
   createdAt: string;
   updatedAt: string;
 }
