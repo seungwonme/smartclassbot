@@ -59,6 +59,16 @@ export const brandService = {
       }, 200);
     }),
 
+  getProductById: async (id: string): Promise<Product | null> =>
+    new Promise((resolve) => {
+      setTimeout(() => {
+        const products = storageService.getProducts();
+        const product = products.find(p => p.id === id);
+        console.log(`brandService.getProductById(${id}) 결과:`, product);
+        resolve(product || null);
+      }, 200);
+    }),
+
   getProductsByBrand: async (brandId: string): Promise<Product[]> =>
     new Promise((resolve) => {
       setTimeout(() => {
@@ -97,6 +107,48 @@ export const brandService = {
         products.push(newProduct);
         storageService.setProducts(products);
         resolve(newProduct);
+      }, 300);
+    }),
+
+  updateProduct: async (id: string, productData: Partial<Product>): Promise<Product> =>
+    new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const products = storageService.getProducts();
+        const productIndex = products.findIndex(p => p.id === id);
+        
+        if (productIndex === -1) {
+          reject(new Error('제품을 찾을 수 없습니다.'));
+          return;
+        }
+
+        const updatedProduct: Product = {
+          ...products[productIndex],
+          ...productData,
+          updatedAt: new Date().toISOString()
+        };
+        
+        products[productIndex] = updatedProduct;
+        storageService.setProducts(products);
+        console.log(`brandService.updateProduct(${id}) 결과:`, updatedProduct);
+        resolve(updatedProduct);
+      }, 300);
+    }),
+
+  deleteProduct: async (id: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const products = storageService.getProducts();
+        const productIndex = products.findIndex(p => p.id === id);
+        
+        if (productIndex === -1) {
+          reject(new Error('제품을 찾을 수 없습니다.'));
+          return;
+        }
+
+        products.splice(productIndex, 1);
+        storageService.setProducts(products);
+        console.log(`brandService.deleteProduct(${id}) 완료`);
+        resolve();
       }, 300);
     })
 };

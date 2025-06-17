@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { brandService } from '@/services/brand.service';
+import { Brand, Product } from '@/types/brand';
 
 interface ProductFormData {
   brandId: string;
@@ -29,68 +32,213 @@ interface ProductFormData {
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   
-  // 임시 제품 데이터
-  const productData = {
-    id: '1',
-    brandId: '1',
-    brandName: '샘플 브랜드 A',
-    purchaseUrl: 'https://example.com/product1',
-    name: '프리미엄 립스틱',
-    unit: '3.5g',
-    price: '25000',
-    description: '촉촉한 발색의 프리미엄 립스틱',
-    ingredients: '비즈왁스, 호호바오일, 비타민E',
-    usage: '입술에 직접 발라주세요',
-    effects: '8시간 지속, 촉촉함 유지',
-    usp: '특허 성분으로 24시간 색상 지속',
-    targetGender: '여성',
-    targetAge: '20-40대',
-    activeCampaigns: 1
-  };
-
   const form = useForm<ProductFormData>({
     defaultValues: {
-      brandId: productData.brandId,
-      purchaseUrl: productData.purchaseUrl,
-      name: productData.name,
-      unit: productData.unit,
-      price: productData.price,
-      description: productData.description,
-      ingredients: productData.ingredients,
-      usage: productData.usage,
-      effects: productData.effects,
-      usp: productData.usp,
-      targetGender: productData.targetGender,
-      targetAge: productData.targetAge
+      brandId: '',
+      purchaseUrl: '',
+      name: '',
+      unit: '',
+      price: '',
+      description: '',
+      ingredients: '',
+      usage: '',
+      effects: '',
+      usp: '',
+      targetGender: '',
+      targetAge: ''
     }
   });
 
-  // 임시 브랜드 데이터
-  const brands = [
-    { id: '1', name: '샘플 브랜드 A' },
-    { id: '2', name: '샘플 브랜드 B' }
-  ];
+  // 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      if (!id) {
+        toast({
+          title: "잘못된 접근",
+          description: "제품 ID가 없습니다.",
+          variant: "destructive"
+        });
+        navigate('/brand/products');
+        return;
+      }
 
-  const onSubmit = (data: ProductFormData) => {
-    console.log('제품 수정:', data);
-    alert('제품 정보가 성공적으로 수정되었습니다!');
-    setIsEditing(false);
+      setLoading(true);
+      try {
+        const [productData, brandsData] = await Promise.all([
+          brandService.getProductById(id),
+          brandService.getBrands()
+        ]);
+
+        if (!productData) {
+          toast({
+            title: "제품을 찾을 수 없습니다",
+            description: "요청한 제품이 존재하지 않습니다.",
+            variant: "destructive"
+          });
+          navigate('/brand/products');
+          return;
+        }
+
+        setProduct(productData);
+        setBrands(brandsData);
+
+        // 폼에 데이터 설정
+        form.reset({
+          brandId: productData.brandId,
+          purchaseUrl: productData.purchaseUrl || '',
+          name: productData.name,
+          unit: productData.unit || '',
+          price: productData.price?.toString() || '',
+          description: productData.description,
+          ingredients: productData.ingredients || '',
+          usage: productData.usage || '',
+          effects: productData.effects || '',
+          usp: productData.usp || '',
+          targetGender: productData.targetGender || '',
+          targetAge: productData.targetAge || ''
+        });
+
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+        toast({
+          title: "데이터 로드 실패",
+          description: "제품 정보를 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+        navigate('/brand/products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, toast, navigate, form]);
+
+  const onSubmit = async (data: ProductFormData) => {
+    if (!product) return;
+
+    setIsUpdating(true);
+    try {
+      // 선택된 브랜드 정보 찾기
+      const selectedBrand = brands.find(brand => brand.id === data.brandId);
+      if (!selectedBrand) {
+        throw new Error('선택된 브랜드를 찾을 수 없습니다.');
+      }
+
+      // 업데이트할 데이터 준비
+      const updateData = {
+        brandId: data.brandId,
+        brandName: selectedBrand.name,
+        purchaseUrl: data.purchaseUrl.trim() || undefined,
+        unit: data.unit.trim() || undefined,
+        price: data.price.trim() ? Number(data.price.trim()) : undefined,
+        description: data.description.trim() || product.description,
+        ingredients: data.ingredients.trim() || undefined,
+        usage: data.usage.trim() || undefined,
+        effects: data.effects.trim() || undefined,
+        usp: data.usp.trim() || undefined,
+        targetGender: data.targetGender || undefined,
+        targetAge: data.targetAge.trim() || undefined,
+      };
+
+      console.log('제품 업데이트 데이터:', updateData);
+      
+      const updatedProduct = await brandService.updateProduct(product.id, updateData);
+      setProduct(updatedProduct);
+      
+      toast({
+        title: "제품 정보가 성공적으로 수정되었습니다!",
+        description: `${updatedProduct.name}의 정보가 업데이트되었습니다.`
+      });
+      
+      setIsEditing(false);
+    } catch (error) {
+      console.error('제품 수정 실패:', error);
+      toast({
+        title: "수정 실패",
+        description: "제품 정보 수정 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (productData.activeCampaigns > 0) {
-      alert('진행 중인 캠페인이 있어 삭제할 수 없습니다.');
+  const handleDelete = async () => {
+    if (!product) return;
+
+    if (product.activeCampaigns && product.activeCampaigns > 0) {
+      toast({
+        title: "삭제할 수 없습니다",
+        description: "진행 중인 캠페인이 있어 삭제할 수 없습니다.",
+        variant: "destructive"
+      });
       return;
     }
     
-    if (confirm('정말로 이 제품을 삭제하시겠습니까?')) {
-      console.log('제품 삭제:', id);
-      alert('제품이 성공적으로 삭제되었습니다!');
-      navigate('/brand/products/manage');
+    if (!confirm('정말로 이 제품을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await brandService.deleteProduct(product.id);
+      
+      toast({
+        title: "제품이 성공적으로 삭제되었습니다!",
+        description: `${product.name}이(가) 삭제되었습니다.`
+      });
+      
+      navigate('/brand/products');
+    } catch (error) {
+      console.error('제품 삭제 실패:', error);
+      toast({
+        title: "삭제 실패",
+        description: "제품 삭제 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <BrandSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-gray-900 mb-2">제품 정보 로딩 중...</div>
+            <div className="text-gray-600">제품 상세 정보를 불러오고 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <BrandSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-gray-900 mb-2">제품을 찾을 수 없습니다</div>
+            <div className="text-gray-600 mb-4">요청한 제품이 존재하지 않습니다.</div>
+            <Link to="/brand/products">
+              <Button>제품 목록으로 돌아가기</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -101,7 +249,7 @@ const ProductDetail = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center">
-              <Link to="/brand/products/manage">
+              <Link to="/brand/products">
                 <Button variant="ghost" size="sm" className="mr-4">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   뒤로가기
@@ -109,7 +257,7 @@ const ProductDetail = () => {
               </Link>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">제품 상세</h1>
-                <p className="text-gray-600 mt-2">{productData.brandName} - {productData.name}</p>
+                <p className="text-gray-600 mt-2">{product.brandName} - {product.name}</p>
               </div>
             </div>
             
@@ -118,6 +266,7 @@ const ProductDetail = () => {
                 <Button
                   onClick={() => setIsEditing(true)}
                   className="bg-blue-500 hover:bg-blue-600 text-white"
+                  disabled={isUpdating}
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   수정
@@ -126,7 +275,7 @@ const ProductDetail = () => {
                   onClick={handleDelete}
                   variant="outline"
                   className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
-                  disabled={productData.activeCampaigns > 0}
+                  disabled={(product.activeCampaigns || 0) > 0 || isUpdating}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   삭제
@@ -294,7 +443,6 @@ const ProductDetail = () => {
                     )}
                   />
 
-                  {/* 상세 정보 */}
                   <FormField
                     control={form.control}
                     name="description"
@@ -396,11 +544,16 @@ const ProductDetail = () => {
                         type="button" 
                         variant="outline"
                         onClick={() => setIsEditing(false)}
+                        disabled={isUpdating}
                       >
                         취소
                       </Button>
-                      <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
-                        저장하기
+                      <Button 
+                        type="submit" 
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? '저장 중...' : '저장하기'}
                       </Button>
                     </div>
                   )}
