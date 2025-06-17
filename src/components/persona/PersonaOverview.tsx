@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Brain, Users, TrendingUp, Target } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Brain, Users, TrendingUp, Target, Trash } from 'lucide-react';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 
 interface PersonaOverviewProps {
@@ -15,6 +16,7 @@ interface PersonaOverviewProps {
   onBrandChange: (brandId: string) => void;
   onProductChange: (productId: string) => void;
   onPersonaSelect: (personaId: string) => void;
+  onPersonaDelete?: (personaId: string, personaName: string) => void;
   savedPersonas: any[];
 }
 
@@ -26,13 +28,24 @@ const PersonaOverview: React.FC<PersonaOverviewProps> = ({
   onBrandChange,
   onProductChange,
   onPersonaSelect,
+  onPersonaDelete,
   savedPersonas
 }) => {
+  const [deletingPersonaId, setDeletingPersonaId] = useState<string | null>(null);
+
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
   const filteredProducts = selectedBrand 
     ? products.filter(product => product.brandId === selectedBrand)
     : [];
+
+  const handleDeletePersona = (personaId: string, personaName: string) => {
+    console.log('🗑️ 페르소나 삭제 요청:', { personaId, personaName });
+    if (onPersonaDelete) {
+      onPersonaDelete(personaId, personaName);
+    }
+    setDeletingPersonaId(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -88,7 +101,7 @@ const PersonaOverview: React.FC<PersonaOverviewProps> = ({
       {savedPersonas.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {savedPersonas.map((persona) => (
-            <Card key={persona.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={persona.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{persona.name}</CardTitle>
@@ -120,15 +133,43 @@ const PersonaOverview: React.FC<PersonaOverviewProps> = ({
                     size="sm" 
                     variant="outline"
                     onClick={() => onPersonaSelect(persona.id)}
+                    className="flex-1"
                   >
                     상세보기
                   </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => onPersonaSelect(persona.id)}
-                  >
-                    매칭하기
-                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        className="flex items-center gap-1"
+                        onClick={() => setDeletingPersonaId(persona.id)}
+                      >
+                        <Trash className="w-3 h-3" />
+                        삭제
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>페르소나 삭제 확인</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          정말로 "{persona.name || '이름 없는 페르소나'}" 페르소나를 삭제하시겠습니까?
+                          <br />
+                          <span className="text-red-600 font-medium">이 작업은 되돌릴 수 없습니다.</span>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeletePersona(persona.id, persona.name || '이름 없는 페르소나')}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          삭제하기
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>

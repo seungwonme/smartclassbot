@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -281,6 +282,38 @@ const BrandPersonaManagement = () => {
     });
   };
 
+  const handlePersonaDeleted = (personaId: string, personaName: string) => {
+    console.log('🗑️ 페르소나 삭제 이벤트 수신:', { personaId, personaName });
+    
+    try {
+      const success = storageService.deletePersona(personaId);
+      
+      if (success) {
+        // 저장된 데이터 다시 로드하여 실시간 업데이트
+        loadStoredData();
+        
+        // 삭제된 페르소나가 현재 활성 페르소나인 경우 선택 해제
+        if (activePersona === personaId) {
+          setActivePersona(null);
+        }
+        
+        toast({
+          title: "페르소나 삭제 완료",
+          description: `${personaName} 페르소나가 성공적으로 삭제되었습니다.`,
+        });
+      } else {
+        throw new Error('페르소나 삭제 실패');
+      }
+    } catch (error) {
+      console.error('❌ 페르소나 삭제 실패:', error);
+      toast({
+        title: "페르소나 삭제 실패",
+        description: "페르소나를 삭제하는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -390,6 +423,7 @@ const BrandPersonaManagement = () => {
               onBrandChange={handleBrandChange}
               onProductChange={setSelectedProduct}
               onPersonaSelect={setActivePersona}
+              onPersonaDelete={handlePersonaDeleted}
               savedPersonas={savedPersonas}
             />
           </TabsContent>

@@ -1,4 +1,3 @@
-
 import { Campaign } from '@/types/campaign';
 import { Brand, Product } from '@/types/brand';
 import { ContentPlanDetail } from '@/types/content';
@@ -15,7 +14,6 @@ const STORAGE_KEYS = {
 };
 
 export const storageService = {
-  // 캠페인 관련
   getCampaigns: (): Campaign[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CAMPAIGNS);
@@ -339,7 +337,36 @@ export const storageService = {
     }
   },
 
-  // 초기화 관련
+  deletePersona: (personaId: string): boolean => {
+    try {
+      console.log('🗑️ 페르소나 삭제 시작:', personaId);
+      const existingPersonas = storageService.getPersonas();
+      const personaToDelete = existingPersonas.find(persona => persona.id === personaId);
+      
+      if (!personaToDelete) {
+        console.error('❌ 삭제할 페르소나를 찾을 수 없음:', personaId);
+        return false;
+      }
+      
+      const updatedPersonas = existingPersonas.filter(persona => persona.id !== personaId);
+      
+      if (storageService.setPersonas(updatedPersonas)) {
+        console.log('✅ 페르소나 삭제 완료:', {
+          id: personaId,
+          name: personaToDelete.name || '이름 없음',
+          총개수: updatedPersonas.length
+        });
+        return true;
+      }
+      
+      console.error('❌ 페르소나 저장 실패');
+      return false;
+    } catch (error) {
+      console.error('❌ 페르소나 삭제 실패:', error);
+      return false;
+    }
+  },
+
   isInitialized: (): boolean => {
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     console.log('초기화 상태 확인:', !!initialized);
