@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Globe, Sparkles, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { brandService } from '@/services/brand.service';
 
 const CreateBrand = () => {
   const navigate = useNavigate();
@@ -84,19 +85,40 @@ const CreateBrand = () => {
 
     setIsLoading(true);
     try {
-      // API 저장 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 폼 데이터를 Brand 타입에 맞게 변환
+      const brandData = {
+        name: formData.name.trim(),
+        description: formData.story.trim() || formData.name.trim() + " 브랜드입니다.",
+        website: formData.website.trim() || undefined,
+        story: formData.story.trim() || undefined,
+        channels: formData.channels.trim() 
+          ? formData.channels.split(',').map(channel => channel.trim()).filter(channel => channel.length > 0)
+          : undefined,
+        marketing: formData.marketing.trim() || undefined,
+        socialChannels: formData.socialChannels.trim()
+          ? formData.socialChannels.split(',').map(channel => channel.trim()).filter(channel => channel.length > 0)
+          : undefined,
+        activeCampaigns: 0
+      };
+
+      console.log('브랜드 생성 데이터:', brandData);
+      
+      // 실제 brandService를 통해 브랜드 생성
+      const newBrand = await brandService.createBrand(brandData);
+      
+      console.log('생성된 브랜드:', newBrand);
       
       toast({
         title: "브랜드가 생성되었습니다",
-        description: "새로운 브랜드가 성공적으로 등록되었습니다."
+        description: `${newBrand.name} 브랜드가 성공적으로 등록되었습니다.`
       });
       
       navigate('/brand/products');
     } catch (error) {
+      console.error('브랜드 생성 실패:', error);
       toast({
         title: "저장 실패",
-        description: "브랜드 저장 중 오류가 발생했습니다.",
+        description: "브랜드 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive"
       });
     } finally {
@@ -233,7 +255,7 @@ const CreateBrand = () => {
                     id="socialChannels"
                     value={formData.socialChannels}
                     onChange={(e) => handleInputChange('socialChannels', e.target.value)}
-                    placeholder="소셜미디어 채널을 입력하세요 (예: Instagram (@brand_name), YouTube (채널명))"
+                    placeholder="소셜미디어 채널을 쉼표로 구분하여 입력하세요 (예: Instagram (@brand_name), YouTube (채널명))"
                     rows={3}
                   />
                 </div>
