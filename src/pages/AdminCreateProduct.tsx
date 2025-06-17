@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,8 @@ import { useForm } from 'react-hook-form';
 import { Bot, ArrowLeft, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { brandService } from '@/services/brand.service';
+import { Brand } from '@/types/brand';
 
 interface ProductFormData {
   brandId: string;
@@ -27,16 +28,12 @@ interface ProductFormData {
   targetAge: string;
 }
 
-interface Brand {
-  id: string;
-  name: string;
-  manager: string;
-}
-
 const AdminCreateProduct = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loadingBrands, setLoadingBrands] = useState(true);
   
   const form = useForm<ProductFormData>({
     defaultValues: {
@@ -55,12 +52,26 @@ const AdminCreateProduct = () => {
     }
   });
 
-  // 브랜드 데이터
-  const brands: Brand[] = [
-    { id: '1', name: '샘플 브랜드 A', manager: '김브랜드' },
-    { id: '2', name: '샘플 브랜드 B', manager: '이제품' },
-    { id: '3', name: '샘플 브랜드 C', manager: '박마케팅' }
-  ];
+  // 브랜드 데이터 로드
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        const brandsData = await brandService.getBrands();
+        setBrands(brandsData);
+      } catch (error) {
+        console.error('브랜드 데이터 로드 실패:', error);
+        toast({
+          title: "브랜드 정보 로드 실패",
+          description: "브랜드 목록을 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
+    loadBrands();
+  }, [toast]);
 
   const handleAIProductInfo = async () => {
     const purchaseUrl = form.getValues('purchaseUrl');
@@ -112,20 +123,58 @@ const AdminCreateProduct = () => {
       return;
     }
 
+    if (!data.name.trim()) {
+      toast({
+        title: "제품명을 입력해주세요",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 선택된 브랜드 정보 찾기
+      const selectedBrand = brands.find(brand => brand.id === data.brandId);
+      if (!selectedBrand) {
+        throw new Error('선택된 브랜드를 찾을 수 없습니다.');
+      }
+
+      // 폼 데이터를 Product 타입에 맞게 변환
+      const productData = {
+        name: data.name.trim(),
+        description: data.description.trim() || data.name.trim(),
+        brandId: data.brandId,
+        brandName: selectedBrand.name,
+        purchaseUrl: data.purchaseUrl.trim() || undefined,
+        unit: data.unit.trim() || undefined,
+        price: data.price.trim() ? Number(data.price.trim()) : undefined,
+        ingredients: data.ingredients.trim() || undefined,
+        usage: data.usage.trim() || undefined,
+        effects: data.effects.trim() || undefined,
+        usp: data.usp.trim() || undefined,
+        targetGender: data.targetGender || undefined,
+        targetAge: data.targetAge.trim() || undefined,
+        activeCampaigns: 0
+      };
+
+      console.log('제품 생성 데이터:', productData);
+      
+      // 실제 brandService를 통해 제품 생성
+      const newProduct = await brandService.createProduct(productData);
+      
+      console.log('생성된 제품:', newProduct);
       
       toast({
         title: "제품이 성공적으로 등록되었습니다!",
-        description: "새로운 제품이 브랜드에 추가되었습니다."
+        description: `${newProduct.name}이(가) ${selectedBrand.name} 브랜드에 추가되었습니다.`
       });
       
       navigate('/admin/brands');
     } catch (error) {
+      console.error('제품 생성 실패:', error);
       toast({
         title: "저장 실패",
-        description: "제품 저장 중 오류가 발생했습니다.",
+        description: "제품 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive"
       });
     } finally {
@@ -134,6 +183,20 @@ const AdminCreateProduct = () => {
   };
 
   const selectedBrand = brands.find(brand => brand.id === form.watch('brandId'));
+
+  if (loadingBrands) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-gray-900 mb-2">브랜드 정보 로딩 중...</div>
+            <div className="text-gray-600">브랜드 목록을 불러오고 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -183,7 +246,7 @@ const AdminCreateProduct = () => {
                                     <Building2 className="h-4 w-4" />
                                     <div>
                                       <div className="font-medium">{brand.name}</div>
-                                      <div className="text-sm text-gray-500">관리자: {brand.manager}</div>
+                                      <div className="text-sm text-gray-500">등록일: {new Date(brand.createdAt).toLocaleDateString()}</div>
                                     </div>
                                   </div>
                                 </SelectItem>
@@ -229,7 +292,10 @@ const AdminCreateProduct = () => {
                         <Building2 className="h-5 w-5 text-blue-600" />
                         <div>
                           <div className="font-medium text-blue-900">선택된 브랜드: {selectedBrand.name}</div>
-                          <div className="text-sm text-blue-700">브랜드 관리자: {selectedBrand.manager}</div>
+                          <div className="text-sm text-blue-700">등록일: {new Date(selectedBrand.createdAt).toLocaleDateString()}</div>
+                          {selectedBrand.website && (
+                            <div className="text-sm text-blue-700">웹사이트: {selectedBrand.website}</div>
+                          )}
                         </div>
                       </div>
                     </div>

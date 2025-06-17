@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { Bot, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
+import { brandService } from '@/services/brand.service';
+import { Brand } from '@/types/brand';
 
 interface ProductFormData {
   brandId: string;
@@ -28,7 +30,10 @@ interface ProductFormData {
 
 const CreateProduct = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loadingBrands, setLoadingBrands] = useState(true);
   
   const form = useForm<ProductFormData>({
     defaultValues: {
@@ -47,16 +52,34 @@ const CreateProduct = () => {
     }
   });
 
-  // 임시 브랜드 데이터
-  const brands = [
-    { id: '1', name: '샘플 브랜드 A' },
-    { id: '2', name: '샘플 브랜드 B' }
-  ];
+  // 브랜드 데이터 로드
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        const brandsData = await brandService.getBrands();
+        setBrands(brandsData);
+      } catch (error) {
+        console.error('브랜드 데이터 로드 실패:', error);
+        toast({
+          title: "브랜드 정보 로드 실패",
+          description: "브랜드 목록을 불러오는데 실패했습니다.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
+    loadBrands();
+  }, [toast]);
 
   const handleAIProductInfo = async () => {
     const purchaseUrl = form.getValues('purchaseUrl');
     if (!purchaseUrl) {
-      alert('구매 링크 URL을 먼저 입력해주세요.');
+      toast({
+        title: "구매 링크 URL을 먼저 입력해주세요.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -75,15 +98,95 @@ const CreateProduct = () => {
       form.setValue('targetGender', '여성');
       form.setValue('targetAge', '30-50대');
       setIsLoading(false);
-      alert('AI가 제품 정보를 성공적으로 가져왔습니다!');
+      
+      toast({
+        title: "AI가 제품 정보를 성공적으로 가져왔습니다!",
+        description: "내용을 확인하고 필요시 수정해주세요."
+      });
     }, 2000);
   };
 
-  const onSubmit = (data: ProductFormData) => {
-    console.log('제품 생성:', data);
-    alert('제품이 성공적으로 등록되었습니다!');
-    navigate('/brand/products/manage');
+  const onSubmit = async (data: ProductFormData) => {
+    if (!data.brandId) {
+      toast({
+        title: "브랜드를 선택해주세요",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!data.name.trim()) {
+      toast({
+        title: "제품명을 입력해주세요",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 선택된 브랜드 정보 찾기
+      const selectedBrand = brands.find(brand => brand.id === data.brandId);
+      if (!selectedBrand) {
+        throw new Error('선택된 브랜드를 찾을 수 없습니다.');
+      }
+
+      // 폼 데이터를 Product 타입에 맞게 변환
+      const productData = {
+        name: data.name.trim(),
+        description: data.description.trim() || data.name.trim(),
+        brandId: data.brandId,
+        brandName: selectedBrand.name,
+        purchaseUrl: data.purchaseUrl.trim() || undefined,
+        unit: data.unit.trim() || undefined,
+        price: data.price.trim() ? Number(data.price.trim()) : undefined,
+        ingredients: data.ingredients.trim() || undefined,
+        usage: data.usage.trim() || undefined,
+        effects: data.effects.trim() || undefined,
+        usp: data.usp.trim() || undefined,
+        targetGender: data.targetGender || undefined,
+        targetAge: data.targetAge.trim() || undefined,
+        activeCampaigns: 0
+      };
+
+      console.log('제품 생성 데이터:', productData);
+      
+      // 실제 brandService를 통해 제품 생성
+      const newProduct = await brandService.createProduct(productData);
+      
+      console.log('생성된 제품:', newProduct);
+      
+      toast({
+        title: "제품이 성공적으로 등록되었습니다!",
+        description: `${newProduct.name}이(가) ${selectedBrand.name} 브랜드에 추가되었습니다.`
+      });
+      
+      navigate('/brand/products');
+    } catch (error) {
+      console.error('제품 생성 실패:', error);
+      toast({
+        title: "저장 실패",
+        description: "제품 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (loadingBrands) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <BrandSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-gray-900 mb-2">브랜드 정보 로딩 중...</div>
+            <div className="text-gray-600">브랜드 목록을 불러오고 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -93,7 +196,7 @@ const CreateProduct = () => {
         <div className="p-8">
           {/* Header */}
           <div className="flex items-center mb-8">
-            <Link to="/brand/products/manage">
+            <Link to="/brand/products">
               <Button variant="ghost" size="sm" className="mr-4">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 뒤로가기
@@ -268,6 +371,7 @@ const CreateProduct = () => {
                     )}
                   />
 
+                  
                   <FormField
                     control={form.control}
                     name="ingredients"
@@ -341,13 +445,17 @@ const CreateProduct = () => {
                   />
 
                   <div className="flex justify-end space-x-4 pt-6">
-                    <Link to="/brand/products/manage">
+                    <Link to="/brand/products">
                       <Button type="button" variant="outline">
                         취소
                       </Button>
                     </Link>
-                    <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
-                      저장하기
+                    <Button 
+                      type="submit" 
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? '저장 중...' : '저장하기'}
                     </Button>
                   </div>
                 </form>
