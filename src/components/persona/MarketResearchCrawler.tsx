@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Search, Globe, MessageSquare, TrendingUp, Users, CheckCircle } from 'lucide-react';
+import { Search, Globe, MessageSquare, TrendingUp, Users, CheckCircle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 import MarketResearchReportModal from './MarketResearchReportModal';
@@ -31,7 +32,7 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
   onBrandChange,
   onProductChange,
   onResearchComplete,
-  savedReports: initialSavedReports,
+  savedReports: filteredReports,
   onReportDeleted
 }) => {
   const { toast } = useToast();
@@ -39,13 +40,6 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
   const [isCrawling, setIsCrawling] = useState(false);
   const [crawlCompleted, setCrawlCompleted] = useState(false);
   const [currentReportData, setCurrentReportData] = useState<any>(null);
-  const [savedReports, setSavedReports] = useState(initialSavedReports);
-
-  // Props로 받은 savedReports 동기화
-  useEffect(() => {
-    console.log('🔄 MarketResearchCrawler: savedReports props 업데이트됨:', initialSavedReports.length);
-    setSavedReports(initialSavedReports);
-  }, [initialSavedReports]);
 
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
   const selectedProductData = products.find(p => p.id === selectedProduct);
@@ -118,7 +112,6 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
     try {
       // localStorage에 저장
       const reports = storageService.getMarketReports();
-      setSavedReports(reports);
       
       // 상위 컴포넌트에 알림
       onResearchComplete(reportData);
@@ -131,13 +124,10 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
 
   const handleDeleteReport = (reportId: string) => {
     try {
-      const reportToDelete = savedReports.find(report => report.id === reportId);
+      const reportToDelete = filteredReports.find(report => report.id === reportId);
       const reportName = reportToDelete?.name || '리포트';
       
       if (storageService.deleteMarketReport(reportId)) {
-        const updatedReports = storageService.getMarketReports();
-        setSavedReports(updatedReports);
-        
         // 상위 컴포넌트에 삭제 알림
         if (onReportDeleted) {
           onReportDeleted(reportId, reportName);
@@ -196,6 +186,21 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
               </Select>
             </div>
           </div>
+
+          {/* 선택된 브랜드/제품 정보 표시 */}
+          {selectedBrand && selectedProduct && (
+            <div className="p-3 bg-blue-50 rounded-lg border">
+              <div className="flex items-center gap-2 text-blue-700">
+                <Info className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  선택된 조합: {selectedBrandData?.name} - {selectedProductData?.name}
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 mt-1">
+                이 조합에 대한 시장조사 리포트만 표시됩니다.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -273,9 +278,13 @@ const MarketResearchCrawler: React.FC<MarketResearchCrawlerProps> = ({
 
       {/* 저장된 리포트 목록 */}
       <SavedReportsList
-        savedReports={savedReports}
+        savedReports={filteredReports}
         onDeleteReport={handleDeleteReport}
         isRecentReport={isRecentReport}
+        selectedBrand={selectedBrand}
+        selectedProduct={selectedProduct}
+        brands={brands}
+        products={products}
       />
     </div>
   );

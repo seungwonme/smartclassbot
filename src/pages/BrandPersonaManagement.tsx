@@ -18,6 +18,7 @@ const BrandPersonaManagement = () => {
   const [marketResearchCompleted, setMarketResearchCompleted] = useState(false);
   const [personaGenerationCompleted, setPersonaGenerationCompleted] = useState(false);
   const [savedReports, setSavedReports] = useState<any[]>([]);
+  const [filteredReports, setFilteredReports] = useState<any[]>([]);
   const [savedPersonas, setSavedPersonas] = useState<any[]>([]);
   
   // 실제 데이터 상태
@@ -52,13 +53,36 @@ const BrandPersonaManagement = () => {
     }
   };
 
+  // 브랜드/제품 선택에 따른 리포트 필터링
+  const filterReportsBySelection = () => {
+    if (!selectedBrand || !selectedProduct) {
+      console.log('🔍 브랜드 또는 제품이 선택되지 않음 - 전체 리포트 표시');
+      setFilteredReports(savedReports);
+      return;
+    }
+
+    const filtered = savedReports.filter(report => 
+      report.brandId === selectedBrand && report.productId === selectedProduct
+    );
+    
+    console.log('🔍 선택된 브랜드/제품에 대한 리포트 필터링:', {
+      selectedBrand,
+      selectedProduct,
+      totalReports: savedReports.length,
+      filteredReports: filtered.length
+    });
+    
+    setFilteredReports(filtered);
+  };
+
   // 브랜드/제품 조합에 따른 탭 활성화 상태 업데이트
   const updateTabStates = () => {
     console.log('🔄 탭 상태 업데이트 시작:', {
       selectedBrand,
       selectedProduct,
       totalReports: savedReports.length,
-      totalPersonas: savedPersonas.length
+      totalPersonas: savedPersonas.length,
+      filteredReports: filteredReports.length
     });
 
     // 브랜드/제품이 선택되지 않은 경우에도 전체 리포트/페르소나 존재 여부로 탭 활성화
@@ -67,9 +91,7 @@ const BrandPersonaManagement = () => {
     
     // 브랜드와 제품이 모두 선택된 경우, 해당 조합에 대한 리포트/페르소나 확인
     if (selectedBrand && selectedProduct) {
-      const hasReportsForSelection = savedReports.some(report => 
-        report.brandId === selectedBrand && report.productId === selectedProduct
-      );
+      const hasReportsForSelection = filteredReports.length > 0;
 
       const hasPersonasForSelection = savedPersonas.some(persona => 
         persona.brandId === selectedBrand && persona.productId === selectedProduct
@@ -162,7 +184,7 @@ const BrandPersonaManagement = () => {
   // 저장된 데이터 변경 시 탭 상태 업데이트
   useEffect(() => {
     updateTabStates();
-  }, [savedReports, savedPersonas, selectedBrand, selectedProduct]);
+  }, [savedReports, savedPersonas, selectedBrand, selectedProduct, filteredReports]);
 
   // 선택된 브랜드의 제품들만 필터링
   const filteredProducts = selectedBrand 
@@ -293,7 +315,7 @@ const BrandPersonaManagement = () => {
               onBrandChange={handleBrandChange}
               onProductChange={setSelectedProduct}
               onResearchComplete={handleMarketResearchComplete}
-              savedReports={savedReports}
+              savedReports={filteredReports}
               onReportDeleted={handleReportDeleted}
             />
           </TabsContent>
@@ -304,7 +326,7 @@ const BrandPersonaManagement = () => {
               selectedProduct={selectedProduct}
               brands={brands}
               products={filteredProducts}
-              savedReports={savedReports}
+              savedReports={filteredReports}
               onPersonaGenerated={handlePersonaGenerated}
               savedPersonas={savedPersonas}
               onBrandChange={handleBrandChange}

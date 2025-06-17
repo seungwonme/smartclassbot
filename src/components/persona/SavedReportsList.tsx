@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, FileText, Trash2, Eye } from 'lucide-react';
+import { Calendar, FileText, Trash2, Eye, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MarketResearchReportModal from './MarketResearchReportModal';
 
@@ -11,12 +11,20 @@ interface SavedReportsListProps {
   savedReports: any[];
   onDeleteReport: (reportId: string) => void;
   isRecentReport: (reportDate: string) => boolean;
+  selectedBrand?: string;
+  selectedProduct?: string;
+  brands?: any[];
+  products?: any[];
 }
 
 const SavedReportsList: React.FC<SavedReportsListProps> = ({
   savedReports,
   onDeleteReport,
-  isRecentReport
+  isRecentReport,
+  selectedBrand,
+  selectedProduct,
+  brands = [],
+  products = []
 }) => {
   const { toast } = useToast();
 
@@ -30,7 +38,46 @@ const SavedReportsList: React.FC<SavedReportsListProps> = ({
     }
   };
 
-  if (savedReports.length === 0) return null;
+  // 선택된 브랜드/제품 정보 가져오기
+  const selectedBrandData = brands.find(b => b.id === selectedBrand);
+  const selectedProductData = products.find(p => p.id === selectedProduct);
+
+  if (savedReports.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            저장된 시장조사 리포트
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            {selectedBrand && selectedProduct ? (
+              <div className="space-y-2">
+                <Filter className="w-12 h-12 mx-auto text-gray-300" />
+                <p className="text-sm">
+                  <strong>{selectedBrandData?.name} - {selectedProductData?.name}</strong>에 대한 
+                  시장조사 리포트가 없습니다.
+                </p>
+                <p className="text-xs text-gray-400">
+                  시장조사를 실행하여 리포트를 생성해보세요.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <FileText className="w-12 h-12 mx-auto text-gray-300" />
+                <p className="text-sm">저장된 시장조사 리포트가 없습니다.</p>
+                <p className="text-xs text-gray-400">
+                  브랜드와 제품을 선택한 후 시장조사를 실행해보세요.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -38,7 +85,17 @@ const SavedReportsList: React.FC<SavedReportsListProps> = ({
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
           저장된 시장조사 리포트
+          {selectedBrand && selectedProduct && (
+            <Badge variant="outline" className="ml-2">
+              {selectedBrandData?.name} - {selectedProductData?.name}
+            </Badge>
+          )}
         </CardTitle>
+        {savedReports.length > 0 && (
+          <p className="text-sm text-gray-600">
+            총 {savedReports.length}개의 리포트가 있습니다.
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
