@@ -21,6 +21,7 @@ interface ContentPlanDetailViewProps {
   hasPlanContent: (plan: ContentPlanDetail) => boolean;
   renderFieldWithFeedback: any;
   plans: ContentPlanDetail[];
+  isProcessing?: boolean;
   // 편집 관련 props 추가
   editingField?: string | null;
   editingValue?: any;
@@ -44,6 +45,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
   hasPlanContent,
   renderFieldWithFeedback,
   plans,
+  isProcessing = false,
   editingField,
   editingValue,
   setEditingValue,
@@ -101,6 +103,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             onSubmit={onSubmitRevision}
             onCancel={onCancelRevision}
             requestType={isAdminView ? "admin-feedback" : "brand-request"}
+            isProcessing={isProcessing}
           />
         </div>
       );
@@ -138,6 +141,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
             setRevisionFeedback={setRevisionFeedback}
             onSubmitRevision={handleSubmitRevision}
             onCancelRevision={onCancelRevision}
+            isProcessing={isProcessing}
           />
 
           {/* 하단 액션 버튼 */}
@@ -150,6 +154,7 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
               onSubmitRevision={handleSubmitRevision}
               canReviewPlan={canReviewPlan}
               hasPlanContent={hasPlanContent}
+              isProcessing={isProcessing}
             />
           )}
         </div>
@@ -171,6 +176,9 @@ const ContentPlanDetailView: React.FC<ContentPlanDetailViewProps> = ({
         <CardTitle className="flex items-center">
           <FileText className="w-5 h-5 mr-2" />
           콘텐츠 기획 상세
+          {isProcessing && (
+            <div className="ml-2 text-sm text-blue-600">처리중...</div>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="h-full overflow-auto">

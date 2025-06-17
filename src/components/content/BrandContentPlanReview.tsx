@@ -22,7 +22,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlanDetail | null>(null);
   const [showRevisionForm, setShowRevisionForm] = useState(false);
-  const [contentPlans, setContentPlans] = useState<ContentPlanDetail[]>(plans);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -105,7 +105,6 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     return completedBrandRevisions > 0 ? `${completedBrandRevisions}차 완료` : null;
   };
 
-  // 브랜드 관리자는 직접 편집 기능 없이 수정코멘트 기능만 사용
   const { renderFieldWithFeedback } = useFieldFeedback({
     activeCommentField,
     currentComment,
@@ -114,52 +113,77 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
     handleCancelInlineComment,
     getFieldComment,
     canReviewPlan
-    // 편집 관련 props는 브랜드 관리자에게는 제공하지 않음
   });
 
-  const handleApprove = (planId: string) => {
-    onApprove(planId);
-    setSelectedPlan(null);
-    setShowRevisionForm(false);
-    resetComments();
-    toast({
-      title: "콘텐츠 기획 승인",
-      description: "콘텐츠 기획이 승인되었습니다."
-    });
-  };
-
-  const handleRequestRevision = (feedback: string) => {
-    if (!selectedPlan) return;
-
-    const planComments = inlineComments.filter(comment => comment.planId === selectedPlan.id);
-    let finalFeedback = feedback.trim();
-
-    if (planComments.length > 0) {
-      const commentsFeedback = planComments.map(comment => 
-        `[${comment.fieldName}] ${comment.comment}`
-      ).join('\n');
-      
-      finalFeedback = finalFeedback 
-        ? `${finalFeedback}\n\n${commentsFeedback}`
-        : commentsFeedback;
-    }
-
-    if (!finalFeedback) {
+  const handleApprove = async (planId: string) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    try {
+      await onApprove(planId);
+      setSelectedPlan(null);
+      setShowRevisionForm(false);
+      resetComments();
       toast({
-        title: "피드백을 입력해주세요",
+        title: "콘텐츠 기획 승인",
+        description: "콘텐츠 기획이 승인되었습니다."
+      });
+    } catch (error) {
+      console.error('승인 처리 실패:', error);
+      toast({
+        title: "승인 실패",
+        description: "승인 처리 중 오류가 발생했습니다.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsProcessing(false);
     }
+  };
 
-    onRequestRevision(selectedPlan.id, finalFeedback);
-    setShowRevisionForm(false);
-    setSelectedPlan(null);
-    resetComments();
-    toast({
-      title: "수정 요청 전송",
-      description: "콘텐츠 기획 수정 요청이 전송되었습니다."
-    });
+  const handleRequestRevision = async (feedback: string) => {
+    if (!selectedPlan || isProcessing) return;
+
+    setIsProcessing(true);
+    try {
+      const planComments = inlineComments.filter(comment => comment.planId === selectedPlan.id);
+      let finalFeedback = feedback.trim();
+
+      if (planComments.length > 0) {
+        const commentsFeedback = planComments.map(comment => 
+          `[${comment.fieldName}] ${comment.comment}`
+        ).join('\n');
+        
+        finalFeedback = finalFeedback 
+          ? `${finalFeedback}\n\n${commentsFeedback}`
+          : commentsFeedback;
+      }
+
+      if (!finalFeedback) {
+        toast({
+          title: "피드백을 입력해주세요",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      await onRequestRevision(selectedPlan.id, finalFeedback);
+      setShowRevisionForm(false);
+      setSelectedPlan(null);
+      resetComments();
+      toast({
+        title: "수정 요청 전송",
+        description: "콘텐츠 기획 수정 요청이 전송되었습니다."
+      });
+    } catch (error) {
+      console.error('수정 요청 실패:', error);
+      toast({
+        title: "수정 요청 실패",
+        description: "수정 요청 처리 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSelectPlan = (plan: ContentPlanDetail) => {
@@ -183,7 +207,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
       <div className="lg:col-span-1">
         <InfluencerListForReview
           confirmedInfluencers={confirmedInfluencers}
-          plans={contentPlans}
+          plans={plans}
           selectedPlan={selectedPlan}
           onSelectPlan={handleSelectPlan}
           onApprove={handleApprove}
@@ -192,6 +216,7 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           getStatusText={getModifiedStatusText}
           getCurrentRevisionInfo={getCurrentRevisionInfo}
           canReviewPlan={canReviewPlan}
+          isProcessing={isProcessing}
         />
       </div>
 
@@ -208,7 +233,8 @@ const BrandContentPlanReview: React.FC<BrandContentPlanReviewProps> = ({
           canReviewPlan={canReviewPlan}
           hasPlanContent={() => true}
           renderFieldWithFeedback={renderFieldWithFeedback}
-          plans={contentPlans}
+          plans={plans}
+          isProcessing={isProcessing}
         />
       </div>
     </div>
