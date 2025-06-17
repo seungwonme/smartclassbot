@@ -14,6 +14,8 @@ interface PersonaSelectionControlsProps {
   products: ProductType[];
   filteredReports: any[];
   onReportChange: (reportId: string) => void;
+  onBrandChange?: (brandId: string) => void;
+  onProductChange?: (productId: string) => void;
   isRecentReport: (reportDate: string) => boolean;
 }
 
@@ -25,6 +27,8 @@ const PersonaSelectionControls: React.FC<PersonaSelectionControlsProps> = ({
   products,
   filteredReports,
   onReportChange,
+  onBrandChange,
+  onProductChange,
   isRecentReport
 }) => {
   const selectedBrandData = brands.find(b => b.id === selectedBrand);
@@ -42,7 +46,7 @@ const PersonaSelectionControls: React.FC<PersonaSelectionControlsProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium mb-2 block">브랜드 선택</label>
-            <Select value={selectedBrand} onValueChange={() => {}}>
+            <Select value={selectedBrand} onValueChange={onBrandChange} disabled={!onBrandChange}>
               <SelectTrigger>
                 <SelectValue placeholder="브랜드를 선택하세요" />
               </SelectTrigger>
@@ -57,7 +61,7 @@ const PersonaSelectionControls: React.FC<PersonaSelectionControlsProps> = ({
           </div>
           <div>
             <label className="text-sm font-medium mb-2 block">제품 선택</label>
-            <Select value={selectedProduct} onValueChange={() => {}}>
+            <Select value={selectedProduct} onValueChange={onProductChange} disabled={!onProductChange}>
               <SelectTrigger>
                 <SelectValue placeholder="제품을 선택하세요" />
               </SelectTrigger>

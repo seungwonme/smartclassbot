@@ -42,7 +42,6 @@ const BrandPersonaManagement = () => {
     }
   };
 
-  // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -135,7 +134,6 @@ const BrandPersonaManagement = () => {
     });
   };
 
-  // 로딩 상태 렌더링
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full">
@@ -154,7 +152,6 @@ const BrandPersonaManagement = () => {
     );
   }
 
-  // 에러 상태 렌더링
   if (error) {
     return (
       <div className="flex min-h-screen w-full">
@@ -221,6 +218,8 @@ const BrandPersonaManagement = () => {
               savedReports={savedReports}
               onPersonaGenerated={handlePersonaGenerated}
               savedPersonas={savedPersonas}
+              onBrandChange={handleBrandChange}
+              onProductChange={setSelectedProduct}
             />
           </TabsContent>
 

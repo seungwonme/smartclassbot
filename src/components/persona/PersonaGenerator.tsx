@@ -15,6 +15,8 @@ interface PersonaGeneratorProps {
   savedReports: any[];
   onPersonaGenerated: (personaData: any) => void;
   savedPersonas: any[];
+  onBrandChange?: (brandId: string) => void;
+  onProductChange?: (productId: string) => void;
 }
 
 const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
@@ -24,7 +26,9 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   products,
   savedReports: initialSavedReports,
   onPersonaGenerated,
-  savedPersonas: initialSavedPersonas
+  savedPersonas: initialSavedPersonas,
+  onBrandChange,
+  onProductChange
 }) => {
   const { toast } = useToast();
   const [generateProgress, setGenerateProgress] = useState(0);
@@ -163,6 +167,8 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
         products={products}
         filteredReports={filteredReports}
         onReportChange={setSelectedReport}
+        onBrandChange={onBrandChange}
+        onProductChange={onProductChange}
         isRecentReport={isRecentReport}
       />
 
