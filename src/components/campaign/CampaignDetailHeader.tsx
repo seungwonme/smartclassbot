@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Trash2, Send, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send, CheckCircle, User } from 'lucide-react';
 import { Campaign } from '@/types/campaign';
 
 interface CampaignDetailHeaderProps {
@@ -85,6 +85,9 @@ const CampaignDetailHeader: React.FC<CampaignDetailHeaderProps> = ({
     return null;
   };
 
+  // 페르소나 기반 캠페인인지 확인 (제목으로 판단)
+  const isPersonaBased = campaign.title.includes('페르소나 기반');
+
   const isCreating = campaign.status === 'creating';
   const isConfirmed = campaign.status === 'confirmed';
 
@@ -98,8 +101,16 @@ const CampaignDetailHeader: React.FC<CampaignDetailHeaderProps> = ({
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">{campaign.title}</h1>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold">{campaign.title}</h1>
+            {isPersonaBased && (
+              <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
+                <User className="w-3 h-3 mr-1" />
+                페르소나 기반
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <Badge className={getStatusColor(campaign.status)}>
               {getStatusText(campaign.status)}
             </Badge>
@@ -109,6 +120,11 @@ const CampaignDetailHeader: React.FC<CampaignDetailHeaderProps> = ({
               </Badge>
             )}
           </div>
+          {isPersonaBased && isCreating && (
+            <p className="text-sm text-gray-600 mt-2">
+              페르소나 분석을 통해 자동으로 생성된 캠페인입니다. 내용을 검토하고 제출해주세요.
+            </p>
+          )}
         </div>
       </div>
       

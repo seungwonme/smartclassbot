@@ -219,6 +219,109 @@ export const useCampaignForm = (campaignId?: string) => {
       return;
     }
 
+    // 강화된 브랜드/제품 검증 함수
+    const validateBrandProduct = (campaignData: any, brandsData: Brand[], productsData: Product[]) => {
+      console.log('🔍 강화된 브랜드/제품 데이터 검증 시작:', {
+        campaignData,
+        availableBrands: brandsData.map(b => ({ id: b.id, name: b.name })),
+        availableProducts: productsData.map(p => ({ id: p.id, name: p.name, brandId: p.brandId }))
+      });
+
+      // 페르소나 데이터에서 브랜드/제품 정보 추출 (여러 소스에서 시도)
+      const extractBrandProductInfo = (data: any) => {
+        console.log('📊 브랜드/제품 정보 추출 시도:', data);
+        
+        // 1차: autoFillData에서 추출
+        let brandId = data.autoFillData?.brandId;
+        let productId = data.autoFillData?.productId;
+        let brandName = data.autoFillData?.brandName;
+        let productName = data.autoFillData?.productName;
+
+        // 2차: persona 객체에서 추출 (fallback)
+        if (!brandId || brandId === '') {
+          brandId = data.persona?.brandId;
+        }
+        if (!productId || productId === '') {
+          productId = data.persona?.productId;
+        }
+        if (!brandName || brandName === '') {
+          brandName = data.persona?.brandName;
+        }
+        if (!productName || productName === '') {
+          productName = data.persona?.productName;
+        }
+
+        console.log('🎯 추출된 정보:', { brandId, productId, brandName, productName });
+        return { brandId, productId, brandName, productName };
+      };
+
+      const { brandId, productId, brandName, productName } = extractBrandProductInfo(campaignData);
+
+      // 1. ID로 직접 매칭 시도
+      let brandExists = brandsData.find(b => b.id === brandId);
+      let productExists = productsData.find(p => p.id === productId);
+
+      console.log('🎯 ID 직접 매칭 결과:', {
+        brandExists: !!brandExists,
+        productExists: !!productExists
+      });
+
+      // 2. ID 매칭 실패 시 이름으로 매칭 시도
+      if (!brandExists && brandName) {
+        brandExists = brandsData.find(b => 
+          b.name === brandName || 
+          b.name.toLowerCase() === brandName.toLowerCase()
+        );
+        console.log('🔄 브랜드 이름 매칭 시도:', brandName, '→', !!brandExists);
+      }
+
+      if (!productExists && productName) {
+        productExists = productsData.find(p => 
+          p.name === productName || 
+          p.name.toLowerCase() === productName.toLowerCase()
+        );
+        console.log('🔄 제품 이름 매칭 시도:', productName, '→', !!productExists);
+      }
+
+      // 3. 제품이 브랜드에 속하는지 확인 및 자동 복구
+      if (brandExists && productExists && productExists.brandId !== brandExists.id) {
+        console.warn('⚠️ 제품이 선택된 브랜드에 속하지 않음 - 자동 복구 시도');
+        
+        // 해당 브랜드의 첫 번째 제품으로 대체
+        const brandProducts = productsData.filter(p => p.brandId === brandExists.id);
+        if (brandProducts.length > 0) {
+          productExists = brandProducts[0];
+          console.log('🔧 브랜드의 첫 번째 제품으로 자동 복구:', productExists.name);
+        } else {
+          console.error('❌ 해당 브랜드에 제품이 없음');
+          productExists = null;
+        }
+      }
+
+      // 4. 브랜드는 있지만 제품이 없는 경우 첫 번째 제품 자동 선택
+      if (brandExists && !productExists) {
+        const brandProducts = productsData.filter(p => p.brandId === brandExists.id);
+        if (brandProducts.length > 0) {
+          productExists = brandProducts[0];
+          console.log('🔧 브랜드의 첫 번째 제품 자동 선택:', productExists.name);
+        }
+      }
+
+      const isValid = brandExists && productExists;
+      
+      console.log('✅ 최종 검증 결과:', {
+        isValid,
+        finalBrand: brandExists ? { id: brandExists.id, name: brandExists.name } : null,
+        finalProduct: productExists ? { id: productExists.id, name: productExists.name } : null
+      });
+
+      return {
+        isValid,
+        brand: brandExists,
+        product: productExists
+      };
+    };
+
     const handlePersonaBasedAutoFill = () => {
       console.log('🎭 페르소나 기반 자동 입력 처리 시작');
       
@@ -328,12 +431,11 @@ export const useCampaignForm = (campaignId?: string) => {
 
         toast({
           title: "페르소나 기반 캠페인 생성",
-          description: `${campaignData.persona?.name} 페르소나의 정보로 캠페인 양식이 자동 입력되었습니다.`,
+          description: `${campaignData.persona?.name} 페르소나의 정보로 캠페인 양식이 자동 입력되었습니다. 검토 후 제출해주세요.`,
         });
 
-        // 성공적으로 처리된 후에만 데이터 정리
-        sessionStorage.removeItem('personaBasedCampaignData');
-        console.log('✅ 페르소나 기반 자동 입력 완료');
+        // 페르소나 데이터는 캠페인 생성 후에 삭제하도록 수정
+        console.log('✅ 페르소나 기반 자동 입력 완료 - 데이터는 캠페인 생성 후 삭제 예정');
         
       } catch (error) {
         console.error('❌ 페르소나 데이터 처리 실패:', error);
@@ -543,6 +645,7 @@ export const useCampaignForm = (campaignId?: string) => {
     console.log('=== 캠페인 제출 시작 ===');
     console.log('캠페인 ID:', campaignId);
     console.log('편집 모드:', isEditMode);
+    console.log('페르소나 기반:', isPersonaBased);
     
     setIsLoading(true);
     try {
@@ -585,13 +688,24 @@ export const useCampaignForm = (campaignId?: string) => {
         const newCampaignId = createdCampaign.id || createdCampaign;
         console.log('추출된 캠페인 ID:', newCampaignId);
         
-        toast({
-          title: "캠페인 생성 완료",
-          description: isPersonaBased 
-            ? "페르소나 기반 캠페인이 성공적으로 생성되었습니다." 
-            : "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
-        });
+        // 페르소나 기반 캠페인 생성 완료 후 데이터 정리
+        if (isPersonaBased) {
+          console.log('🎭 페르소나 기반 캠페인 생성 완료 - 세션 데이터 정리');
+          sessionStorage.removeItem('personaBasedCampaignData');
+          localStorage.removeItem('campaignInfluencerData');
+          
+          toast({
+            title: "페르소나 기반 캠페인 생성 완료",
+            description: "페르소나 기반 캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
+          });
+        } else {
+          toast({
+            title: "캠페인 생성 완료",
+            description: "캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
+          });
+        }
         
+        // 모든 캠페인(일반/페르소나 기반 모두)을 상세 페이지로 리다이렉트
         navigate(`/brand/campaigns/${newCampaignId}`);
         return;
       }

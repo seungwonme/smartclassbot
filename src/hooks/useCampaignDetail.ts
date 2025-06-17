@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Campaign, CampaignInfluencer } from '@/types/campaign';
@@ -73,13 +74,21 @@ export const useCampaignDetail = (campaignId?: string) => {
     if (!campaign || campaign.status !== 'creating') return;
     
     try {
-      await campaignService.updateCampaign(campaign.id, { status: 'recruiting' });
-      setCampaign(prev => prev ? { ...prev, status: 'recruiting' } : null);
+      console.log('=== 브랜드에서 캠페인 제출 ===');
+      console.log('캠페인 ID:', campaign.id);
+      console.log('현재 상태:', campaign.status);
+      
+      await campaignService.updateCampaign(campaign.id, { status: 'submitted' });
+      setCampaign(prev => prev ? { ...prev, status: 'submitted' } : null);
+      
+      console.log('캠페인 상태를 submitted로 변경 완료');
+      
       toast({
         title: "캠페인이 제출되었습니다",
         description: "시스템 관리자가 검토 후 인플루언서 섭외를 진행합니다."
       });
     } catch (error) {
+      console.error('캠페인 제출 실패:', error);
       toast({
         title: "제출 실패",
         variant: "destructive"
