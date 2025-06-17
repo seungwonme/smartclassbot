@@ -55,25 +55,63 @@ const BrandPersonaManagement = () => {
 
   // 브랜드/제품 선택에 따른 리포트 필터링
   const filterReportsBySelection = () => {
+    console.log('🔍 리포트 필터링 시작:', {
+      savedReportsCount: savedReports.length,
+      selectedBrand,
+      selectedProduct
+    });
+
     if (!selectedBrand || !selectedProduct) {
       console.log('🔍 브랜드 또는 제품이 선택되지 않음 - 전체 리포트 표시');
       setFilteredReports(savedReports);
       return;
     }
 
-    const filtered = savedReports.filter(report => 
-      report.brandId === selectedBrand && report.productId === selectedProduct
-    );
+    const filtered = savedReports.filter(report => {
+      const idMatch = report.brandId === selectedBrand && report.productId === selectedProduct;
+      const nameMatch = report.brandName && report.productName && 
+        brands.find(b => b.id === selectedBrand)?.name === report.brandName &&
+        products.find(p => p.id === selectedProduct)?.name === report.productName;
+      
+      console.log('🔍 리포트 매칭 확인:', {
+        reportId: report.id,
+        reportName: report.name,
+        reportBrandId: report.brandId,
+        reportProductId: report.productId,
+        idMatch,
+        nameMatch,
+        finalMatch: idMatch || nameMatch
+      });
+      
+      return idMatch || nameMatch;
+    });
     
-    console.log('🔍 선택된 브랜드/제품에 대한 리포트 필터링:', {
+    console.log('🔍 선택된 브랜드/제품에 대한 리포트 필터링 완료:', {
       selectedBrand,
       selectedProduct,
       totalReports: savedReports.length,
-      filteredReports: filtered.length
+      filteredReports: filtered.length,
+      filteredReportNames: filtered.map(r => r.name)
     });
     
     setFilteredReports(filtered);
   };
+
+  // 필터링 함수 자동 실행을 위한 useEffect
+  useEffect(() => {
+    console.log('🔄 필터링 함수 자동 실행 트리거:', {
+      savedReportsLength: savedReports.length,
+      selectedBrand,
+      selectedProduct,
+      brandsLength: brands.length,
+      productsLength: products.length
+    });
+    
+    // 브랜드와 제품 데이터가 로딩된 후에만 필터링 실행
+    if (brands.length > 0 && products.length > 0) {
+      filterReportsBySelection();
+    }
+  }, [savedReports, selectedBrand, selectedProduct, brands, products]);
 
   // 브랜드/제품 조합에 따른 탭 활성화 상태 업데이트
   const updateTabStates = () => {
@@ -181,10 +219,10 @@ const BrandPersonaManagement = () => {
     loadData();
   }, []);
 
-  // 저장된 데이터 변경 시 탭 상태 업데이트
+  // 저장된 데이터 변경 시 탭 상태 업데이트 (filteredReports 의존성 제거)
   useEffect(() => {
     updateTabStates();
-  }, [savedReports, savedPersonas, selectedBrand, selectedProduct, filteredReports]);
+  }, [savedReports, savedPersonas, selectedBrand, selectedProduct]);
 
   // 선택된 브랜드의 제품들만 필터링
   const filteredProducts = selectedBrand 
