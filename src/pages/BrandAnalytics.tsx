@@ -222,6 +222,7 @@ const BrandAnalytics = () => {
             <CampaignOverviewPanel
               campaignId={selectedCampaign}
               campaignTitle={selectedCampaignData.title}
+              campaignData={selectedCampaignData}
             />
           )}
 
