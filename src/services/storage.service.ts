@@ -1,3 +1,4 @@
+
 import { Campaign } from '@/types/campaign';
 import { Brand, Product } from '@/types/brand';
 import { ContentPlanDetail } from '@/types/content';
@@ -172,9 +173,27 @@ export const storageService = {
 
   generateUniqueReportName: (brandId: string, productId: string, baseDate?: string): string => {
     try {
+      // 브랜드와 제품 데이터 조회
+      const brands = storageService.getBrands();
+      const products = storageService.getProducts();
+      
+      const brand = brands.find(b => b.id === brandId);
+      const product = products.find(p => p.id === productId);
+      
+      // 브랜드명과 제품명 결정 (이름이 없으면 ID 사용)
+      const brandName = brand?.name || brandId;
+      const productName = product?.name || productId;
+      
+      console.log('🏷️ 리포트명 생성을 위한 데이터:', {
+        brandId,
+        productId,
+        brandName,
+        productName
+      });
+      
       const existingReports = storageService.getMarketReports();
       const currentDate = baseDate || new Date().toISOString().split('T')[0];
-      const baseReportName = `${brandId}_${productId}_${currentDate}`;
+      const baseReportName = `${brandName}_${productName}_${currentDate}`;
       
       // 같은 패턴의 리포트 찾기
       const similarReports = existingReports.filter(report => 
@@ -201,7 +220,8 @@ export const storageService = {
       return uniqueName;
     } catch (error) {
       console.error('❌ 고유 리포트명 생성 실패:', error);
-      return `${brandId}_${productId}_${Date.now()}`;
+      // 에러 발생 시 타임스탬프를 사용한 폴백
+      return `Report_${brandId}_${productId}_${Date.now()}`;
     }
   },
 
@@ -209,18 +229,33 @@ export const storageService = {
     try {
       const existingReports = storageService.getMarketReports();
       
-      // 고유한 리포트명 생성
-      const uniqueReportName = storageService.generateUniqueReportName(
-        reportData.brandId, 
-        reportData.productId
-      );
+      // 리포트 데이터에서 브랜드ID와 제품ID 추출
+      const brandId = reportData.brandId || reportData.brandName;
+      const productId = reportData.productId || reportData.productName;
+      
+      if (!brandId || !productId) {
+        console.error('❌ 브랜드ID 또는 제품ID가 누락됨:', { brandId, productId });
+        throw new Error('브랜드ID와 제품ID가 필요합니다');
+      }
+      
+      // 고유한 리포트명 생성 (브랜드명_제품명_일자 형식)
+      const uniqueReportName = storageService.generateUniqueReportName(brandId, productId);
       
       const newReport = {
         ...reportData,
         id: Date.now().toString(),
         name: uniqueReportName,
+        brandId: brandId,
+        productId: productId,
         createdAt: new Date().toISOString(),
       };
+      
+      console.log('📝 생성된 리포트 정보:', {
+        id: newReport.id,
+        name: newReport.name,
+        brandId: newReport.brandId,
+        productId: newReport.productId
+      });
       
       const updatedReports = [...existingReports, newReport];
       
