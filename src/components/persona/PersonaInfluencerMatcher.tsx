@@ -31,7 +31,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
   const [matchResults, setMatchResults] = useState<any[]>([]);
   const [showMixRecommendations, setShowMixRecommendations] = useState(false);
 
-  // Enhanced mock influencer data with tiers
+  // Enhanced mock influencer data with tiers (converted to KRW)
   const mockInfluencers = [
     {
       id: 'inf-mega-1',
@@ -40,7 +40,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 1250000,
       engagement: 5.8,
       tier: 'mega',
-      estimatedCost: 45000,
+      estimatedCost: 59850000, // ~45,000 CNY * 133 (exchange rate)
       avatar: '👑'
     },
     {
@@ -50,7 +50,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 450000,
       engagement: 8.2,
       tier: 'macro',
-      estimatedCost: 18000,
+      estimatedCost: 23940000, // ~18,000 CNY * 133
       avatar: '⭐'
     },
     {
@@ -60,7 +60,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 280000,
       engagement: 9.1,
       tier: 'macro',
-      estimatedCost: 12000,
+      estimatedCost: 15960000, // ~12,000 CNY * 133
       avatar: '🌟'
     },
     {
@@ -70,7 +70,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 85000,
       engagement: 12.4,
       tier: 'micro',
-      estimatedCost: 4500,
+      estimatedCost: 5985000, // ~4,500 CNY * 133
       avatar: '💎'
     },
     {
@@ -80,7 +80,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 62000,
       engagement: 14.2,
       tier: 'micro',
-      estimatedCost: 3800,
+      estimatedCost: 5054000, // ~3,800 CNY * 133
       avatar: '🎯'
     },
     {
@@ -90,7 +90,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 48000,
       engagement: 16.1,
       tier: 'micro',
-      estimatedCost: 2900,
+      estimatedCost: 3857000, // ~2,900 CNY * 133
       avatar: '🔥'
     },
     {
@@ -100,7 +100,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       followers: 25000,
       engagement: 18.5,
       tier: 'nano',
-      estimatedCost: 1500,
+      estimatedCost: 1995000, // ~1,500 CNY * 133
       avatar: '💫'
     }
   ];
@@ -201,10 +201,10 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
               )}
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2 block">캠페인 예산 (위안)</Label>
+              <Label className="text-sm font-medium mb-2 block">캠페인 예산 (원)</Label>
               <Input
                 type="number"
-                placeholder="예: 50000"
+                placeholder="예: 50,000,000"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
                 className="w-full"
@@ -270,7 +270,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
                     </div>
                     <div className="flex justify-between">
                       <span>예상 비용:</span>
-                      <span className="font-semibold">{influencer.estimatedCost.toLocaleString()}위안</span>
+                      <span className="font-semibold">{influencer.estimatedCost.toLocaleString()}원</span>
                     </div>
                   </div>
                 </div>

@@ -58,17 +58,17 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
     };
   }, [influencers]);
 
-  // 믹스 전략 생성
+  // 믹스 전략 생성 (한화 기준으로 계산)
   const mixStrategies = useMemo((): MixStrategy[] => {
     const strategies: MixStrategy[] = [];
 
     // 전략 1: 메가 인플루언서 중심 (브랜드 인지도 극대화)
-    if (influencersByTier.mega.length > 0 && budget >= 40000) {
+    if (influencersByTier.mega.length > 0 && budget >= 53200000) { // ~40,000 CNY in KRW
       const megaInfluencer = influencersByTier.mega[0];
       const remainingBudget = budget - megaInfluencer.estimatedCost;
       const additionalMicros = influencersByTier.micro
         .filter(inf => inf.estimatedCost <= remainingBudget)
-        .slice(0, Math.floor(remainingBudget / 4000));
+        .slice(0, Math.floor(remainingBudget / 5320000)); // ~4,000 CNY in KRW
 
       strategies.push({
         id: 'mega-focused',
@@ -85,7 +85,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
     }
 
     // 전략 2: 마이크로 인플루언서 다수 (참여율 극대화)
-    const microBudgetCount = Math.floor(budget / 3500);
+    const microBudgetCount = Math.floor(budget / 4655000); // ~3,500 CNY in KRW
     const selectedMicros = influencersByTier.micro.slice(0, Math.min(microBudgetCount, 6));
     
     if (selectedMicros.length >= 3) {
@@ -104,12 +104,12 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
     }
 
     // 전략 3: 하이브리드 전략 (매크로 + 마이크로)
-    if (influencersByTier.macro.length > 0 && budget >= 20000) {
+    if (influencersByTier.macro.length > 0 && budget >= 26600000) { // ~20,000 CNY in KRW
       const macroInfluencer = influencersByTier.macro[0];
       const remainingBudget = budget - macroInfluencer.estimatedCost;
       const additionalMicros = influencersByTier.micro
         .filter(inf => inf.estimatedCost <= remainingBudget)
-        .slice(0, Math.floor(remainingBudget / 3500));
+        .slice(0, Math.floor(remainingBudget / 4655000)); // ~3,500 CNY in KRW
 
       strategies.push({
         id: 'hybrid-balanced',
@@ -126,12 +126,12 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
     }
 
     // 전략 4: 니치 타겟팅 (나노 + 마이크로)
-    if (influencersByTier.nano.length > 0 && budget >= 15000) {
+    if (influencersByTier.nano.length > 0 && budget >= 19950000) { // ~15,000 CNY in KRW
       const nanoInfluencers = influencersByTier.nano.slice(0, 2);
       const remainingBudget = budget - nanoInfluencers.reduce((sum, inf) => sum + inf.estimatedCost, 0);
       const additionalMicros = influencersByTier.micro
         .filter(inf => inf.estimatedCost <= remainingBudget)
-        .slice(0, Math.floor(remainingBudget / 3500));
+        .slice(0, Math.floor(remainingBudget / 4655000)); // ~3,500 CNY in KRW
 
       strategies.push({
         id: 'niche-targeting',
@@ -200,7 +200,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
             예산 기반 인플루언서 믹스 추천
           </CardTitle>
           <div className="text-sm text-gray-600">
-            예산: {budget.toLocaleString()}위안 | 페르소나: {persona?.name}
+            예산: {budget.toLocaleString()}원 | 페르소나: {persona?.name}
           </div>
         </CardHeader>
         <CardContent>
@@ -227,7 +227,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm">총 비용:</span>
-                            <span className="font-semibold">{strategy.totalCost.toLocaleString()}위안</span>
+                            <span className="font-semibold">{strategy.totalCost.toLocaleString()}원</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-sm">예상 도달:</span>
@@ -292,7 +292,7 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
                                   <span>{influencer.engagement}%</span>
                                 </div>
                                 <div className="font-semibold text-green-600">
-                                  {influencer.estimatedCost.toLocaleString()}위안
+                                  {influencer.estimatedCost.toLocaleString()}원
                                 </div>
                               </div>
                             </div>
@@ -309,10 +309,10 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
               <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold mb-2">추천 가능한 믹스가 없습니다</h3>
               <p className="text-gray-600 mb-4">
-                입력하신 예산({budget.toLocaleString()}위안)으로는 적절한 인플루언서 믹스를 구성할 수 없습니다.
+                입력하신 예산({budget.toLocaleString()}원)으로는 적절한 인플루언서 믹스를 구성할 수 없습니다.
               </p>
               <p className="text-sm text-gray-500">
-                최소 15,000위안 이상의 예산을 권장합니다.
+                최소 19,950,000원 이상의 예산을 권장합니다.
               </p>
             </div>
           )}
