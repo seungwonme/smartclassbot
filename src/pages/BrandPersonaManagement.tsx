@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,16 +38,14 @@ const BrandPersonaManagement = () => {
       setSavedReports(reports);
       setSavedPersonas(personas);
       
-      // 전체 리포트가 있으면 시장조사 완료로 간주
+      // 전체 리포트가 있으면 시장조사 완료로 간주 (초기 활성화)
       if (reports.length > 0) {
-        setMarketResearchCompleted(true);
-        console.log('✅ 시장조사 리포트 존재로 인해 탭 활성화');
+        console.log('✅ 시장조사 리포트 존재로 인해 초기 탭 활성화');
       }
       
-      // 전체 페르소나가 있으면 페르소나 생성 완료로 간주
+      // 전체 페르소나가 있으면 페르소나 생성 완료로 간주 (초기 활성화)
       if (personas.length > 0) {
-        setPersonaGenerationCompleted(true);
-        console.log('✅ 페르소나 존재로 인해 인플루언서 매칭 탭 활성화');
+        console.log('✅ 페르소나 존재로 인해 초기 인플루언서 매칭 탭 활성화');
       }
     } catch (error) {
       console.error('저장된 데이터 로드 실패:', error);
@@ -57,45 +54,58 @@ const BrandPersonaManagement = () => {
 
   // 브랜드/제품 조합에 따른 탭 활성화 상태 업데이트
   const updateTabStates = () => {
-    if (!selectedBrand || !selectedProduct) {
-      setMarketResearchCompleted(false);
-      setPersonaGenerationCompleted(false);
-      return;
-    }
-
-    // 선택된 브랜드/제품에 해당하는 리포트 확인
-    const hasReportsForSelection = savedReports.some(report => 
-      report.brandId === selectedBrand && report.productId === selectedProduct
-    );
-
-    // 선택된 브랜드/제품에 해당하는 페르소나 확인
-    const hasPersonasForSelection = savedPersonas.some(persona => 
-      persona.brandId === selectedBrand && persona.productId === selectedProduct
-    );
-
-    console.log('🔄 탭 상태 업데이트:', {
+    console.log('🔄 탭 상태 업데이트 시작:', {
       selectedBrand,
       selectedProduct,
-      hasReportsForSelection,
-      hasPersonasForSelection
+      totalReports: savedReports.length,
+      totalPersonas: savedPersonas.length
     });
 
-    setMarketResearchCompleted(hasReportsForSelection);
-    setPersonaGenerationCompleted(hasPersonasForSelection);
+    // 브랜드/제품이 선택되지 않은 경우에도 전체 리포트/페르소나 존재 여부로 탭 활성화
+    let hasAnyReports = savedReports.length > 0;
+    let hasAnyPersonas = savedPersonas.length > 0;
+    
+    // 브랜드와 제품이 모두 선택된 경우, 해당 조합에 대한 리포트/페르소나 확인
+    if (selectedBrand && selectedProduct) {
+      const hasReportsForSelection = savedReports.some(report => 
+        report.brandId === selectedBrand && report.productId === selectedProduct
+      );
 
-    if (hasReportsForSelection && !hasPersonasForSelection) {
-      toast({
-        title: "AI 페르소나 생성 가능",
-        description: "저장된 시장조사 리포트를 기반으로 페르소나를 생성할 수 있습니다.",
+      const hasPersonasForSelection = savedPersonas.some(persona => 
+        persona.brandId === selectedBrand && persona.productId === selectedProduct
+      );
+
+      console.log('🎯 선택된 브랜드/제품에 대한 데이터:', {
+        hasReportsForSelection,
+        hasPersonasForSelection
       });
+
+      // 선택된 조합에 대한 데이터가 있으면 우선적으로 사용
+      if (hasReportsForSelection) hasAnyReports = true;
+      if (hasPersonasForSelection) hasAnyPersonas = true;
+
+      if (hasReportsForSelection && !hasPersonasForSelection) {
+        toast({
+          title: "AI 페르소나 생성 가능",
+          description: "저장된 시장조사 리포트를 기반으로 페르소나를 생성할 수 있습니다.",
+        });
+      }
+
+      if (hasPersonasForSelection) {
+        toast({
+          title: "인플루언서 매칭 가능",
+          description: "생성된 페르소나를 기반으로 인플루언서 매칭을 진행할 수 있습니다.",
+        });
+      }
     }
 
-    if (hasPersonasForSelection) {
-      toast({
-        title: "인플루언서 매칭 가능",
-        description: "생성된 페르소나를 기반으로 인플루언서 매칭을 진행할 수 있습니다.",
-      });
-    }
+    console.log('📋 최종 탭 활성화 상태:', {
+      marketResearchCompleted: hasAnyReports,
+      personaGenerationCompleted: hasAnyPersonas
+    });
+
+    setMarketResearchCompleted(hasAnyReports);
+    setPersonaGenerationCompleted(hasAnyPersonas);
   };
 
   useEffect(() => {
@@ -119,7 +129,15 @@ const BrandPersonaManagement = () => {
         
         // 첫 번째 브랜드를 기본 선택 (있는 경우)
         if (brandsData.length > 0 && !selectedBrand) {
-          setSelectedBrand(brandsData[0].id);
+          const firstBrand = brandsData[0];
+          setSelectedBrand(firstBrand.id);
+          
+          // 선택된 브랜드의 첫 번째 제품도 자동 선택
+          const brandProducts = productsData.filter(product => product.brandId === firstBrand.id);
+          if (brandProducts.length > 0) {
+            setSelectedProduct(brandProducts[0].id);
+            console.log('🎯 첫 번째 브랜드와 제품 자동 선택:', firstBrand.name, brandProducts[0].name);
+          }
         }
         
         // 저장된 데이터 로드
@@ -151,10 +169,18 @@ const BrandPersonaManagement = () => {
     ? products.filter(product => product.brandId === selectedBrand)
     : [];
 
-  // 브랜드 변경 시 제품 선택 초기화
+  // 브랜드 변경 시 제품 선택 초기화 및 첫 번째 제품 자동 선택
   const handleBrandChange = (brandId: string) => {
     setSelectedBrand(brandId);
-    setSelectedProduct(''); // 브랜드 변경 시 제품 선택 초기화
+    
+    // 선택된 브랜드의 첫 번째 제품 자동 선택
+    const brandProducts = products.filter(product => product.brandId === brandId);
+    if (brandProducts.length > 0) {
+      setSelectedProduct(brandProducts[0].id);
+      console.log('🔄 브랜드 변경 시 첫 번째 제품 자동 선택:', brandProducts[0].name);
+    } else {
+      setSelectedProduct(''); // 제품이 없으면 선택 해제
+    }
   };
 
   const handleMarketResearchComplete = (reportData: any) => {
