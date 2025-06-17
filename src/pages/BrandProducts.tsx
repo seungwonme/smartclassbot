@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import BrandSidebar from '@/components/BrandSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,101 +8,43 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Building2, Plus, Globe, Package, ShoppingBag, Edit, Trash2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface Brand {
-  id: string;
-  name: string;
-  website: string;
-  story: string;
-  products: string[];
-  channels: string[];
-  marketing: string;
-  socialChannels: string[];
-  activeCampaigns: number;
-}
-
-interface Product {
-  id: string;
-  brandId: string;
-  brandName: string;
-  name: string;
-  purchaseUrl: string;
-  unit: string;
-  price: number;
-  description: string;
-  ingredients: string;
-  usage: string;
-  effects: string;
-  usp: string;
-  targetGender: string;
-  targetAge: string;
-  activeCampaigns: number;
-}
+import { brandService } from '@/services/brand.service';
+import { Brand, Product } from '@/types/brand';
+import { useToast } from '@/hooks/use-toast';
 
 const BrandProducts = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const [brands] = useState<Brand[]>([
-    {
-      id: '1',
-      name: '샘플 브랜드 A',
-      website: 'https://example-a.com',
-      story: '혁신적인 뷰티 브랜드입니다.',
-      products: ['립스틱', '파운데이션', '아이섀도'],
-      channels: ['네이버 스마트스토어', '쿠팡', '올리브영'],
-      marketing: 'SNS 마케팅 중심',
-      socialChannels: ['Instagram', 'YouTube'],
-      activeCampaigns: 2
-    },
-    {
-      id: '2',
-      name: '샘플 브랜드 B',
-      website: 'https://example-b.com',
-      story: '친환경 라이프스타일 브랜드입니다.',
-      products: ['세제', '샴푸', '바디워시'],
-      channels: ['자사몰', '마켓컬리'],
-      marketing: '인플루언서 마케팅',
-      socialChannels: ['Instagram', 'TikTok'],
-      activeCampaigns: 0
-    }
-  ]);
+  // 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [brandsData, productsData] = await Promise.all([
+          brandService.getBrands(),
+          brandService.getProducts()
+        ]);
 
-  const [products] = useState<Product[]>([
-    {
-      id: '1',
-      brandId: '1',
-      brandName: '샘플 브랜드 A',
-      name: '프리미엄 립스틱',
-      purchaseUrl: 'https://example.com/product1',
-      unit: '3.5g',
-      price: 25000,
-      description: '촉촉한 발색의 프리미엄 립스틱',
-      ingredients: '비즈왁스, 호호바오일, 비타민E',
-      usage: '입술에 직접 발라주세요',
-      effects: '8시간 지속, 촉촉함 유지',
-      usp: '특허 성분으로 24시간 색상 지속',
-      targetGender: '여성',
-      targetAge: '20-40대',
-      activeCampaigns: 1
-    },
-    {
-      id: '2',
-      brandId: '1',
-      brandName: '샘플 브랜드 A',
-      name: '모이스처 파운데이션',
-      purchaseUrl: 'https://example.com/product2',
-      unit: '30ml',
-      price: 35000,
-      description: '수분 가득한 커버 파운데이션',
-      ingredients: '히알루론산, 콜라겐, 나이아신아마이드',
-      usage: '소량을 얼굴에 발라 펴주세요',
-      effects: '12시간 무너지지 않는 커버력',
-      usp: '무너지지 않는 워터프루프 기능',
-      targetGender: '여성',
-      targetAge: '20-50대',
-      activeCampaigns: 0
-    }
-  ]);
+        setBrands(brandsData);
+        setProducts(productsData);
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+        toast({
+          title: "데이터 로드 실패",
+          description: "브랜드 및 제품 데이터를 불러오는데 실패했습니다.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [toast]);
 
   const filteredBrands = brands.filter(brand => 
     brand.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -111,6 +54,20 @@ const BrandProducts = () => {
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.brandName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <BrandSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-gray-900 mb-2">데이터 로딩 중...</div>
+            <div className="text-gray-600">브랜드 및 제품 정보를 불러오고 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -194,7 +151,7 @@ const BrandProducts = () => {
                               <Building2 className="h-5 w-5 text-green-600" />
                               <span>{brand.name}</span>
                             </CardTitle>
-                            {brand.activeCampaigns > 0 && (
+                            {(brand.activeCampaigns || 0) > 0 && (
                               <Badge className="bg-blue-100 text-blue-700">
                                 {brand.activeCampaigns}개 진행중
                               </Badge>
@@ -202,44 +159,48 @@ const BrandProducts = () => {
                           </div>
                           <CardDescription className="flex items-center space-x-1">
                             <Globe className="h-4 w-4" />
-                            <span className="truncate">{brand.website}</span>
+                            <span className="truncate">{brand.website || 'N/A'}</span>
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{brand.story}</p>
+                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{brand.story || brand.description}</p>
                           
                           <div className="space-y-3">
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">대표 제품</p>
-                              <div className="flex flex-wrap gap-1">
-                                {brand.products.slice(0, 3).map((product, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-xs">
-                                    {product}
-                                  </Badge>
-                                ))}
-                                {brand.products.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{brand.products.length - 3}
-                                  </Badge>
-                                )}
+                            {brand.channels && brand.channels.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-1">판매 채널</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {brand.channels.slice(0, 2).map((channel, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs bg-green-50 text-green-700">
+                                      {channel}
+                                    </Badge>
+                                  ))}
+                                  {brand.channels.length > 2 && (
+                                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                                      +{brand.channels.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
-                            </div>
+                            )}
                             
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">판매 채널</p>
-                              <div className="flex flex-wrap gap-1">
-                                {brand.channels.slice(0, 2).map((channel, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-xs bg-green-50 text-green-700">
-                                    {channel}
-                                  </Badge>
-                                ))}
-                                {brand.channels.length > 2 && (
-                                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                                    +{brand.channels.length - 2}
-                                  </Badge>
-                                )}
+                            {brand.socialChannels && brand.socialChannels.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-1">소셜 채널</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {brand.socialChannels.slice(0, 3).map((channel, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {channel}
+                                    </Badge>
+                                  ))}
+                                  {brand.socialChannels.length > 3 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{brand.socialChannels.length - 3}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         </CardContent>
                       </Link>
@@ -278,7 +239,7 @@ const BrandProducts = () => {
                               <Package className="h-5 w-5 text-green-600" />
                               <span className="text-lg">{product.name}</span>
                             </CardTitle>
-                            {product.activeCampaigns > 0 && (
+                            {(product.activeCampaigns || 0) > 0 && (
                               <Badge className="bg-blue-100 text-blue-700">
                                 {product.activeCampaigns}개 진행중
                               </Badge>
@@ -290,27 +251,37 @@ const BrandProducts = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500">판매가</span>
-                              <span className="font-semibold text-lg">{product.price.toLocaleString()}원</span>
-                            </div>
-                            
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500">용량/사이즈</span>
-                              <span className="text-sm">{product.unit}</span>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">타겟</p>
-                              <div className="flex gap-1">
-                                <Badge variant="outline" className="text-xs">
-                                  {product.targetGender}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {product.targetAge}
-                                </Badge>
+                            {product.price && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">판매가</span>
+                                <span className="font-semibold text-lg">{product.price.toLocaleString()}원</span>
                               </div>
-                            </div>
+                            )}
+                            
+                            {product.unit && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">용량/사이즈</span>
+                                <span className="text-sm">{product.unit}</span>
+                              </div>
+                            )}
+
+                            {(product.targetGender || product.targetAge) && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-1">타겟</p>
+                                <div className="flex gap-1">
+                                  {product.targetGender && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {product.targetGender}
+                                    </Badge>
+                                  )}
+                                  {product.targetAge && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {product.targetAge}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
                             <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
                           </div>

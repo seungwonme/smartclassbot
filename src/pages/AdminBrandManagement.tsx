@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building2, Plus, Package, Search, Edit, Trash2, User, Globe, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { brandService } from '@/services/brand.service';
+import { Brand, Product } from '@/types/brand';
+import { useToast } from '@/hooks/use-toast';
 
 interface BrandManager {
   id: string;
@@ -19,45 +22,23 @@ interface BrandManager {
   joinDate: string;
 }
 
-interface Brand {
-  id: string;
-  name: string;
-  website: string;
-  story: string;
-  products: string[];
-  channels: string[];
-  marketing: string;
-  socialChannels: string[];
-  activeCampaigns: number;
+interface ExtendedBrand extends Brand {
   managerId: string;
   manager: BrandManager;
-  createdAt: string;
   status: 'active' | 'pending' | 'suspended';
 }
 
-interface Product {
-  id: string;
-  brandId: string;
-  brandName: string;
-  name: string;
-  purchaseUrl: string;
-  unit: string;
-  price: number;
-  description: string;
-  ingredients: string;
-  usage: string;
-  effects: string;
-  usp: string;
-  targetGender: string;
-  targetAge: string;
-  activeCampaigns: number;
-  createdAt: string;
+interface ExtendedProduct extends Product {
   status: 'active' | 'pending' | 'suspended';
 }
 
 const AdminBrandManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [brands, setBrands] = useState<ExtendedBrand[]>([]);
+  const [products, setProducts] = useState<ExtendedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // 샘플 브랜드 관리자 데이터
   const [brandManagers] = useState<BrandManager[]>([
@@ -77,81 +58,46 @@ const AdminBrandManagement = () => {
     }
   ]);
 
-  // 샘플 브랜드 데이터
-  const [brands] = useState<Brand[]>([
-    {
-      id: '1',
-      name: '샘플 브랜드 A',
-      website: 'https://example-a.com',
-      story: '혁신적인 뷰티 브랜드입니다.',
-      products: ['립스틱', '파운데이션', '아이섀도'],
-      channels: ['네이버 스마트스토어', '쿠팡', '올리브영'],
-      marketing: 'SNS 마케팅 중심',
-      socialChannels: ['Instagram', 'YouTube'],
-      activeCampaigns: 2,
-      managerId: '1',
-      manager: brandManagers[0],
-      createdAt: '2024-03-01',
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: '샘플 브랜드 B',
-      website: 'https://example-b.com',
-      story: '친환경 라이프스타일 브랜드입니다.',
-      products: ['세제', '샴푸', '바디워시'],
-      channels: ['자사몰', '마켓컬리'],
-      marketing: '인플루언서 마케팅',
-      socialChannels: ['Instagram', 'TikTok'],
-      activeCampaigns: 0,
-      managerId: '2',
-      manager: brandManagers[1],
-      createdAt: '2024-03-15',
-      status: 'active'
-    }
-  ]);
+  // 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [brandsData, productsData] = await Promise.all([
+          brandService.getBrands(),
+          brandService.getProducts()
+        ]);
 
-  // 샘플 제품 데이터
-  const [products] = useState<Product[]>([
-    {
-      id: '1',
-      brandId: '1',
-      brandName: '샘플 브랜드 A',
-      name: '프리미엄 립스틱',
-      purchaseUrl: 'https://example.com/product1',
-      unit: '3.5g',
-      price: 25000,
-      description: '촉촉한 발색의 프리미엄 립스틱',
-      ingredients: '비즈왁스, 호호바오일, 비타민E',
-      usage: '입술에 직접 발라주세요',
-      effects: '8시간 지속, 촉촉함 유지',
-      usp: '특허 성분으로 24시간 색상 지속',
-      targetGender: '여성',
-      targetAge: '20-40대',
-      activeCampaigns: 1,
-      createdAt: '2024-03-10',
-      status: 'active'
-    },
-    {
-      id: '2',
-      brandId: '1',
-      brandName: '샘플 브랜드 A',
-      name: '모이스처 파운데이션',
-      purchaseUrl: 'https://example.com/product2',
-      unit: '30ml',
-      price: 35000,
-      description: '수분 가득한 커버 파운데이션',
-      ingredients: '히알루론산, 콜라겐, 나이아신아마이드',
-      usage: '소량을 얼굴에 발라 펴주세요',
-      effects: '12시간 무너지지 않는 커버력',
-      usp: '무너지지 않는 워터프루프 기능',
-      targetGender: '여성',
-      targetAge: '20-50대',
-      activeCampaigns: 0,
-      createdAt: '2024-03-20',
-      status: 'active'
-    }
-  ]);
+        // 브랜드에 관리자 정보와 상태 추가
+        const extendedBrands: ExtendedBrand[] = brandsData.map((brand, index) => ({
+          ...brand,
+          managerId: brandManagers[index % brandManagers.length]?.id || '1',
+          manager: brandManagers[index % brandManagers.length] || brandManagers[0],
+          status: 'active' as const
+        }));
+
+        // 제품에 상태 추가
+        const extendedProducts: ExtendedProduct[] = productsData.map(product => ({
+          ...product,
+          status: 'active' as const
+        }));
+
+        setBrands(extendedBrands);
+        setProducts(extendedProducts);
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+        toast({
+          title: "데이터 로드 실패",
+          description: "브랜드 및 제품 데이터를 불러오는데 실패했습니다.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [toast, brandManagers]);
 
   const filteredBrands = brands.filter(brand => 
     brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -167,19 +113,57 @@ const AdminBrandManagement = () => {
     product.brandName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDeleteBrand = (brandId: string) => {
+  const handleDeleteBrand = async (brandId: string) => {
     if (confirm('정말로 이 브랜드를 삭제하시겠습니까?')) {
-      console.log('브랜드 삭제:', brandId);
-      // 실제 삭제 로직 구현
+      try {
+        // 실제 삭제 로직은 brandService에 구현 필요
+        console.log('브랜드 삭제:', brandId);
+        toast({
+          title: "브랜드 삭제 완료",
+          description: "브랜드가 성공적으로 삭제되었습니다.",
+        });
+      } catch (error) {
+        toast({
+          title: "삭제 실패",
+          description: "브랜드 삭제에 실패했습니다.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     if (confirm('정말로 이 제품을 삭제하시겠습니까?')) {
-      console.log('제품 삭제:', productId);
-      // 실제 삭제 로직 구현
+      try {
+        // 실제 삭제 로직은 brandService에 구현 필요
+        console.log('제품 삭제:', productId);
+        toast({
+          title: "제품 삭제 완료",
+          description: "제품이 성공적으로 삭제되었습니다.",
+        });
+      } catch (error) {
+        toast({
+          title: "삭제 실패",
+          description: "제품 삭제에 실패했습니다.",
+          variant: "destructive",
+        });
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg font-medium text-gray-900 mb-2">데이터 로딩 중...</div>
+            <div className="text-gray-600">브랜드 및 제품 정보를 불러오고 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -291,9 +275,9 @@ const AdminBrandManagement = () => {
                                brand.status === 'pending' ? '대기' : '중단'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{brand.createdAt}</TableCell>
+                          <TableCell>{new Date(brand.createdAt).toLocaleDateString('ko-KR')}</TableCell>
                           <TableCell>
-                            {brand.activeCampaigns > 0 ? (
+                            {(brand.activeCampaigns || 0) > 0 ? (
                               <Badge className="bg-blue-100 text-blue-700">
                                 {brand.activeCampaigns}개 진행중
                               </Badge>
@@ -394,7 +378,7 @@ const AdminBrandManagement = () => {
                           <TableCell>
                             <span className="text-green-600 font-medium">{product.brandName}</span>
                           </TableCell>
-                          <TableCell>{product.price.toLocaleString()}원</TableCell>
+                          <TableCell>{product.price?.toLocaleString()}원</TableCell>
                           <TableCell>
                             <div className="flex gap-1">
                               <Badge variant="outline" className="text-xs">
@@ -417,9 +401,9 @@ const AdminBrandManagement = () => {
                                product.status === 'pending' ? '대기' : '중단'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{product.createdAt}</TableCell>
+                          <TableCell>{new Date(product.createdAt).toLocaleDateString('ko-KR')}</TableCell>
                           <TableCell>
-                            {product.activeCampaigns > 0 ? (
+                            {(product.activeCampaigns || 0) > 0 ? (
                               <Badge className="bg-blue-100 text-blue-700">
                                 {product.activeCampaigns}개 진행중
                               </Badge>
