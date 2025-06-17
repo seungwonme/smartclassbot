@@ -296,18 +296,46 @@ export const useCampaignForm = (campaignId?: string) => {
 
     console.log('🎯 인플루언서 단계 - 페르소나 데이터 적용');
     
-    if (personaData.selectedInfluencers) {
-      const influencersForCampaign = personaData.selectedInfluencers.map((inf: any) => ({
-        id: inf.id,
-        name: inf.name,
-        profileImage: inf.avatar || '',
-        profileImageUrl: inf.avatar || '',
-        followers: inf.followers,
-        engagementRate: inf.engagement,
-        category: inf.platform || '뷰티',
-        platform: inf.platform || '샤오홍슈',
-        isSelected: true
-      }));
+    if (personaData.selectedInfluencers && personaData.mixStrategy) {
+      const totalCost = personaData.mixStrategy.totalCost;
+      const influencerCount = personaData.selectedInfluencers.length;
+      
+      // Calculate estimated cost per influencer based on total strategy cost
+      const costPerInfluencer = influencerCount > 0 ? Math.floor(totalCost / influencerCount) : 0;
+      
+      const influencersForCampaign = personaData.selectedInfluencers.map((inf: any, index: number) => {
+        // Use actual estimated cost if available, otherwise distribute total cost
+        const estimatedCost = inf.estimatedCost || costPerInfluencer;
+        
+        return {
+          id: inf.id,
+          name: inf.name,
+          profileImage: inf.avatar || '',
+          profileImageUrl: inf.avatar || '',
+          followers: inf.followers,
+          avgViews: Math.floor(inf.followers * 0.15), // Estimated 15% view rate
+          avgLikes: Math.floor(inf.followers * inf.engagement / 100),
+          avgComments: Math.floor(inf.followers * inf.engagement / 100 * 0.1),
+          engagementRate: inf.engagement,
+          category: inf.platform || '뷰티',
+          platform: inf.platform || '샤오홍슈',
+          proposedFee: estimatedCost, // Set proper cost for admin workflow
+          adFee: 0, // Will be set by admin during negotiation
+          deliverables: ['피드 포스팅 1회', '스토리 3회'],
+          status: 'pending', // Start with pending status for admin review
+          isSelected: true
+        };
+      });
+      
+      console.log('💰 페르소나 인플루언서 비용 계산:', {
+        totalCost,
+        influencerCount,
+        costPerInfluencer,
+        influencersWithCost: influencersForCampaign.map(inf => ({
+          name: inf.name,
+          proposedFee: inf.proposedFee
+        }))
+      });
       
       setRecommendedInfluencers(influencersForCampaign);
       setFormData(prev => ({
@@ -428,6 +456,14 @@ export const useCampaignForm = (campaignId?: string) => {
         formData.selectedInfluencers.includes(inf.id)
       );
 
+      // For persona-based campaigns, ensure all influencers have proper status
+      const normalizedInfluencers = selectedInfluencerData.map(inf => ({
+        ...inf,
+        status: isPersonaBased ? 'pending' as const : inf.status || 'pending' as const,
+        proposedFee: inf.proposedFee || 0,
+        adFee: inf.adFee || 0
+      }));
+
       const campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
         title: formData.title,
         brandId: formData.brandId,
@@ -439,11 +475,19 @@ export const useCampaignForm = (campaignId?: string) => {
         campaignStartDate: formData.campaignStartDate ? format(formData.campaignStartDate, 'yyyy-MM-dd') : '',
         campaignEndDate: formData.campaignEndDate ? format(formData.campaignEndDate, 'yyyy-MM-dd') : '',
         adType: formData.adType === 'live-commerce' ? 'live-commerce' : 'branding',
-        status: 'creating',
+        status: isPersonaBased ? 'submitted' : 'creating', // Persona campaigns start as submitted for admin review
         currentStage: 1,
         targetContent: formData.targetContent,
-        influencers: selectedInfluencerData
+        influencers: normalizedInfluencers
       };
+
+      console.log('📝 생성할 캠페인 데이터:', {
+        title: campaignData.title,
+        status: campaignData.status,
+        influencerCount: campaignData.influencers.length,
+        isPersonaBased,
+        influencerStatuses: campaignData.influencers.map(inf => ({ name: inf.name, status: inf.status, proposedFee: inf.proposedFee }))
+      });
 
       if (isEditMode && campaignId) {
         await campaignService.updateCampaign(campaignId, campaignData);
@@ -464,7 +508,7 @@ export const useCampaignForm = (campaignId?: string) => {
           
           toast({
             title: "페르소나 기반 캠페인 생성 완료",
-            description: "페르소나 기반 캠페인이 성공적으로 생성되었습니다. 검토 후 제출해주세요."
+            description: "페르소나 기반 캠페인이 성공적으로 생성되었습니다. 관리자가 인플루언서 협상을 진행합니다."
           });
         } else {
           toast({
