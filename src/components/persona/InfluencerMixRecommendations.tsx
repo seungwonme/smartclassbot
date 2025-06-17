@@ -24,8 +24,8 @@ interface InfluencerMixRecommendationsProps {
   influencers: any[];
   persona: any;
   adType?: 'branding' | 'live-commerce';
-  brandInfo?: { id: string; name: string };
-  productInfo?: { id: string; name: string };
+  brandInfo?: any;
+  productInfo?: any;
 }
 
 interface MixStrategy {
@@ -171,19 +171,42 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
   };
 
   const handleCreateCampaign = (strategy: MixStrategy) => {
+    console.log('🎯 캠페인 생성 데이터 준비:', {
+      brandInfo,
+      productInfo,
+      persona,
+      strategy,
+      adType
+    });
+
+    if (!brandInfo?.id || !productInfo?.id) {
+      toast({
+        title: "브랜드/제품 정보 오류",
+        description: "올바른 브랜드와 제품 정보가 필요합니다.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const campaignData = {
       persona: persona,
       selectedInfluencers: strategy.influencers,
       mixStrategy: strategy,
       estimatedBudget: strategy.totalCost,
       adType: adType,
-      brandInfo: brandInfo,
-      productInfo: productInfo,
+      brandInfo: {
+        id: brandInfo.id,
+        name: brandInfo.name || brandInfo.brandName
+      },
+      productInfo: {
+        id: productInfo.id,
+        name: productInfo.name || productInfo.productName
+      },
       autoFillData: {
-        brandId: brandInfo?.id || '',
-        brandName: brandInfo?.name || '',
-        productId: productInfo?.id || '',
-        productName: productInfo?.name || '',
+        brandId: brandInfo.id,
+        brandName: brandInfo.name || brandInfo.brandName,
+        productId: productInfo.id,
+        productName: productInfo.name || productInfo.productName,
         budget: strategy.totalCost.toLocaleString(),
         adType: adType || 'branding',
         selectedInfluencers: strategy.influencers.map(inf => inf.id),
@@ -192,14 +215,15 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
           targetAge: persona?.demographics?.age || '',
           uspImportance: adType === 'branding' ? 8 : 6,
           influencerImpact: '',
-          additionalDescription: `${persona?.name} 페르소나 기반 ${strategy.name}`,
+          additionalDescription: `${persona?.name} 페르소나 기반 ${strategy.name}으로 구성된 캠페인입니다.`,
           secondaryContentUsage: false
         }
       }
     };
 
+    console.log('💾 저장할 캠페인 데이터:', campaignData);
+
     sessionStorage.setItem('personaBasedCampaignData', JSON.stringify(campaignData));
-    
     localStorage.setItem('campaignInfluencerData', JSON.stringify(campaignData));
 
     toast({
@@ -227,6 +251,8 @@ const InfluencerMixRecommendations: React.FC<InfluencerMixRecommendationsProps> 
           <div className="text-sm text-gray-600">
             예산: {budget.toLocaleString()}원 | 페르소나: {persona?.name}
             {adType && <span> | 광고 유형: {adType === 'branding' ? '브랜딩' : '라이브커머스'}</span>}
+            {brandInfo && <span> | 브랜드: {brandInfo.name || brandInfo.brandName}</span>}
+            {productInfo && <span> | 제품: {productInfo.name || productInfo.productName}</span>}
           </div>
         </CardHeader>
         <CardContent>

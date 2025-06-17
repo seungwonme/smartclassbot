@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
@@ -123,13 +122,13 @@ export const useCampaignForm = (campaignId?: string) => {
                           localData ? JSON.parse(localData) : null;
 
       if (campaignData) {
-        console.log('🎭 페르소나 기반 캠페인 감지');
+        console.log('🎭 페르소나 기반 캠페인 감지 - 데이터:', campaignData);
         setIsPersonaBased(true);
         setPersonaData(campaignData);
       }
     }
 
-    // Auto-select first brand/product for regular campaigns
+    // Auto-select first brand/product for regular campaigns only
     if (!isPersonaFromUrl && brands.length > 0 && !formData.brandId) {
       const firstBrand = brands[0];
       const brandProducts = products.filter(p => p.brandId === firstBrand.id);
@@ -204,30 +203,45 @@ export const useCampaignForm = (campaignId?: string) => {
 
   // Step-specific persona data application functions
   const applyBasicInfoPersonaData = () => {
-    if (!isPersonaBased || !personaData) return;
+    if (!isPersonaBased || !personaData) {
+      console.log('❌ 페르소나 데이터 없음 또는 일반 캠페인');
+      return;
+    }
 
-    console.log('🎯 기본정보 단계 - 페르소나 데이터 적용');
+    console.log('🎯 기본정보 단계 - 페르소나 데이터 적용 시작');
+    console.log('📊 적용할 데이터:', personaData.autoFillData);
     
-    // Validate and apply brand/product data
-    const { brandId, productId, brandName, productName } = personaData.autoFillData || {};
+    const { brandId, productId, brandName, productName, budget, adType: campaignAdType } = personaData.autoFillData || {};
     
-    let validBrand = brands.find(b => b.id === brandId || b.name === brandName);
-    let validProduct = products.find(p => p.id === productId || p.name === productName);
-    
+    // Find brand by ID first, then by name as fallback
+    let validBrand = brands.find(b => b.id === brandId);
     if (!validBrand && brandName) {
-      validBrand = brands.find(b => b.name.toLowerCase() === brandName.toLowerCase());
+      validBrand = brands.find(b => b.name.toLowerCase().includes(brandName.toLowerCase()) || 
+                                     brandName.toLowerCase().includes(b.name.toLowerCase()));
     }
     
+    // Find product by ID first, then by name as fallback
+    let validProduct = products.find(p => p.id === productId);
     if (!validProduct && productName) {
-      validProduct = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+      validProduct = products.find(p => p.name.toLowerCase().includes(productName.toLowerCase()) || 
+                                        productName.toLowerCase().includes(p.name.toLowerCase()));
     }
     
+    // Ensure product belongs to the selected brand
     if (validBrand && validProduct && validProduct.brandId !== validBrand.id) {
+      console.log('⚠️ 제품이 브랜드와 매치되지 않음, 브랜드 제품으로 대체');
       const brandProducts = products.filter(p => p.brandId === validBrand.id);
       if (brandProducts.length > 0) {
         validProduct = brandProducts[0];
       }
     }
+    
+    console.log('🔍 검증된 브랜드/제품:', {
+      validBrand: validBrand ? { id: validBrand.id, name: validBrand.name } : null,
+      validProduct: validProduct ? { id: validProduct.id, name: validProduct.name } : null,
+      budget,
+      adType: campaignAdType
+    });
     
     if (validBrand && validProduct) {
       setFormData(prev => ({
@@ -237,13 +251,21 @@ export const useCampaignForm = (campaignId?: string) => {
         brandName: validBrand.name,
         productId: validProduct.id,
         productName: validProduct.name,
-        budget: personaData.autoFillData?.budget || '',
-        adType: personaData.autoFillData?.adType || 'branding'
+        budget: budget || '',
+        adType: campaignAdType || 'branding'
       }));
       
+      console.log('✅ 기본정보 자동 입력 완료');
       toast({
         title: "페르소나 기본정보 적용",
         description: `${personaData.persona?.name} 페르소나의 기본정보가 자동 입력되었습니다.`
+      });
+    } else {
+      console.log('❌ 브랜드/제품 매칭 실패');
+      toast({
+        title: "기본정보 적용 실패",
+        description: "브랜드 또는 제품 정보를 찾을 수 없습니다. 수동으로 선택해주세요.",
+        variant: "destructive"
       });
     }
   };

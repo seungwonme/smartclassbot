@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -141,6 +142,23 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
       });
       return;
     }
+
+    // Ensure we have valid brand and product data
+    if (!selectedBrandData || !selectedProductData) {
+      toast({
+        title: "브랜드와 제품을 확인해주세요",
+        description: "올바른 브랜드와 제품 정보가 필요합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('🎯 매칭 시작 - 브랜드/제품 정보:', {
+      brand: selectedBrandData,
+      product: selectedProductData,
+      budget,
+      adType
+    });
 
     setIsMatching(true);
     setMatchProgress(0);
@@ -295,7 +313,7 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
 
           <Button 
             onClick={handleStartMatching}
-            disabled={isMatching || !activePersona || !adType}
+            disabled={isMatching || !activePersona || !adType || !selectedBrandData || !selectedProductData}
             className="w-full"
           >
             {isMatching ? '매칭 중...' : '인플루언서 매칭 시작'}
@@ -350,8 +368,8 @@ const PersonaInfluencerMatcher: React.FC<PersonaInfluencerMatcherProps> = ({
           influencers={matchResults}
           persona={selectedPersonaData}
           adType={adType as 'branding' | 'live-commerce'}
-          brandInfo={selectedBrandData ? { id: selectedBrandData.id, name: selectedBrandData.name } : undefined}
-          productInfo={selectedProductData ? { id: selectedProductData.id, name: selectedProductData.name } : undefined}
+          brandInfo={selectedBrandData}
+          productInfo={selectedProductData}
         />
       )}
 
