@@ -1,33 +1,19 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Brain, Eye, Edit3, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Brain, Sparkles, Users, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import MarketInsightComparison from './MarketInsightComparison';
-import PersonaValidation from './PersonaValidation';
-
-interface Brand {
-  id: string;
-  name: string;
-  category: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  brandId: string;
-}
+import { Brand as BrandType, Product as ProductType } from '@/types/brand';
 
 interface PersonaGeneratorProps {
   selectedBrand: string;
   selectedProduct: string;
-  brands: Brand[];
-  products: Product[];
+  brands: BrandType[];
+  products: ProductType[];
   savedReports: any[];
   onPersonaGenerated: (personaData: any) => void;
   savedPersonas: any[];
@@ -43,239 +29,143 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
   savedPersonas
 }) => {
   const { toast } = useToast();
-  const [selectedReport, setSelectedReport] = useState<string>('');
-  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generateProgress, setGenerateProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPersonas, setGeneratedPersonas] = useState<any[]>([]);
-  const [selectedPersona, setSelectedPersona] = useState<any>(null);
+  const [generationCompleted, setGenerationCompleted] = useState(false);
+  const [currentPersona, setCurrentPersona] = useState<any>(null);
 
-  // 선택된 브랜드와 제품에 해당하는 리포트 필터링
-  const filteredReports = savedReports.filter(report => {
-    console.log('Filtering report:', report, 'Brand:', selectedBrand, 'Product:', selectedProduct);
-    return report.brandId === selectedBrand && report.productId === selectedProduct;
-  });
+  const selectedBrandData = brands.find(b => b.id === selectedBrand);
+  const selectedProductData = products.find(p => p.id === selectedProduct);
 
-  // 브랜드나 제품이 변경되면 선택된 리포트 초기화
-  useEffect(() => {
-    console.log('Brand or product changed, resetting selected report');
-    setSelectedReport('');
-    setGeneratedPersonas([]);
-    setSelectedPersona(null);
-  }, [selectedBrand, selectedProduct]);
-
-  // 리포트 목록이 변경되면 첫 번째 리포트를 자동 선택 (있는 경우)
-  useEffect(() => {
-    if (filteredReports.length > 0 && !selectedReport) {
-      console.log('Auto-selecting first available report:', filteredReports[0]);
-      setSelectedReport(filteredReports[0].id);
-    }
-  }, [filteredReports, selectedReport]);
-
-  const mockGeneratedPersonas = [
-    {
-      id: 'ai-persona-1',
-      name: '젊은 뷰티 얼리어답터',
-      confidence: 94,
-      demographics: {
-        age: '22-28세',
-        gender: '여성',
-        location: '1-2선 도시',
-        income: '월 8,000-15,000위안'
-      },
-      psychographics: {
-        interests: ['뷰티', '트렌드', '소셜미디어', 'K-뷰티'],
-        personality: '새로운 것을 시도하기 좋아함, 브랜드 충성도 높음',
-        values: '개성 표현, 품질 추구'
-      },
-      platforms: ['샤오홍슈', '도우인'],
-      insights: [
-        '한국 뷰티 제품에 대한 관심도가 매우 높음',
-        '성분과 효과에 대해 꼼꼼히 조사함',
-        '인플루언서의 리뷰를 신뢰함'
-      ],
-      marketData: {
-        searchVolume: 45000,
-        engagement: '8.2%',
-        conversionRate: '3.1%'
-      }
-    },
-    {
-      id: 'ai-persona-2',
-      name: '실용적 중산층 소비자',
-      confidence: 89,
-      demographics: {
-        age: '30-38세',
-        gender: '여성',
-        location: '2-3선 도시',
-        income: '월 12,000-25,000위안'
-      },
-      psychographics: {
-        interests: ['가족', '실용성', '가성비', '건강'],
-        personality: '신중한 구매 결정, 리뷰 중시',
-        values: '가족 우선, 합리적 소비'
-      },
-      platforms: ['티몰', '타오바오', '바이두'],
-      insights: [
-        '가격 대비 효과를 중요하게 생각함',
-        '다른 사용자들의 후기를 많이 참고함',
-        '할인 프로모션에 민감함'
-      ],
-      marketData: {
-        searchVolume: 32000,
-        engagement: '6.8%',
-        conversionRate: '4.2%'
-      }
-    },
-    {
-      id: 'ai-persona-3',
-      name: '프리미엄 추구 고소득층',
-      confidence: 91,
-      demographics: {
-        age: '28-35세',
-        gender: '여성',
-        location: '1선 도시',
-        income: '월 20,000위안 이상'
-      },
-      psychographics: {
-        interests: ['럭셔리', '프리미엄 뷰티', '라이프스타일', '여행'],
-        personality: '브랜드 지향적, 품질 추구',
-        values: '자기 투자, 삶의 질'
-      },
-      platforms: ['샤오홍슈', '위챗'],
-      insights: [
-        '브랜드 스토리와 가치를 중시함',
-        '프리미엄 포장과 디자인을 선호함',
-        '개인 맞춤형 서비스를 기대함'
-      ],
-      marketData: {
-        searchVolume: 18000,
-        engagement: '12.4%',
-        conversionRate: '5.8%'
-      }
-    }
-  ];
-
-  const handleGeneratePersonas = async () => {
-    if (!selectedReport) {
+  const handleGeneratePersona = async () => {
+    if (!selectedBrand || !selectedProduct) {
       toast({
-        title: "시장조사 리포트를 선택해주세요",
-        description: "페르소나 생성을 위해 먼저 시장조사 리포트를 선택해야 합니다.",
+        title: "브랜드와 제품을 선택해주세요",
+        description: "페르소나 생성을 위해 브랜드와 제품을 모두 선택해야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (savedReports.length === 0) {
+      toast({
+        title: "시장조사 데이터가 필요합니다",
+        description: "먼저 시장조사를 완료해주세요.",
         variant: "destructive",
       });
       return;
     }
 
     setIsGenerating(true);
-    setGenerationProgress(0);
+    setGenerateProgress(0);
+    setGenerationCompleted(false);
 
-    // AI 생성 시뮬레이션
+    // 시뮬레이션: AI 페르소나 생성 과정
+    const steps = [
+      "시장조사 데이터 분석 중...",
+      "소비자 행동 패턴 파악 중...",
+      "페르소나 프로필 생성 중...",
+      "매칭 플랫폼 분석 중...",
+      "최종 페르소나 완성 중..."
+    ];
+
     for (let i = 0; i <= 100; i += 20) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setGenerationProgress(i);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setGenerateProgress(i);
     }
 
-    setGeneratedPersonas(mockGeneratedPersonas);
+    const personaData = {
+      id: `persona_${Date.now()}`,
+      name: "리우 샤오메이",
+      brandId: selectedBrand,
+      productId: selectedProduct,
+      brandName: selectedBrandData?.name,
+      productName: selectedProductData?.name,
+      demographics: {
+        age: "25-30세",
+        gender: "여성",
+        location: "상하이, 베이징",
+        income: "중상위층"
+      },
+      platforms: ["샤오홍슈", "도우인"],
+      interests: ["뷰티", "라이프스타일", "건강"],
+      description: "중국 시장 데이터 기반으로 생성된 타겟 페르소나",
+      confidence: 92,
+      completedAt: new Date().toISOString()
+    };
+
+    setCurrentPersona(personaData);
+    setGenerationCompleted(true);
     setIsGenerating(false);
     
     toast({
       title: "AI 페르소나 생성 완료",
-      description: `${mockGeneratedPersonas.length}개의 페르소나 후보가 생성되었습니다.`,
+      description: "중국 시장 데이터 기반 소비자 페르소나가 생성되었습니다.",
     });
   };
-
-  const handleSavePersona = (persona: any) => {
-    const savedPersona = {
-      ...persona,
-      id: Date.now().toString(),
-      brandId: selectedBrand,
-      productId: selectedProduct,
-      createdAt: new Date().toISOString(),
-    };
-
-    onPersonaGenerated(savedPersona);
-    
-    toast({
-      title: "페르소나 저장 완료",
-      description: `${persona.name} 페르소나가 저장되었습니다.`,
-    });
-  };
-
-  const selectedBrandData = brands.find(b => b.id === selectedBrand);
-  const selectedProductData = products.find(p => p.id === selectedProduct);
-
-  console.log('Current state:', {
-    selectedBrand,
-    selectedProduct,
-    savedReports: savedReports.length,
-    filteredReports: filteredReports.length,
-    selectedReport
-  });
 
   return (
     <div className="space-y-6">
-      {/* 현재 선택 상태 표시 */}
-      {selectedBrand && selectedProduct && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="pt-4">
-            <div className="text-sm text-blue-700">
-              <strong>선택된 분석 대상:</strong> {selectedBrandData?.name} - {selectedProductData?.name}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 시장조사 리포트 선택 */}
+      {/* 브랜드 및 제품 선택 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
-            시장조사 리포트 선택
+            AI 페르소나 생성 설정
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">저장된 시장조사 리포트</label>
-            <Select value={selectedReport} onValueChange={setSelectedReport}>
-              <SelectTrigger>
-                <SelectValue placeholder="시장조사 리포트를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredReports.map((report) => (
-                  <SelectItem key={report.id} value={report.id}>
-                    {report.name} ({new Date(report.createdAt).toLocaleDateString('ko-KR')})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {filteredReports.length === 0 && (
-              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  <p className="text-sm text-yellow-700">
-                    선택된 브랜드와 제품에 대한 시장조사 리포트가 없습니다. 
-                    먼저 시장조사 탭에서 시장조사를 진행해주세요.
-                  </p>
-                </div>
-              </div>
-            )}
-            {filteredReports.length > 0 && selectedReport && (
-              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <p className="text-sm text-green-700">
-                    시장조사 리포트가 선택되었습니다. AI 페르소나 생성을 진행할 수 있습니다.
-                  </p>
-                </div>
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">브랜드 선택</label>
+              <Select value={selectedBrand} onValueChange={() => {}}>
+                <SelectTrigger>
+                  <SelectValue placeholder="브랜드를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id}>
+                      {brand.name} ({brand.category || '카테고리 없음'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">제품 선택</label>
+              <Select value={selectedProduct} onValueChange={() => {}}>
+                <SelectTrigger>
+                  <SelectValue placeholder="제품을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {selectedBrand && selectedProduct && (
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <div className="text-sm text-purple-700">
+                <strong>페르소나 생성 대상:</strong> {selectedBrandData?.name} - {selectedProductData?.name}
+              </div>
+              <div className="text-xs text-purple-600 mt-1">
+                시장조사 데이터를 기반으로 최적화된 소비자 페르소나를 생성합니다
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
+      {/* 페르소나 생성 실행 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="w-5 h-5" />
+            <Sparkles className="w-5 h-5" />
             AI 페르소나 생성
           </CardTitle>
         </CardHeader>
@@ -283,137 +173,112 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({
           {isGenerating && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>AI 분석 진행률</span>
-                <span>{generationProgress}%</span>
+                <span>AI 페르소나 생성 진행률</span>
+                <span>{generateProgress}%</span>
               </div>
-              <Progress value={generationProgress} />
+              <Progress value={generateProgress} />
               <div className="text-sm text-gray-600 text-center">
-                시장조사 데이터를 분석하여 페르소나를 생성하고 있습니다...
+                중국 시장 데이터를 분석하여 최적의 페르소나를 생성하고 있습니다...
               </div>
             </div>
           )}
 
           <Button 
-            onClick={handleGeneratePersonas}
-            disabled={isGenerating || !selectedReport}
+            onClick={handleGeneratePersona}
+            disabled={isGenerating || !selectedBrand || !selectedProduct || savedReports.length === 0}
             className="w-full"
           >
-            {isGenerating ? 'AI 분석 중...' : 'AI 페르소나 생성 시작'}
+            {isGenerating ? 'AI 페르소나 생성 중...' : '페르소나 생성하기'}
           </Button>
         </CardContent>
       </Card>
 
-      {/* 생성된 페르소나 목록 */}
-      {generatedPersonas.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">생성된 페르소나 후보</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {generatedPersonas.map((persona) => (
-              <Card 
-                key={persona.id}
-                className={`cursor-pointer transition-all ${
-                  selectedPersona?.id === persona.id ? 'ring-2 ring-green-500' : 'hover:shadow-md'
-                }`}
-                onClick={() => setSelectedPersona(persona)}
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{persona.name}</CardTitle>
-                    <Badge variant="outline">
-                      신뢰도 {persona.confidence}%
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="text-sm text-gray-600">
-                    {persona.demographics.age} • {persona.demographics.location}
-                  </div>
-                  <div className="text-sm">
-                    주 플랫폼: {persona.platforms.join(', ')}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    월 검색량: {persona.marketData.searchVolume.toLocaleString()}
-                  </div>
-                  <Button 
-                    size="sm" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSavePersona(persona);
-                    }}
-                    className="w-full mt-2"
-                  >
-                    페르소나 저장
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 선택된 페르소나 상세 분석 */}
-      {selectedPersona && (
+      {/* 생성된 페르소나 미리보기 */}
+      {generationCompleted && currentPersona && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              페르소나 상세 분석 및 조정
+              <Users className="w-5 h-5" />
+              <span>생성된 페르소나</span>
+              <Badge variant="outline" className="ml-2">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                완료
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">상세 정보</TabsTrigger>
-                <TabsTrigger value="comparison">시장 비교</TabsTrigger>
-                <TabsTrigger value="validation">검증 및 조정</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="details" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">인구통계학적 특성</h4>
-                    <div className="space-y-2 text-sm">
-                      <div>연령: {selectedPersona.demographics.age}</div>
-                      <div>성별: {selectedPersona.demographics.gender}</div>
-                      <div>지역: {selectedPersona.demographics.location}</div>
-                      <div>소득: {selectedPersona.demographics.income}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">심리통계학적 특성</h4>
-                    <div className="space-y-2 text-sm">
-                      <div>관심사: {selectedPersona.psychographics.interests.join(', ')}</div>
-                      <div>성격: {selectedPersona.psychographics.personality}</div>
-                      <div>가치관: {selectedPersona.psychographics.values}</div>
-                    </div>
-                  </div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <h4 className="font-semibold">{currentPersona.name}</h4>
+                <div className="space-y-2 text-sm">
+                  <div><strong>연령:</strong> {currentPersona.demographics.age}</div>
+                  <div><strong>성별:</strong> {currentPersona.demographics.gender}</div>
+                  <div><strong>지역:</strong> {currentPersona.demographics.location}</div>
+                  <div><strong>소득:</strong> {currentPersona.demographics.income}</div>
                 </div>
-
-                <div className="space-y-4">
-                  <h4 className="font-semibold">주요 인사이트</h4>
-                  <ul className="space-y-2">
-                    {selectedPersona.insights.map((insight: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        {insight}
-                      </li>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <strong className="text-sm">주요 플랫폼:</strong>
+                  <div className="flex gap-2 mt-1">
+                    {currentPersona.platforms.map((platform: string, index: number) => (
+                      <Badge key={index} variant="secondary">{platform}</Badge>
                     ))}
-                  </ul>
+                  </div>
                 </div>
-              </TabsContent>
+                <div>
+                  <strong className="text-sm">관심사:</strong>
+                  <div className="flex gap-2 mt-1">
+                    {currentPersona.interests.map((interest: string, index: number) => (
+                      <Badge key={index} variant="outline">{interest}</Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-sm">
+                  <strong>신뢰도:</strong> {currentPersona.confidence}%
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <Button 
+                onClick={() => {
+                  onPersonaGenerated(currentPersona);
+                  toast({
+                    title: "페르소나 저장 완료",
+                    description: "인플루언서 매칭을 진행할 수 있습니다.",
+                  });
+                }}
+              >
+                페르소나 저장하기
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-              <TabsContent value="comparison">
-                <MarketInsightComparison persona={selectedPersona} />
-              </TabsContent>
-
-              <TabsContent value="validation">
-                <PersonaValidation 
-                  persona={selectedPersona}
-                  onPersonaUpdate={setSelectedPersona}
-                />
-              </TabsContent>
-            </Tabs>
+      {/* 저장된 페르소나 목록 */}
+      {savedPersonas.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>저장된 페르소나</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {savedPersonas.map((persona, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="font-medium">{persona.name}</div>
+                    <div className="text-sm text-gray-600">
+                      {new Date(persona.completedAt).toLocaleDateString('ko-KR')} - 신뢰도: {persona.confidence}%
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    상세보기
+                  </Button>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
