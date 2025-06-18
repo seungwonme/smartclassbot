@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { brandSettingsService } from '@/services/brandSettings.service';
 
 const userSettingsSchema = z.object({
   // 회사 정보
@@ -36,31 +37,54 @@ type UserSettingsForm = z.infer<typeof userSettingsSchema>;
 export const UserSettingsTab = () => {
   const { toast } = useToast();
   
+  // 기존 설정값 로드
+  const currentSettings = brandSettingsService.getBrandSettings();
+  
   const form = useForm<UserSettingsForm>({
     resolver: zodResolver(userSettingsSchema),
     defaultValues: {
-      companyName: '',
-      businessNumber: '',
-      address: '',
-      ceoName: '',
-      industry: '',
-      contactName: '',
-      contactEmail: '',
-      contactPhone: '',
-      department: '',
-      position: '',
-      billingEmail: '',
-      paymentMethod: '',
-      taxInvoiceInfo: '',
+      companyName: currentSettings.company.companyName,
+      businessNumber: currentSettings.company.businessNumber,
+      address: currentSettings.company.address,
+      ceoName: currentSettings.company.ceoName,
+      industry: currentSettings.company.industry,
+      contactName: currentSettings.contact.contactName,
+      contactEmail: currentSettings.contact.contactEmail,
+      contactPhone: currentSettings.contact.contactPhone,
+      department: currentSettings.contact.department,
+      position: currentSettings.contact.position,
+      billingEmail: currentSettings.billing.billingEmail,
+      paymentMethod: currentSettings.billing.paymentMethod,
+      taxInvoiceInfo: currentSettings.billing.taxInvoiceInfo,
     },
   });
 
   const onSubmit = async (data: UserSettingsForm) => {
     try {
-      // API 호출 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 새로운 브랜드 설정 서비스를 사용하여 데이터 저장
+      brandSettingsService.updateBrandSettings({
+        company: {
+          companyName: data.companyName,
+          businessNumber: data.businessNumber,
+          address: data.address,
+          ceoName: data.ceoName,
+          industry: data.industry,
+        },
+        contact: {
+          contactName: data.contactName,
+          contactEmail: data.contactEmail,
+          contactPhone: data.contactPhone,
+          department: data.department,
+          position: data.position,
+        },
+        billing: {
+          billingEmail: data.billingEmail,
+          paymentMethod: data.paymentMethod,
+          taxInvoiceInfo: data.taxInvoiceInfo,
+        },
+      });
       
-      console.log('사용자 설정 저장:', data);
+      console.log('브랜드 사용자 설정 저장:', data);
       
       toast({
         title: '저장 완료',
