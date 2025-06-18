@@ -132,23 +132,64 @@ class SettingsService {
 
   getSettings(): AdminSettings {
     try {
-      const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const parsedSettings = JSON.parse(stored);
-        return this.deepMerge(this.defaultSettings, parsedSettings);
+      // Safely access localStorage
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('localStorage not available, using default settings');
+        return this.defaultSettings;
       }
-      return this.defaultSettings;
+
+      const stored = window.localStorage.getItem(this.storageKey);
+      
+      if (!stored || stored === null || stored === 'undefined' || stored === '') {
+        console.log('No stored settings found, using defaults');
+        return this.defaultSettings;
+      }
+
+      // Safely parse JSON
+      let parsedSettings;
+      try {
+        parsedSettings = JSON.parse(stored);
+      } catch (parseError) {
+        console.error('JSON parse error for settings:', parseError);
+        console.log('Clearing corrupted settings and using defaults');
+        this.clearCorruptedSettings();
+        return this.defaultSettings;
+      }
+
+      if (!parsedSettings || typeof parsedSettings !== 'object') {
+        console.warn('Invalid settings format, using defaults');
+        return this.defaultSettings;
+      }
+
+      return this.deepMerge(this.defaultSettings, parsedSettings);
     } catch (error) {
-      console.error('설정 로드 실패:', error);
+      console.error('Critical error in getSettings:', error);
       return this.defaultSettings;
+    }
+  }
+
+  private clearCorruptedSettings(): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(this.storageKey);
+      }
+    } catch (error) {
+      console.error('Failed to clear corrupted settings:', error);
     }
   }
 
   updateSettings(settings: Partial<AdminSettings>): void {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('localStorage not available, cannot save settings');
+        return;
+      }
+
       const currentSettings = this.getSettings();
       const updatedSettings = this.deepMerge(currentSettings, settings);
-      localStorage.setItem(this.storageKey, JSON.stringify(updatedSettings));
+      
+      const settingsString = JSON.stringify(updatedSettings);
+      window.localStorage.setItem(this.storageKey, settingsString);
       
       console.log('=== 관리자 설정 업데이트 ===');
       console.log('업데이트된 설정:', settings);
@@ -159,43 +200,72 @@ class SettingsService {
   }
 
   private deepMerge(target: any, source: any): any {
-    const result = { ...target };
-    
-    for (const key in source) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-        result[key] = this.deepMerge(target[key] || {}, source[key]);
-      } else {
-        result[key] = source[key];
+    try {
+      const result = { ...target };
+      
+      for (const key in source) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          result[key] = this.deepMerge(target[key] || {}, source[key]);
+        } else {
+          result[key] = source[key];
+        }
       }
+      
+      return result;
+    } catch (error) {
+      console.error('Deep merge error:', error);
+      return target;
     }
-    
-    return result;
   }
 
   getPlatformSettings(): PlatformSettings {
-    return this.getSettings().platforms;
+    try {
+      return this.getSettings().platforms;
+    } catch (error) {
+      console.error('Error getting platform settings:', error);
+      return this.defaultSettings.platforms;
+    }
   }
 
   updatePlatformSettings(platformSettings: Partial<PlatformSettings>): void {
-    const currentSettings = this.getSettings();
-    this.updateSettings({
-      platforms: { ...currentSettings.platforms, ...platformSettings }
-    });
+    try {
+      const currentSettings = this.getSettings();
+      this.updateSettings({
+        platforms: { ...currentSettings.platforms, ...platformSettings }
+      });
+    } catch (error) {
+      console.error('Error updating platform settings:', error);
+    }
   }
 
   getCrawlingInterval(platform: string): number {
-    const settings = this.getPlatformSettings();
-    return settings[platform as keyof PlatformSettings]?.crawlingInterval || 10;
+    try {
+      const settings = this.getPlatformSettings();
+      return settings[platform as keyof PlatformSettings]?.crawlingInterval || 10;
+    } catch (error) {
+      console.error('Error getting crawling interval:', error);
+      return 10;
+    }
   }
 
   isPlatformEnabled(platform: string): boolean {
-    const settings = this.getPlatformSettings();
-    return settings[platform as keyof PlatformSettings]?.enabled || false;
+    try {
+      const settings = this.getPlatformSettings();
+      return settings[platform as keyof PlatformSettings]?.enabled || false;
+    } catch (error) {
+      console.error('Error checking platform enabled:', error);
+      return false;
+    }
   }
 
   getPlatformMetrics(platform: string): string[] {
-    const settings = this.getPlatformSettings();
-    return settings[platform as keyof PlatformSettings]?.metrics || [];
+    try {
+      const settings = this.getPlatformSettings();
+      return settings[platform as keyof PlatformSettings]?.metrics || [];
+    } catch (error) {
+      console.error('Error getting platform metrics:', error);
+      return [];
+    }
   }
 }
 
