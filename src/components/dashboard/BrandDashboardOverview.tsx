@@ -86,7 +86,9 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
     }
   };
 
-  const totalCampaigns = Math.max(stats.activeCampaigns + (stats.completedCampaigns || 0), 1);
+  // Safe calculation for total campaigns
+  const completedCampaigns = (stats as any).completedCampaigns || 0;
+  const totalCampaigns = Math.max(stats.activeCampaigns + completedCampaigns, 1);
 
   return (
     <div className="space-y-6">
