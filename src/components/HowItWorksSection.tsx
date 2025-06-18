@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
 
 const HowItWorksSection = () => {
   const steps = [
@@ -43,14 +42,7 @@ const HowItWorksSection = () => {
         {/* Steps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, index) => (
-            <div key={index} className="relative flex flex-col">
-              {/* Connection Arrow - Only show on desktop and not for last item */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:flex absolute top-16 -right-4 z-10 items-center justify-center w-8 h-8">
-                  <ArrowRight className="w-5 h-5 text-green-400" />
-                </div>
-              )}
-              
+            <div key={index} className="flex flex-col">
               <Card className="group hover:shadow-lg transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white border-green-200 flex-1 flex flex-col h-full">
                 <CardHeader className="text-center pb-4 flex-shrink-0">
                   {/* Step Number */}
@@ -69,13 +61,6 @@ const HowItWorksSection = () => {
                 </CardContent>
               </Card>
             </div>
-          ))}
-        </div>
-
-        {/* Mobile Connection Arrows */}
-        <div className="lg:hidden flex flex-col items-center mt-8 space-y-4">
-          {steps.slice(0, -1).map((_, index) => (
-            <ArrowRight key={index} className="w-5 h-5 text-green-400 rotate-90" />
           ))}
         </div>
       </div>
