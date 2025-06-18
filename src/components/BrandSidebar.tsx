@@ -31,11 +31,6 @@ const BrandSidebar = () => {
       icon: LayoutDashboard,
     },
     {
-      title: "캠페인 관리",
-      url: "/brand/campaigns",
-      icon: Home,
-    },
-    {
       title: "브랜드 및 제품관리",
       url: "/brand/products",
       icon: Package,
@@ -49,6 +44,11 @@ const BrandSidebar = () => {
       title: "인플루언서",
       url: "/brand/influencers",
       icon: Users,
+    },
+    {
+      title: "캠페인 관리",
+      url: "/brand/campaigns",
+      icon: Home,
     },
     {
       title: "분석",
