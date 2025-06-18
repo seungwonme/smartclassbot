@@ -37,7 +37,7 @@ export const AdminUserManagementTab = () => {
   const onSubmit = async (data: UserManagementForm) => {
     try {
       settingsService.updateSettings({
-        users: data
+        users: data as any
       });
       
       toast({

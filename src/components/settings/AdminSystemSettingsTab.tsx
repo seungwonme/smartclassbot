@@ -35,7 +35,7 @@ export const AdminSystemSettingsTab = () => {
   const onSubmit = async (data: SystemForm) => {
     try {
       settingsService.updateSettings({
-        system: data
+        system: data as any
       });
       
       toast({
