@@ -135,7 +135,7 @@ class SettingsService {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
         const parsedSettings = JSON.parse(stored);
-        return { ...this.defaultSettings, ...parsedSettings };
+        return this.deepMerge(this.defaultSettings, parsedSettings);
       }
       return this.defaultSettings;
     } catch (error) {
@@ -147,7 +147,7 @@ class SettingsService {
   updateSettings(settings: Partial<AdminSettings>): void {
     try {
       const currentSettings = this.getSettings();
-      const updatedSettings = { ...currentSettings, ...settings };
+      const updatedSettings = this.deepMerge(currentSettings, settings);
       localStorage.setItem(this.storageKey, JSON.stringify(updatedSettings));
       
       console.log('=== 관리자 설정 업데이트 ===');
@@ -156,6 +156,20 @@ class SettingsService {
       console.error('설정 저장 실패:', error);
       throw new Error('설정 저장에 실패했습니다.');
     }
+  }
+
+  private deepMerge(target: any, source: any): any {
+    const result = { ...target };
+    
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        result[key] = this.deepMerge(target[key] || {}, source[key]);
+      } else {
+        result[key] = source[key];
+      }
+    }
+    
+    return result;
   }
 
   getPlatformSettings(): PlatformSettings {
