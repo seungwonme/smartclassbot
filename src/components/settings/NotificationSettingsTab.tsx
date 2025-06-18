@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,7 +35,7 @@ export const NotificationSettingsTab = () => {
   const onSubmit = async (data: NotificationForm) => {
     try {
       brandSettingsService.updateBrandSettings({
-        notifications: data
+        notifications: data as any
       });
       
       toast({

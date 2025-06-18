@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,7 +35,7 @@ export const LanguageRegionTab = () => {
   const onSubmit = async (data: LanguageForm) => {
     try {
       brandSettingsService.updateBrandSettings({
-        language: data
+        language: data as any
       });
       
       toast({
