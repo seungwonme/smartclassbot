@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
@@ -24,6 +23,7 @@ import AdminInfluencerManagement from './pages/AdminInfluencerManagement';
 import AdminBrandManagement from './pages/AdminBrandManagement';
 import AdminSettings from './pages/AdminSettings';
 import NotFound from './pages/NotFound';
+import BrandSettings from './pages/BrandSettings';
 
 function App() {
   const { isLoggedIn, userRole } = useAuth();
@@ -51,6 +51,7 @@ function App() {
         <Route path="/brand/influencers" element={isValidAuthState && userRole === 'brand' ? <BrandInfluencers /> : <Navigate to="/login" />} />
         <Route path="/brand/analytics" element={isValidAuthState && userRole === 'brand' ? <BrandAnalytics /> : <Navigate to="/login" />} />
         <Route path="/brand/billing" element={isValidAuthState && userRole === 'brand' ? <BrandBilling /> : <Navigate to="/login" />} />
+        <Route path="/brand/settings" element={isValidAuthState && userRole === 'brand' ? <BrandSettings /> : <Navigate to="/login" />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={isValidAuthState && userRole === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
