@@ -46,9 +46,7 @@ const FeaturesSection = () => {
         <div className="text-center max-w-3xl mx-auto mb-16">
           
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
-            <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
-              AI가 만드는
-            </span>
+            
             <br />
             <span className="text-foreground">마케팅 혁신</span>
           </h2>
