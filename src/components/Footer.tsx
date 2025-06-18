@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Phone, MapPin, Twitter, Instagram, Linkedin, Building2, FileText } from 'lucide-react';
-
 const Footer = () => {
   const footerSections = [{
     title: "플랫폼",
@@ -75,7 +74,7 @@ const Footer = () => {
               <div className="flex items-center space-x-2 mb-4">
                 <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-8" />
               </div>
-              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">AI-powerd Brand &amp; Influencer matching Platform</p>
+              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">AI-powered Brand &amp; Influencer matching Platform</p>
               
               {/* Contact Info */}
               <div className="space-y-3 mb-6">
@@ -155,5 +154,4 @@ const Footer = () => {
       </div>
     </footer>;
 };
-
 export default Footer;
