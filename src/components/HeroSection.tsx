@@ -7,12 +7,15 @@ const HeroSection = () => {
   return (
     <section className="pt-32 pb-20 md:pt-40 md:pb-28 lg:pt-48 lg:pb-32 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-4xl mx-auto">
-          {/* Headline */}
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-6 text-center leading-tight">
+        {/* Headline - separate container with full width */}
+        <div className="text-center max-w-6xl mx-auto mb-6">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-tight leading-tight">
             AI 기반 중국 인플루언서<span className="text-green-600"> 매칭 </span>플랫폼
           </h1>
+        </div>
 
+        {/* Rest of content with original max-width */}
+        <div className="text-center max-w-4xl mx-auto">
           {/* Subtitle */}
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto md:text-xl">
             "감(感)"과 "꽌시(关系)"에 의존했던 중국 인플루언서 마케팅, AI 기술을 활용한 시장분석 및 페르소나 매칭 기술을 통해 나의 브랜드와 중국 인플루언서를 완벽하게 연결하세요.
