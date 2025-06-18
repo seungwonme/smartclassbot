@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Home,
@@ -31,11 +32,6 @@ const AdminSidebar: React.FC = () => {
       icon: LayoutDashboard,
     },
     {
-      title: "캠페인 관리",
-      url: "/admin/campaigns",
-      icon: Home,
-    },
-    {
       title: "브랜드 및 제품관리",
       url: "/admin/brands",
       icon: Building2,
@@ -44,6 +40,11 @@ const AdminSidebar: React.FC = () => {
       title: "인플루언서관리",
       url: "/admin/influencers",
       icon: UserCheck,
+    },
+    {
+      title: "캠페인 관리",
+      url: "/admin/campaigns",
+      icon: Home,
     },
     {
       title: "분석",
