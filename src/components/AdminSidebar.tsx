@@ -1,72 +1,81 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Users, 
-  BarChart3, 
-  Calculator,
+import {
+  Home,
+  LayoutDashboard,
+  Users,
   Settings,
-  LogOut,
-  Megaphone
+  FileText,
+  DollarSign
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { NavLink } from 'react-router-dom';
 
-const AdminSidebar = () => {
-  const location = useLocation();
+interface SidebarItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<any>;
+}
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: '대시보드', href: '/admin/dashboard' },
-    { icon: Building2, label: '브랜드 및 제품관리', href: '/admin/brands' },
-    { icon: Users, label: '인플루언서 관리', href: '/admin/influencers' },
-    { icon: Megaphone, label: '캠페인 관리', href: '/admin/campaigns' },
-    { icon: BarChart3, label: '성과분석관리', href: '/admin/analytics' },
-    { icon: Calculator, label: '정산관리', href: '/admin/billing' },
-    { icon: Settings, label: '일반설정', href: '/admin/settings' },
+const AdminSidebar: React.FC = () => {
+  const sidebarItems: SidebarItem[] = [
+    {
+      title: "대시보드",
+      url: "/admin/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "캠페인 관리",
+      url: "/admin/campaigns",
+      icon: Home,
+    },
+    {
+      title: "브랜드 관리",
+      url: "/admin/brands",
+      icon: Users,
+    },
+    {
+      title: "보고서 관리",
+      url: "/admin/reports",
+      icon: FileText,
+    },
+    {
+      title: "정산 관리",
+      url: "/admin/billing",
+      icon: DollarSign,
+    },
+    {
+      title: "설정",
+      url: "/admin/settings",
+      icon: Settings,
+    },
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <Link to="/" className="flex items-center justify-center">
-          <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-10" />
-        </Link>
-        <p className="text-sm text-muted-foreground mt-2 text-center">시스템 관리자</p>
+    <div className="w-64 bg-gray-50 border-r border-gray-200 h-full py-4 px-2 flex flex-col">
+      <div className="mb-8">
+        <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-8 mx-auto" />
+        <h1 className="text-center mt-2 font-semibold">Admin Dashboard</h1>
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                to={item.href}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  location.pathname === item.href
-                    ? "bg-green-100 text-green-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                )}
+      <nav className="flex-1">
+        <ul>
+          {sidebarItems.map((item) => (
+            <li key={item.title} className="mb-1">
+              <NavLink
+                to={item.url}
+                className={({ isActive }) =>
+                  `flex items-center p-2 rounded-md hover:bg-gray-100 ${
+                    isActive ? 'bg-gray-100 font-semibold' : 'text-gray-700'
+                  }`
+                }
               >
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </Link>
+                <item.icon className="w-4 h-4 mr-2" />
+                {item.title}
+              </NavLink>
             </li>
           ))}
         </ul>
       </nav>
-
-      {/* Logout */}
-      <div className="p-4 border-t border-gray-200">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-600 hover:text-gray-900"
-        >
-          <LogOut className="h-5 w-5 mr-3" />
-          로그아웃
-        </Button>
+      <div className="mt-auto text-center text-sm text-gray-500">
+        <p>&copy; 2024 Circlue.ai</p>
       </div>
     </div>
   );

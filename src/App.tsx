@@ -1,86 +1,65 @@
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import BrandDashboard from './pages/BrandDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import BrandSignup from './pages/BrandSignup';
+import AdminSignup from './pages/AdminSignup';
+import CampaignList from './pages/CampaignList';
+import CampaignCreate from './pages/CampaignCreate';
+import CampaignEdit from './pages/CampaignEdit';
+import CampaignDetail from './pages/CampaignDetail';
+import BrandList from './pages/BrandList';
+import ProductList from './pages/ProductList';
+import MarketReportList from './pages/MarketReportList';
+import MarketReportDetail from './pages/MarketReportDetail';
+import MarketReportCreate from './pages/MarketReportCreate';
+import PersonaList from './pages/PersonaList';
+import ContentPlanDetail from './pages/ContentPlanDetail';
+import ContentSubmissionDetail from './pages/ContentSubmissionDetail';
+import BrandBilling from './pages/BrandBilling';
+import AdminBilling from './pages/AdminBilling';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AdminLogin from "./pages/AdminLogin";
-import BrandDashboard from "./pages/BrandDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import BrandProducts from "./pages/BrandProducts";
-import CreateBrand from "./pages/CreateBrand";
-import BrandDetail from "./pages/BrandDetail";
-import CreateProduct from "./pages/CreateProduct";
-import ProductDetail from "./pages/ProductDetail";
-import AdminBrandManagement from "./pages/AdminBrandManagement";
-import AdminCreateBrand from "./pages/AdminCreateBrand";
-import AdminCreateProduct from "./pages/AdminCreateProduct";
-import AdminInfluencerManagement from "./pages/AdminInfluencerManagement";
-import AdminInfluencerDetail from "./pages/AdminInfluencerDetail";
-import AdminBrandDetail from "./pages/AdminBrandDetail";
-import AdminProductDetail from "./pages/AdminProductDetail";
-import BrandCampaigns from "./pages/BrandCampaigns";
-import CreateCampaign from "./pages/CreateCampaign";
-import CampaignEdit from "./pages/CampaignEdit";
-import CampaignDetail from "./pages/CampaignDetail";
-import AdminCampaigns from "./pages/AdminCampaigns";
-import AdminCampaignDetail from "./pages/AdminCampaignDetail";
-import AdminContentPlanning from "./pages/AdminContentPlanning";
-import BrandInfluencers from "./pages/BrandInfluencers";
-import BrandAnalytics from "./pages/BrandAnalytics";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import BrandPersonaManagement from "./pages/BrandPersonaManagement";
+function App() {
+  const { isLoggedIn, userRole } = useAuth();
 
-const queryClient = new QueryClient();
+  return (
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={!isLoggedIn ? <LoginPage /> : <Navigate to="/" />} />
+        <Route path="/signup" element={!isLoggedIn ? <SignupPage /> : <Navigate to="/" />} />
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/brand/dashboard" element={<BrandDashboard />} />
-          <Route path="/brand/products" element={<BrandProducts />} />
-          <Route path="/brand/products/create" element={<CreateBrand />} />
-          <Route path="/brand/products/:id" element={<BrandDetail />} />
-          <Route path="/brand/products/create-product" element={<CreateProduct />} />
-          <Route path="/brand/products/product/:id" element={<ProductDetail />} />
-          <Route path="/brand/campaigns" element={<BrandCampaigns />} />
-          <Route path="/brand/campaigns/create" element={<CreateCampaign />} />
-          <Route path="/brand/campaigns/:id" element={<CampaignDetail />} />
-          <Route path="/brand/campaigns/edit/:id" element={<CampaignEdit />} />
-          <Route path="/brand/influencers" element={<BrandInfluencers />} />
-          <Route path="/brand/analytics" element={<BrandAnalytics />} />
-          <Route path="/brand/persona-management" element={<BrandPersonaManagement />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/brands" element={<AdminBrandManagement />} />
-          <Route path="/admin/brands/create" element={<AdminCreateBrand />} />
-          <Route path="/admin/brands/:id" element={<AdminBrandDetail />} />
-          <Route path="/admin/brands/edit/:id" element={<AdminBrandDetail />} />
-          <Route path="/admin/products/create" element={<AdminCreateProduct />} />
-          <Route path="/admin/influencers" element={<AdminInfluencerManagement />} />
-          <Route path="/admin/influencers/:id" element={<AdminInfluencerDetail />} />
-          <Route path="/admin/products/:id" element={<AdminProductDetail />} />
-          <Route path="/admin/products/edit/:id" element={<AdminProductDetail />} />
-          <Route path="/admin/campaigns" element={<AdminCampaigns />} />
-          <Route path="/admin/campaigns/:id" element={<AdminCampaignDetail />} />
-          <Route path="/admin/campaigns/:campaignId/content-planning" element={<AdminContentPlanning />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        {/* Brand Routes */}
+        <Route path="/brand/signup" element={!isLoggedIn ? <BrandSignup /> : <Navigate to="/" />} />
+        <Route path="/brand" element={isLoggedIn && userRole === 'brand' ? <BrandDashboard /> : <Navigate to="/login" />} />
+        <Route path="/brand/campaigns" element={isLoggedIn && userRole === 'brand' ? <CampaignList /> : <Navigate to="/login" />} />
+        <Route path="/brand/campaigns/create" element={isLoggedIn && userRole === 'brand' ? <CampaignCreate /> : <Navigate to="/login" />} />
+        <Route path="/brand/campaigns/edit/:id" element={isLoggedIn && userRole === 'brand' ? <CampaignEdit /> : <Navigate to="/login" />} />
+        <Route path="/brand/campaigns/:id" element={isLoggedIn && userRole === 'brand' ? <CampaignDetail /> : <Navigate to="/login" />} />
+        <Route path="/brand/market-reports" element={isLoggedIn && userRole === 'brand' ? <MarketReportList /> : <Navigate to="/login" />} />
+        <Route path="/brand/market-reports/:id" element={isLoggedIn && userRole === 'brand' ? <MarketReportDetail /> : <Navigate to="/login" />} />
+        <Route path="/brand/market-reports/create" element={isLoggedIn && userRole === 'brand' ? <MarketReportCreate /> : <Navigate to="/login" />} />
+        <Route path="/brand/personas" element={isLoggedIn && userRole === 'brand' ? <PersonaList /> : <Navigate to="/login" />} />
+        <Route path="/brand/content-plans/:id" element={isLoggedIn && userRole === 'brand' ? <ContentPlanDetail /> : <Navigate to="/login" />} />
+        <Route path="/brand/content-submissions/:id" element={isLoggedIn && userRole === 'brand' ? <ContentSubmissionDetail /> : <Navigate to="/login" />} />
+        <Route path="/brand/billing" element={isLoggedIn && userRole === 'brand' ? <BrandBilling /> : <Navigate to="/login" />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin/signup" element={!isLoggedIn ? <AdminSignup /> : <Navigate to="/" />} />
+        <Route path="/admin" element={isLoggedIn && userRole === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
+        <Route path="/admin/brands" element={isLoggedIn && userRole === 'admin' ? <BrandList /> : <Navigate to="/login" />} />
+        <Route path="/admin/products" element={isLoggedIn && userRole === 'admin' ? <ProductList /> : <Navigate to="/login" />} />
+        <Route path="/admin/campaigns/:id" element={isLoggedIn && userRole === 'admin' ? <CampaignDetail /> : <Navigate to="/login" />} />
+        <Route path="/admin/billing" element={isLoggedIn && userRole === 'admin' ? <AdminBilling /> : <Navigate to="/login" />} />
+
+        {/* Redirect to Dashboard if logged in, otherwise to Login */}
+        <Route path="/" element={isLoggedIn ? (userRole === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/brand" />) : <Navigate to="/login" />} />
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;

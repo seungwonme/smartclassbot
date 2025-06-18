@@ -1,73 +1,73 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Brain, 
-  Users, 
-  Megaphone, 
-  BarChart3, 
-  Calculator,
-  LogOut
+import {
+  Home,
+  LayoutDashboard,
+  Users,
+  Settings,
+  FileText,
+  DollarSign
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { NavLink } from 'react-router-dom';
+
+interface SidebarItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<any>;
+}
 
 const BrandSidebar = () => {
-  const location = useLocation();
-
-  const menuItems = [
-    { icon: LayoutDashboard, label: '대시보드', href: '/brand/dashboard' },
-    { icon: Building2, label: '브랜드 및 제품관리', href: '/brand/products' },
-    { icon: Brain, label: 'AI 페르소나 관리', href: '/brand/persona-management' },
-    { icon: Users, label: '인플루언서', href: '/brand/influencers' },
-    { icon: Megaphone, label: '캠페인관리', href: '/brand/campaigns' },
-    { icon: BarChart3, label: '성과분석', href: '/brand/analytics' },
-    { icon: Calculator, label: '정산관리', href: '/brand/billing' },
+  const sidebarItems: SidebarItem[] = [
+    {
+      title: "대시보드",
+      url: "/brand/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "캠페인 관리",
+      url: "/brand/campaigns",
+      icon: Home,
+    },
+    {
+      title: "인플루언서",
+      url: "/brand/influencers",
+      icon: Users,
+    },
+    {
+      title: "마켓 리포트",
+      url: "/brand/reports",
+      icon: FileText,
+    },
+    {
+      title: "정산 관리",
+      url: "/brand/billing",
+      icon: DollarSign,
+    },
+    {
+      title: "설정",
+      url: "/brand/settings",
+      icon: Settings,
+    },
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <Link to="/" className="flex items-center justify-center">
-          <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-10" />
-        </Link>
-        <p className="text-sm text-muted-foreground mt-2 text-center">브랜드 관리자</p>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                to={item.href}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  location.pathname === item.href
-                    ? "bg-green-100 text-green-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+    <div className="w-64 bg-gray-50 border-r border-gray-200 h-full py-4 px-2">
+      <nav className="space-y-4">
+        {sidebarItems.map((item) => (
+          <NavLink
+            key={item.title}
+            to={item.url}
+            className={({ isActive }) =>
+              `flex items-center px-3 py-2 text-sm font-medium rounded-md
+              ${isActive
+                  ? 'bg-green-100 text-green-700'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`
+            }
+          >
+            <item.icon className="mr-2 h-4 w-4" />
+            {item.title}
+          </NavLink>
+        ))}
       </nav>
-
-      {/* Logout */}
-      <div className="p-4 border-t border-gray-200">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-600 hover:text-gray-900"
-        >
-          <LogOut className="h-5 w-5 mr-3" />
-          로그아웃
-        </Button>
-      </div>
     </div>
   );
 };
