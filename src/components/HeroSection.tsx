@@ -8,7 +8,7 @@ const HeroSection = () => {
     <section className="pt-32 pb-20 md:pt-40 md:pb-28 lg:pt-48 lg:pb-32 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Headline - separate container with full width */}
-        <div className="text-center max-w-6xl mx-auto mb-6">
+        <div className="text-center max-w-6xl mx-auto mb-12 md:mb-16">
           <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-tight leading-tight">
             AI 기반 중국 인플루언서<span className="text-green-600"> 매칭 </span>플랫폼
           </h1>
