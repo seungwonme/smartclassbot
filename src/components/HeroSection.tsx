@@ -16,11 +16,8 @@ const HeroSection = () => {
           </Badge>
 
           {/* Headline */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            AI 기반 중국 인플루언서
-            <span className="text-green-600"> 매칭 </span>
-            <br />
-            플랫폼
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 whitespace-nowrap">
+            AI 기반 중국 인플루언서<span className="text-green-600"> 매칭 </span>플랫폼
           </h1>
 
           {/* Subtitle */}
