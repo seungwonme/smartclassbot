@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, TrendingUp, Users, Zap } from 'lucide-react';
@@ -15,9 +14,7 @@ const HeroSection = () => {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-            AI 기반 인플루언서 마케팅 플랫폼으로 브랜드 성장을 가속화하세요. 
-            <br className="hidden md:block" />
-            시장 분석부터 캠페인 관리까지 한 번에 해결합니다.
+            "감(感)"과 "꽌시(关系)"에 의존했던 중국 인플루언서 마케팅, AI 기술을 활용한 시장분석 및 페르소나 매칭 기술을 통해 나의 브랜드와 중국 인플루언서를 완벽하게 연결하세요.
           </p>
 
           {/* CTA Buttons */}
