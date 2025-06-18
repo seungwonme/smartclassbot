@@ -130,71 +130,105 @@ class SettingsService {
     },
   };
 
-  getSettings(): AdminSettings {
+  // 안전한 localStorage 접근을 위한 헬퍼 메서드
+  private safeGetItem(key: string): string | null {
     try {
-      // Safely access localStorage
       if (typeof window === 'undefined' || !window.localStorage) {
-        console.warn('localStorage not available, using default settings');
-        return this.defaultSettings;
+        return null;
       }
-
-      const stored = window.localStorage.getItem(this.storageKey);
-      
-      if (!stored || stored === null || stored === 'undefined' || stored === '') {
-        console.log('No stored settings found, using defaults');
-        return this.defaultSettings;
-      }
-
-      // Safely parse JSON
-      let parsedSettings;
-      try {
-        parsedSettings = JSON.parse(stored);
-      } catch (parseError) {
-        console.error('JSON parse error for settings:', parseError);
-        console.log('Clearing corrupted settings and using defaults');
-        this.clearCorruptedSettings();
-        return this.defaultSettings;
-      }
-
-      if (!parsedSettings || typeof parsedSettings !== 'object') {
-        console.warn('Invalid settings format, using defaults');
-        return this.defaultSettings;
-      }
-
-      return this.deepMerge(this.defaultSettings, parsedSettings);
+      return window.localStorage.getItem(key);
     } catch (error) {
-      console.error('Critical error in getSettings:', error);
-      return this.defaultSettings;
+      console.warn(`localStorage getItem failed for key "${key}":`, error);
+      return null;
     }
   }
 
-  private clearCorruptedSettings(): void {
+  private safeSetItem(key: string, value: string): boolean {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(this.storageKey);
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return false;
       }
+      window.localStorage.setItem(key, value);
+      return true;
     } catch (error) {
-      console.error('Failed to clear corrupted settings:', error);
+      console.warn(`localStorage setItem failed for key "${key}":`, error);
+      return false;
     }
+  }
+
+  private safeRemoveItem(key: string): boolean {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return false;
+      }
+      window.localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.warn(`localStorage removeItem failed for key "${key}":`, error);
+      return false;
+    }
+  }
+
+  private safeJsonParse(jsonString: string | null): any | null {
+    if (!jsonString || jsonString === 'undefined' || jsonString === 'null') {
+      return null;
+    }
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.warn('JSON parse failed:', error);
+      return null;
+    }
+  }
+
+  private safeJsonStringify(obj: any): string | null {
+    try {
+      return JSON.stringify(obj);
+    } catch (error) {
+      console.warn('JSON stringify failed:', error);
+      return null;
+    }
+  }
+
+  getSettings(): AdminSettings {
+    console.log('⚙️ 설정 로드 시작');
+    
+    const stored = this.safeGetItem(this.storageKey);
+    if (!stored) {
+      console.log('📝 저장된 설정 없음, 기본값 사용');
+      return this.defaultSettings;
+    }
+
+    const parsedSettings = this.safeJsonParse(stored);
+    if (!parsedSettings || typeof parsedSettings !== 'object') {
+      console.log('❌ 설정 파싱 실패, 기본값 사용');
+      this.safeRemoveItem(this.storageKey);
+      return this.defaultSettings;
+    }
+
+    const mergedSettings = this.deepMerge(this.defaultSettings, parsedSettings);
+    console.log('✅ 설정 로드 완료');
+    return mergedSettings;
   }
 
   updateSettings(settings: Partial<AdminSettings>): void {
     try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        console.warn('localStorage not available, cannot save settings');
-        return;
-      }
-
       const currentSettings = this.getSettings();
       const updatedSettings = this.deepMerge(currentSettings, settings);
       
-      const settingsString = JSON.stringify(updatedSettings);
-      window.localStorage.setItem(this.storageKey, settingsString);
+      const settingsString = this.safeJsonStringify(updatedSettings);
+      if (!settingsString) {
+        throw new Error('설정 직렬화 실패');
+      }
+
+      const success = this.safeSetItem(this.storageKey, settingsString);
+      if (!success) {
+        throw new Error('설정 저장 실패');
+      }
       
-      console.log('=== 관리자 설정 업데이트 ===');
-      console.log('업데이트된 설정:', settings);
+      console.log('✅ 설정 업데이트 완료');
     } catch (error) {
-      console.error('설정 저장 실패:', error);
+      console.error('❌ 설정 업데이트 실패:', error);
       throw new Error('설정 저장에 실패했습니다.');
     }
   }
@@ -213,7 +247,7 @@ class SettingsService {
       
       return result;
     } catch (error) {
-      console.error('Deep merge error:', error);
+      console.warn('❌ deepMerge 실패, 기본값 반환:', error);
       return target;
     }
   }
@@ -222,7 +256,7 @@ class SettingsService {
     try {
       return this.getSettings().platforms;
     } catch (error) {
-      console.error('Error getting platform settings:', error);
+      console.warn('❌ 플랫폼 설정 로드 실패, 기본값 사용:', error);
       return this.defaultSettings.platforms;
     }
   }
@@ -234,7 +268,7 @@ class SettingsService {
         platforms: { ...currentSettings.platforms, ...platformSettings }
       });
     } catch (error) {
-      console.error('Error updating platform settings:', error);
+      console.error('❌ 플랫폼 설정 업데이트 실패:', error);
     }
   }
 
@@ -243,7 +277,7 @@ class SettingsService {
       const settings = this.getPlatformSettings();
       return settings[platform as keyof PlatformSettings]?.crawlingInterval || 10;
     } catch (error) {
-      console.error('Error getting crawling interval:', error);
+      console.warn('❌ 크롤링 간격 조회 실패, 기본값 사용:', error);
       return 10;
     }
   }
@@ -253,7 +287,7 @@ class SettingsService {
       const settings = this.getPlatformSettings();
       return settings[platform as keyof PlatformSettings]?.enabled || false;
     } catch (error) {
-      console.error('Error checking platform enabled:', error);
+      console.warn('❌ 플랫폼 활성화 상태 조회 실패, 기본값 사용:', error);
       return false;
     }
   }
@@ -263,7 +297,7 @@ class SettingsService {
       const settings = this.getPlatformSettings();
       return settings[platform as keyof PlatformSettings]?.metrics || [];
     } catch (error) {
-      console.error('Error getting platform metrics:', error);
+      console.warn('❌ 플랫폼 메트릭 조회 실패, 기본값 사용:', error);
       return [];
     }
   }

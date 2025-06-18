@@ -43,114 +43,114 @@ export interface AdminDashboardData {
 }
 
 class DashboardService {
-  // Brand Admin Dashboard Data with maximum safety
+  // 안전한 브랜드 대시보드 데이터 로딩
   async getBrandDashboardData(): Promise<BrandDashboardData> {
-    try {
-      console.log('📊 대시보드 데이터 로딩 시작');
-      
-      // Safe service calls with individual error handling
-      let campaigns: any[] = [];
-      let brands: any[] = [];
-      let products: any[] = [];
+    console.log('📊 브랜드 대시보드 데이터 생성 시작');
+    
+    // 각 서비스 호출을 안전하게 처리
+    const [campaigns, brands, products] = await Promise.all([
+      this.safeGetCampaigns(),
+      this.safeGetBrands(),
+      this.safeGetProducts()
+    ]);
 
-      try {
-        campaigns = await campaignService.getCampaigns();
-        if (!Array.isArray(campaigns)) campaigns = [];
-      } catch (error) {
-        console.warn('캠페인 데이터 로드 실패:', error);
-        campaigns = [];
-      }
+    console.log(`📈 데이터 로드 완료 - 캠페인: ${campaigns.length}, 브랜드: ${brands.length}, 제품: ${products.length}`);
 
-      try {
-        brands = await brandService.getBrands();
-        if (!Array.isArray(brands)) brands = [];
-      } catch (error) {
-        console.warn('브랜드 데이터 로드 실패:', error);
-        brands = [];
-      }
+    // 안전한 계산 수행
+    const stats = this.calculateStats(campaigns, brands, products);
+    const campaignsByStage = this.calculateCampaignStages(campaigns);
+    const contentStatus = this.calculateContentStatus(campaigns);
+    const recentCampaigns = this.getRecentCampaigns(campaigns);
+    const topInfluencers = this.getTopInfluencers(campaigns);
 
-      try {
-        products = await brandService.getProducts();
-        if (!Array.isArray(products)) products = [];
-      } catch (error) {
-        console.warn('제품 데이터 로드 실패:', error);
-        products = [];
-      }
-
-      // Safe performance summary - avoid external service dependencies
-      const performanceSummary = {
+    const result: BrandDashboardData = {
+      stats,
+      campaignsByStage,
+      recentCampaigns,
+      performanceSummary: {
         xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
         douyin: { count: 0, totalViews: 0, totalLikes: 0 }
-      };
-      
-      // Calculate campaign stages with enhanced safety
-      const campaignsByStage = this.calculateCampaignStages(campaigns);
-      const contentStatus = this.calculateContentStatus(campaigns);
-      const recentCampaigns = this.getRecentCampaigns(campaigns);
-      const topInfluencers = this.getTopInfluencers(campaigns);
-      const stats: DashboardStats = this.calculateStats(campaigns, brands, products);
+      },
+      topInfluencers,
+      contentStatus
+    };
 
-      const result = {
-        stats,
-        campaignsByStage,
-        recentCampaigns,
-        performanceSummary,
-        topInfluencers,
-        contentStatus
-      };
+    console.log('✅ 브랜드 대시보드 데이터 생성 완료');
+    return result;
+  }
 
-      console.log('✅ 대시보드 데이터 생성 완료');
-      return result;
+  // 안전한 서비스 호출 메서드들
+  private async safeGetCampaigns(): Promise<any[]> {
+    try {
+      const campaigns = await campaignService.getCampaigns();
+      return Array.isArray(campaigns) ? campaigns : [];
     } catch (error) {
-      console.error('❌ Dashboard data fetch error:', error);
-      return this.getFallbackBrandData();
+      console.warn('⚠️ 캠페인 데이터 로드 실패:', error);
+      return [];
+    }
+  }
+
+  private async safeGetBrands(): Promise<any[]> {
+    try {
+      const brands = await brandService.getBrands();
+      return Array.isArray(brands) ? brands : [];
+    } catch (error) {
+      console.warn('⚠️ 브랜드 데이터 로드 실패:', error);
+      return [];
+    }
+  }
+
+  private async safeGetProducts(): Promise<any[]> {
+    try {
+      const products = await brandService.getProducts();
+      return Array.isArray(products) ? products : [];
+    } catch (error) {
+      console.warn('⚠️ 제품 데이터 로드 실패:', error);
+      return [];
     }
   }
 
   private calculateCampaignStages(campaigns: any[]) {
     try {
-      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
       return {
-        creation: safeCampaigns.filter(c => 
+        creation: campaigns.filter(c => 
           c?.status && ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
         ).length,
-        content: safeCampaigns.filter(c => 
+        content: campaigns.filter(c => 
           c?.status && ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
         ).length,
-        live: safeCampaigns.filter(c => 
+        live: campaigns.filter(c => 
           c?.status && ['live', 'monitoring', 'completed'].includes(c.status)
         ).length
       };
     } catch (error) {
-      console.error('❌ 캠페인 단계 계산 실패:', error);
+      console.warn('⚠️ 캠페인 단계 계산 실패:', error);
       return { creation: 0, content: 0, live: 0 };
     }
   }
 
   private calculateContentStatus(campaigns: any[]) {
     try {
-      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
       return {
-        planningInProgress: safeCampaigns.filter(c => 
+        planningInProgress: campaigns.filter(c => 
           c?.status && ['planning', 'plan-review', 'plan-revision'].includes(c.status)
         ).length,
-        productionInProgress: safeCampaigns.filter(c => 
+        productionInProgress: campaigns.filter(c => 
           c?.status && ['producing', 'content-review'].includes(c.status)
         ).length,
-        reviewPending: safeCampaigns.filter(c => 
+        reviewPending: campaigns.filter(c => 
           c?.contentPlans && Array.isArray(c.contentPlans) && c.contentPlans.some(plan => plan?.status === 'revision-request')
         ).length
       };
     } catch (error) {
-      console.error('❌ 콘텐츠 상태 계산 실패:', error);
+      console.warn('⚠️ 콘텐츠 상태 계산 실패:', error);
       return { planningInProgress: 0, productionInProgress: 0, reviewPending: 0 };
     }
   }
 
   private getRecentCampaigns(campaigns: any[]) {
     try {
-      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
-      return safeCampaigns
+      return campaigns
         .filter(campaign => campaign && campaign.updatedAt)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .slice(0, 5)
@@ -164,15 +164,14 @@ class DashboardService {
           progress: this.calculateCampaignProgress(campaign.status || '')
         }));
     } catch (error) {
-      console.error('❌ 최근 캠페인 조회 실패:', error);
+      console.warn('⚠️ 최근 캠페인 조회 실패:', error);
       return [];
     }
   }
 
   private getTopInfluencers(campaigns: any[]) {
     try {
-      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
-      const allInfluencers = safeCampaigns
+      const allInfluencers = campaigns
         .filter(c => c && Array.isArray(c.influencers))
         .flatMap(c => c.influencers.filter(inf => inf?.status === 'confirmed'))
         .filter(inf => inf && typeof inf.engagementRate === 'number');
@@ -188,33 +187,29 @@ class DashboardService {
           category: inf.category || 'General'
         }));
     } catch (error) {
-      console.error('❌ 상위 인플루언서 조회 실패:', error);
+      console.warn('⚠️ 상위 인플루언서 조회 실패:', error);
       return [];
     }
   }
 
   private calculateStats(campaigns: any[], brands: any[], products: any[]): DashboardStats {
     try {
-      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
-      const safeBrands = Array.isArray(brands) ? brands : [];
-      const safeProducts = Array.isArray(products) ? products : [];
-
       return {
-        totalCampaigns: safeCampaigns.length,
-        activeCampaigns: safeCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
-        completedCampaigns: safeCampaigns.filter(c => c?.status === 'completed').length,
-        totalBrands: safeBrands.length,
-        totalProducts: safeProducts.length,
-        totalInfluencers: safeCampaigns.reduce((sum, c) => {
+        totalCampaigns: campaigns.length,
+        activeCampaigns: campaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
+        completedCampaigns: campaigns.filter(c => c?.status === 'completed').length,
+        totalBrands: brands.length,
+        totalProducts: products.length,
+        totalInfluencers: campaigns.reduce((sum, c) => {
           const confirmedInfluencers = Array.isArray(c?.influencers) ? 
             c.influencers.filter(inf => inf?.status === 'confirmed').length : 0;
           return sum + confirmedInfluencers;
         }, 0),
-        totalRevenue: safeCampaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
-        monthlyGrowth: 15.5 // Mock growth rate
+        totalRevenue: campaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
+        monthlyGrowth: 15.5
       };
     } catch (error) {
-      console.error('❌ 통계 계산 실패:', error);
+      console.warn('⚠️ 통계 계산 실패:', error);
       return {
         totalCampaigns: 0,
         activeCampaigns: 0,
@@ -228,13 +223,12 @@ class DashboardService {
     }
   }
 
-  // Admin Dashboard Data
   async getAdminDashboardData(): Promise<AdminDashboardData> {
     try {
       const [campaigns, brands, products] = await Promise.all([
-        campaignService.getCampaigns(),
-        brandService.getBrands(),
-        brandService.getProducts()
+        this.safeGetCampaigns(),
+        this.safeGetBrands(),
+        this.safeGetProducts()
       ]);
 
       // Ensure all data is arrays
@@ -296,20 +290,7 @@ class DashboardService {
         live: safeCampaigns.filter(c => c?.status && ['live', 'monitoring'].includes(c.status)).length
       };
 
-      const stats: DashboardStats = {
-        totalCampaigns: safeCampaigns.length,
-        activeCampaigns: safeCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
-        completedCampaigns: safeCampaigns.filter(c => c?.status === 'completed').length,
-        totalBrands: safeBrands.length,
-        totalProducts: safeProducts.length,
-        totalInfluencers: safeCampaigns.reduce((sum, c) => {
-          const confirmedInfluencers = Array.isArray(c?.influencers) ? 
-            c.influencers.filter(inf => inf?.status === 'confirmed').length : 0;
-          return sum + confirmedInfluencers;
-        }, 0),
-        totalRevenue: safeCampaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
-        monthlyGrowth: 18.2 // Mock growth rate
-      };
+      const stats: DashboardStats = this.calculateStats(campaigns, brands, products);
 
       return {
         stats,

@@ -8,12 +8,10 @@ import {
   Users, 
   Megaphone, 
   DollarSign, 
-  Calendar,
   Eye,
-  MessageSquare,
-  PlayCircle,
   Clock,
-  Edit
+  Edit,
+  PlayCircle
 } from 'lucide-react';
 import { BrandDashboardData } from '@/services/dashboard.service';
 
@@ -23,6 +21,8 @@ interface BrandDashboardOverviewProps {
 }
 
 const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, isLoading }) => {
+  console.log('📊 대시보드 오버뷰 렌더링 시작');
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -39,42 +39,33 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
     );
   }
 
-  // Ultra-safe data access with minimal processing
-  const getSafeStats = () => {
-    try {
-      return {
-        activeCampaigns: data?.stats?.activeCampaigns || 0,
-        monthlyGrowth: data?.stats?.monthlyGrowth || 0,
-        totalInfluencers: data?.stats?.totalInfluencers || 0,
-        totalRevenue: data?.stats?.totalRevenue || 0,
-        completedCampaigns: data?.stats?.completedCampaigns || 0
-      };
-    } catch (error) {
-      console.error('Stats calculation error:', error);
-      return { activeCampaigns: 0, monthlyGrowth: 0, totalInfluencers: 0, totalRevenue: 0, completedCampaigns: 0 };
-    }
+  // 안전한 데이터 접근
+  const safeStats = {
+    activeCampaigns: data?.stats?.activeCampaigns || 0,
+    monthlyGrowth: data?.stats?.monthlyGrowth || 0,
+    totalInfluencers: data?.stats?.totalInfluencers || 0,
+    totalRevenue: data?.stats?.totalRevenue || 0,
+    completedCampaigns: data?.stats?.completedCampaigns || 0
   };
 
-  const getSafeCampaignStages = () => {
-    try {
-      return {
-        creation: data?.campaignsByStage?.creation || 0,
-        content: data?.campaignsByStage?.content || 0,
-        live: data?.campaignsByStage?.live || 0
-      };
-    } catch (error) {
-      console.error('Campaign stages calculation error:', error);
-      return { creation: 0, content: 0, live: 0 };
-    }
+  const safeCampaignStages = {
+    creation: data?.campaignsByStage?.creation || 0,
+    content: data?.campaignsByStage?.content || 0,
+    live: data?.campaignsByStage?.live || 0
   };
 
-  const getSafeViews = () => {
+  const safeRecentCampaigns = Array.isArray(data?.recentCampaigns) ? data.recentCampaigns : [];
+  const safeTopInfluencers = Array.isArray(data?.topInfluencers) ? data.topInfluencers : [];
+
+  const totalCampaigns = Math.max(safeStats.activeCampaigns + safeStats.completedCampaigns, 1);
+
+  // 안전한 조회수 계산
+  const getTotalViews = () => {
     try {
       const xiaohongshuviews = data?.performanceSummary?.xiaohongshu?.totalExposure || 0;
       const douyinViews = data?.performanceSummary?.douyin?.totalViews || 0;
       return (xiaohongshuviews + douyinViews) / 1000000;
     } catch (error) {
-      console.error('Views calculation error:', error);
       return 0;
     }
   };
@@ -100,10 +91,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
     return textMap[status] || status || '알 수 없음';
   };
 
-  const stats = getSafeStats();
-  const campaignStages = getSafeCampaignStages();
-  const totalViews = getSafeViews();
-  const totalCampaigns = Math.max(stats.activeCampaigns + stats.completedCampaigns, 1);
+  console.log('✅ 대시보드 오버뷰 렌더링 완료');
 
   return (
     <div className="space-y-6">
@@ -115,10 +103,10 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <Megaphone className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.activeCampaigns}</div>
+            <div className="text-2xl font-bold text-gray-900">{safeStats.activeCampaigns}</div>
             <p className="text-xs text-gray-600 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              지난 달 대비 +{stats.monthlyGrowth}%
+              지난 달 대비 +{safeStats.monthlyGrowth}%
             </p>
           </CardContent>
         </Card>
@@ -129,7 +117,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <Users className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.totalInfluencers}</div>
+            <div className="text-2xl font-bold text-gray-900">{safeStats.totalInfluencers}</div>
             <p className="text-xs text-gray-600">활성 인플루언서 수</p>
           </CardContent>
         </Card>
@@ -141,7 +129,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {totalViews.toFixed(1)}M
+              {getTotalViews().toFixed(1)}M
             </div>
             <p className="text-xs text-gray-600">이번 달 누적</p>
           </CardContent>
@@ -154,7 +142,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              ₩{(stats.totalRevenue / 1000000).toFixed(0)}M
+              ₩{(safeStats.totalRevenue / 1000000).toFixed(0)}M
             </div>
             <p className="text-xs text-gray-600">현재 캠페인 기준</p>
           </CardContent>
@@ -172,8 +160,8 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <CardDescription>캠페인 준비 및 인플루언서 확정</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600 mb-2">{campaignStages.creation}</div>
-            <Progress value={(campaignStages.creation / totalCampaigns) * 100} className="h-2" />
+            <div className="text-3xl font-bold text-blue-600 mb-2">{safeCampaignStages.creation}</div>
+            <Progress value={(safeCampaignStages.creation / totalCampaigns) * 100} className="h-2" />
           </CardContent>
         </Card>
 
@@ -186,8 +174,8 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <CardDescription>기획, 제작, 검수 진행</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600 mb-2">{campaignStages.content}</div>
-            <Progress value={(campaignStages.content / totalCampaigns) * 100} className="h-2" />
+            <div className="text-3xl font-bold text-purple-600 mb-2">{safeCampaignStages.content}</div>
+            <Progress value={(safeCampaignStages.content / totalCampaigns) * 100} className="h-2" />
             <div className="mt-2 text-sm text-gray-600">
               수정요청 대기: {data?.contentStatus?.reviewPending || 0}건
             </div>
@@ -203,8 +191,8 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <CardDescription>라이브 및 성과 모니터링</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600 mb-2">{campaignStages.live}</div>
-            <Progress value={(campaignStages.live / totalCampaigns) * 100} className="h-2" />
+            <div className="text-3xl font-bold text-green-600 mb-2">{safeCampaignStages.live}</div>
+            <Progress value={(safeCampaignStages.live / totalCampaigns) * 100} className="h-2" />
           </CardContent>
         </Card>
       </div>
@@ -218,7 +206,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(data?.recentCampaigns || []).slice(0, 5).map((campaign, index) => (
+              {safeRecentCampaigns.slice(0, 5).map((campaign, index) => (
                 <div key={campaign?.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex-1">
                     <p className="font-medium">{campaign?.title || '제목 없음'}</p>
@@ -234,7 +222,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
                   </Badge>
                 </div>
               ))}
-              {(!data?.recentCampaigns || data.recentCampaigns.length === 0) && (
+              {safeRecentCampaigns.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   진행 중인 캠페인이 없습니다.
                 </div>
@@ -250,7 +238,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(data?.topInfluencers || []).slice(0, 5).map((influencer, index) => (
+              {safeTopInfluencers.slice(0, 5).map((influencer, index) => (
                 <div key={influencer?.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -269,7 +257,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
                   </div>
                 </div>
               ))}
-              {(!data?.topInfluencers || data.topInfluencers.length === 0) && (
+              {safeTopInfluencers.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   인플루언서 데이터가 없습니다.
                 </div>
