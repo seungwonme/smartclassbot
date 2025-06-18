@@ -56,68 +56,86 @@ class DashboardService {
         brandService.getProducts()
       ]);
 
-      const performanceSummary = performanceTrackerService.getPerformanceSummary();
+      // Ensure campaigns is always an array
+      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
+      const safeBrands = Array.isArray(brands) ? brands : [];
+      const safeProducts = Array.isArray(products) ? products : [];
+
+      const performanceSummary = performanceTrackerService.getPerformanceSummary() || {
+        xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
+        douyin: { count: 0, totalViews: 0, totalLikes: 0 }
+      };
       
-      // Calculate campaign stages
+      // Calculate campaign stages with safe array access
       const campaignsByStage = {
-        creation: campaigns.filter(c => 
-          ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
+        creation: safeCampaigns.filter(c => 
+          c?.status && ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
         ).length,
-        content: campaigns.filter(c => 
-          ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
+        content: safeCampaigns.filter(c => 
+          c?.status && ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
         ).length,
-        live: campaigns.filter(c => 
-          ['live', 'monitoring', 'completed'].includes(c.status)
+        live: safeCampaigns.filter(c => 
+          c?.status && ['live', 'monitoring', 'completed'].includes(c.status)
         ).length
       };
 
-      // Content status analysis
+      // Content status analysis with safe access
       const contentStatus = {
-        planningInProgress: campaigns.filter(c => 
-          ['planning', 'plan-review', 'plan-revision'].includes(c.status)
+        planningInProgress: safeCampaigns.filter(c => 
+          c?.status && ['planning', 'plan-review', 'plan-revision'].includes(c.status)
         ).length,
-        productionInProgress: campaigns.filter(c => 
-          ['producing', 'content-review'].includes(c.status)
+        productionInProgress: safeCampaigns.filter(c => 
+          c?.status && ['producing', 'content-review'].includes(c.status)
         ).length,
-        reviewPending: campaigns.filter(c => 
-          c.contentPlans?.some(plan => plan.status === 'revision-request') || false
+        reviewPending: safeCampaigns.filter(c => 
+          c?.contentPlans && Array.isArray(c.contentPlans) && c.contentPlans.some(plan => plan?.status === 'revision-request')
         ).length
       };
 
-      // Get recent campaigns (last 5)
-      const recentCampaigns = campaigns
+      // Get recent campaigns (last 5) with safe sorting
+      const recentCampaigns = safeCampaigns
+        .filter(campaign => campaign && campaign.updatedAt)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .slice(0, 5)
         .map(campaign => ({
-          id: campaign.id,
-          title: campaign.title,
-          status: campaign.status,
-          brandName: campaign.brandName,
-          influencerCount: campaign.influencers.filter(inf => inf.status === 'confirmed').length,
-          progress: this.calculateCampaignProgress(campaign.status)
+          id: campaign.id || '',
+          title: campaign.title || 'Untitled Campaign',
+          status: campaign.status || 'unknown',
+          brandName: campaign.brandName || 'Unknown Brand',
+          influencerCount: Array.isArray(campaign.influencers) ? 
+            campaign.influencers.filter(inf => inf?.status === 'confirmed').length : 0,
+          progress: this.calculateCampaignProgress(campaign.status || '')
         }));
 
-      // Top influencers by performance
-      const topInfluencers = campaigns
-        .flatMap(c => c.influencers.filter(inf => inf.status === 'confirmed'))
-        .sort((a, b) => b.engagementRate - a.engagementRate)
+      // Top influencers by performance with safe access
+      const allInfluencers = safeCampaigns
+        .filter(c => c && Array.isArray(c.influencers))
+        .flatMap(c => c.influencers.filter(inf => inf?.status === 'confirmed'))
+        .filter(inf => inf && typeof inf.engagementRate === 'number');
+
+      const topInfluencers = allInfluencers
+        .sort((a, b) => (b.engagementRate || 0) - (a.engagementRate || 0))
         .slice(0, 5)
         .map(inf => ({
-          id: inf.id,
-          name: inf.name,
-          followers: inf.followers,
-          engagementRate: inf.engagementRate,
-          category: inf.category
+          id: inf.id || '',
+          name: inf.name || 'Unknown Influencer',
+          followers: inf.followers || 0,
+          engagementRate: inf.engagementRate || 0,
+          category: inf.category || 'General'
         }));
 
       const stats: DashboardStats = {
-        totalCampaigns: campaigns.length,
-        activeCampaigns: campaigns.filter(c => !['completed'].includes(c.status)).length,
-        completedCampaigns: campaigns.filter(c => c.status === 'completed').length,
-        totalBrands: brands.length,
-        totalProducts: products.length,
-        totalInfluencers: campaigns.reduce((sum, c) => sum + c.influencers.filter(inf => inf.status === 'confirmed').length, 0),
-        totalRevenue: campaigns.reduce((sum, c) => sum + c.budget, 0),
+        totalCampaigns: safeCampaigns.length,
+        activeCampaigns: safeCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
+        completedCampaigns: safeCampaigns.filter(c => c?.status === 'completed').length,
+        totalBrands: safeBrands.length,
+        totalProducts: safeProducts.length,
+        totalInfluencers: safeCampaigns.reduce((sum, c) => {
+          const confirmedInfluencers = Array.isArray(c?.influencers) ? 
+            c.influencers.filter(inf => inf?.status === 'confirmed').length : 0;
+          return sum + confirmedInfluencers;
+        }, 0),
+        totalRevenue: safeCampaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
         monthlyGrowth: 15.5 // Mock growth rate
       };
 
@@ -144,42 +162,50 @@ class DashboardService {
         brandService.getProducts()
       ]);
 
-      const performanceSummary = performanceTrackerService.getPerformanceSummary();
+      // Ensure all data is arrays
+      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
+      const safeBrands = Array.isArray(brands) ? brands : [];
+      const safeProducts = Array.isArray(products) ? products : [];
+
+      const performanceSummary = performanceTrackerService.getPerformanceSummary() || {
+        xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
+        douyin: { count: 0, totalViews: 0, totalLikes: 0 }
+      };
 
       // Brand overview with campaign statistics
-      const brandOverview = brands.map(brand => {
-        const brandCampaigns = campaigns.filter(c => c.brandId === brand.id);
-        const brandProducts = products.filter(p => p.brandId === brand.id);
+      const brandOverview = safeBrands.map(brand => {
+        const brandCampaigns = safeCampaigns.filter(c => c?.brandId === brand?.id);
+        const brandProducts = safeProducts.filter(p => p?.brandId === brand?.id);
         
         return {
-          id: brand.id,
-          name: brand.name,
+          id: brand?.id || '',
+          name: brand?.name || 'Unknown Brand',
           campaignCount: brandCampaigns.length,
           productCount: brandProducts.length,
-          totalBudget: brandCampaigns.reduce((sum, c) => sum + c.budget, 0),
-          activeCampaigns: brandCampaigns.filter(c => !['completed'].includes(c.status)).length,
+          totalBudget: brandCampaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
+          activeCampaigns: brandCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
           lastActivity: brandCampaigns.length > 0 ? 
-            Math.max(...brandCampaigns.map(c => new Date(c.updatedAt).getTime())) : 0
+            Math.max(...brandCampaigns.map(c => new Date(c?.updatedAt || 0).getTime())) : 0
         };
       });
 
-      // Platform statistics
+      // Platform statistics with safe access
       const platformStats = {
         xiaohongshu: {
-          totalContent: performanceSummary.xiaohongshu.count,
-          totalExposure: performanceSummary.xiaohongshu.totalExposure,
-          avgEngagement: performanceSummary.xiaohongshu.totalLikes / Math.max(performanceSummary.xiaohongshu.count, 1)
+          totalContent: performanceSummary?.xiaohongshu?.count || 0,
+          totalExposure: performanceSummary?.xiaohongshu?.totalExposure || 0,
+          avgEngagement: (performanceSummary?.xiaohongshu?.totalLikes || 0) / Math.max(performanceSummary?.xiaohongshu?.count || 1, 1)
         },
         douyin: {
-          totalContent: performanceSummary.douyin.count,
-          totalViews: performanceSummary.douyin.totalViews,
-          avgEngagement: performanceSummary.douyin.totalLikes / Math.max(performanceSummary.douyin.count, 1)
+          totalContent: performanceSummary?.douyin?.count || 0,
+          totalViews: performanceSummary?.douyin?.totalViews || 0,
+          avgEngagement: (performanceSummary?.douyin?.totalLikes || 0) / Math.max(performanceSummary?.douyin?.count || 1, 1)
         }
       };
 
       // Revenue by brand
       const revenueByBrand = brandOverview
-        .sort((a, b) => b.totalBudget - a.totalBudget)
+        .sort((a, b) => (b.totalBudget || 0) - (a.totalBudget || 0))
         .slice(0, 10)
         .map(brand => ({
           brandName: brand.name,
@@ -189,20 +215,24 @@ class DashboardService {
 
       // Campaign distribution by status
       const campaignDistribution = {
-        active: campaigns.filter(c => !['completed'].includes(c.status)).length,
-        completed: campaigns.filter(c => c.status === 'completed').length,
-        planning: campaigns.filter(c => ['planning', 'plan-review', 'plan-revision', 'plan-approved'].includes(c.status)).length,
-        live: campaigns.filter(c => ['live', 'monitoring'].includes(c.status)).length
+        active: safeCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
+        completed: safeCampaigns.filter(c => c?.status === 'completed').length,
+        planning: safeCampaigns.filter(c => c?.status && ['planning', 'plan-review', 'plan-revision', 'plan-approved'].includes(c.status)).length,
+        live: safeCampaigns.filter(c => c?.status && ['live', 'monitoring'].includes(c.status)).length
       };
 
       const stats: DashboardStats = {
-        totalCampaigns: campaigns.length,
-        activeCampaigns: campaigns.filter(c => !['completed'].includes(c.status)).length,
-        completedCampaigns: campaigns.filter(c => c.status === 'completed').length,
-        totalBrands: brands.length,
-        totalProducts: products.length,
-        totalInfluencers: campaigns.reduce((sum, c) => sum + c.influencers.filter(inf => inf.status === 'confirmed').length, 0),
-        totalRevenue: campaigns.reduce((sum, c) => sum + c.budget, 0),
+        totalCampaigns: safeCampaigns.length,
+        activeCampaigns: safeCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
+        completedCampaigns: safeCampaigns.filter(c => c?.status === 'completed').length,
+        totalBrands: safeBrands.length,
+        totalProducts: safeProducts.length,
+        totalInfluencers: safeCampaigns.reduce((sum, c) => {
+          const confirmedInfluencers = Array.isArray(c?.influencers) ? 
+            c.influencers.filter(inf => inf?.status === 'confirmed').length : 0;
+          return sum + confirmedInfluencers;
+        }, 0),
+        totalRevenue: safeCampaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
         monthlyGrowth: 18.2 // Mock growth rate
       };
 
@@ -211,7 +241,7 @@ class DashboardService {
         brandOverview,
         platformStats,
         systemHealth: {
-          activeUsers: brands.length + 15, // Mock active users
+          activeUsers: safeBrands.length + 15, // Mock active users
           systemUptime: 99.8,
           dataCollectionStatus: settingsService.isPlatformEnabled('xiaohongshu') ? 'Active' : 'Paused'
         },
