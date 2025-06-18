@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Play, TrendingUp, Users, Zap } from 'lucide-react';
 
 const HeroSection = () => {
@@ -9,12 +8,6 @@ const HeroSection = () => {
     <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Badge */}
-          <Badge variant="outline" className="mb-6 px-4 py-2 text-sm font-medium border-green-200 text-green-700">
-            <Zap className="w-4 h-4 mr-2" />
-            AI 기반 인플루언서 마케팅 플랫폼
-          </Badge>
-
           {/* Headline */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 whitespace-nowrap">
             AI 기반 중국 인플루언서<span className="text-green-600"> 매칭 </span>플랫폼
