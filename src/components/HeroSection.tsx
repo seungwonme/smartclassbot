@@ -1,10 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, TrendingUp, Users, Zap } from 'lucide-react';
-
 const HeroSection = () => {
-  return (
-    <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
+  return <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-4xl mx-auto">
           {/* Headline */}
@@ -13,7 +11,7 @@ const HeroSection = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto md:text-xl">
             "감(感)"과 "꽌시(关系)"에 의존했던 중국 인플루언서 마케팅, AI 기술을 활용한 시장분석 및 페르소나 매칭 기술을 통해 나의 브랜드와 중국 인플루언서를 완벽하게 연결하세요.
           </p>
 
@@ -55,8 +53,6 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;
