@@ -39,63 +39,89 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
     );
   }
 
-  // Enhanced safe data access with detailed logging
-  console.log('🔍 BrandDashboardOverview 데이터 확인:', data);
+  // Protected data access with comprehensive error handling
+  const getSafeData = () => {
+    try {
+      console.log('🔍 BrandDashboardOverview 데이터 확인:', data);
 
-  const stats = data?.stats || {
-    activeCampaigns: 0,
-    monthlyGrowth: 0,
-    totalInfluencers: 0,
-    totalRevenue: 0,
-    completedCampaigns: 0
+      return {
+        stats: {
+          activeCampaigns: data?.stats?.activeCampaigns || 0,
+          monthlyGrowth: data?.stats?.monthlyGrowth || 0,
+          totalInfluencers: data?.stats?.totalInfluencers || 0,
+          totalRevenue: data?.stats?.totalRevenue || 0,
+          completedCampaigns: data?.stats?.completedCampaigns || 0
+        },
+        campaignsByStage: {
+          creation: data?.campaignsByStage?.creation || 0,
+          content: data?.campaignsByStage?.content || 0,
+          live: data?.campaignsByStage?.live || 0
+        },
+        contentStatus: {
+          reviewPending: data?.contentStatus?.reviewPending || 0
+        },
+        performanceSummary: {
+          xiaohongshu: {
+            totalExposure: data?.performanceSummary?.xiaohongshu?.totalExposure || 0
+          },
+          douyin: {
+            totalViews: data?.performanceSummary?.douyin?.totalViews || 0
+          }
+        },
+        recentCampaigns: Array.isArray(data?.recentCampaigns) ? data.recentCampaigns : [],
+        topInfluencers: Array.isArray(data?.topInfluencers) ? data.topInfluencers : []
+      };
+    } catch (error) {
+      console.error('❌ 데이터 처리 중 오류:', error);
+      return {
+        stats: { activeCampaigns: 0, monthlyGrowth: 0, totalInfluencers: 0, totalRevenue: 0, completedCampaigns: 0 },
+        campaignsByStage: { creation: 0, content: 0, live: 0 },
+        contentStatus: { reviewPending: 0 },
+        performanceSummary: { xiaohongshu: { totalExposure: 0 }, douyin: { totalViews: 0 } },
+        recentCampaigns: [],
+        topInfluencers: []
+      };
+    }
   };
 
-  const campaignsByStage = data?.campaignsByStage || {
-    creation: 0,
-    content: 0,
-    live: 0
-  };
-
-  const contentStatus = data?.contentStatus || {
-    reviewPending: 0
-  };
-
-  const performanceSummary = data?.performanceSummary || {
-    xiaohongshu: { totalExposure: 0 },
-    douyin: { totalViews: 0 }
-  };
-
-  const recentCampaigns = Array.isArray(data?.recentCampaigns) ? data.recentCampaigns : [];
-  const topInfluencers = Array.isArray(data?.topInfluencers) ? data.topInfluencers : [];
+  const safeData = getSafeData();
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'live': return 'bg-green-100 text-green-800';
-      case 'producing': return 'bg-blue-100 text-blue-800';
-      case 'planning': return 'bg-purple-100 text-purple-800';
-      case 'recruiting': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+    try {
+      switch (status) {
+        case 'live': return 'bg-green-100 text-green-800';
+        case 'producing': return 'bg-blue-100 text-blue-800';
+        case 'planning': return 'bg-purple-100 text-purple-800';
+        case 'recruiting': return 'bg-orange-100 text-orange-800';
+        default: return 'bg-gray-100 text-gray-800';
+      }
+    } catch (error) {
+      console.error('❌ 상태 색상 처리 오류:', error);
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'live': return '라이브';
-      case 'producing': return '제작중';
-      case 'planning': return '기획중';
-      case 'recruiting': return '섭외중';
-      case 'confirmed': return '확정됨';
-      default: return status;
+    try {
+      switch (status) {
+        case 'live': return '라이브';
+        case 'producing': return '제작중';
+        case 'planning': return '기획중';
+        case 'recruiting': return '섭외중';
+        case 'confirmed': return '확정됨';
+        default: return status || '알 수 없음';
+      }
+    } catch (error) {
+      console.error('❌ 상태 텍스트 처리 오류:', error);
+      return '알 수 없음';
     }
   };
 
-  // Safe calculation for total campaigns
-  const completedCampaigns = stats.completedCampaigns || 0;
-  const totalCampaigns = Math.max(stats.activeCampaigns + completedCampaigns, 1);
-
-  // Safe calculation for views with proper null checking
-  const totalViews = ((performanceSummary?.xiaohongshu?.totalExposure || 0) + 
-    (performanceSummary?.douyin?.totalViews || 0)) / 1000000;
+  const safeCalculations = {
+    totalCampaigns: Math.max(safeData.stats.activeCampaigns + safeData.stats.completedCampaigns, 1),
+    totalViews: ((safeData.performanceSummary.xiaohongshu.totalExposure || 0) + 
+      (safeData.performanceSummary.douyin.totalViews || 0)) / 1000000
+  };
 
   return (
     <div className="space-y-6">
@@ -107,10 +133,10 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <Megaphone className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.activeCampaigns}</div>
+            <div className="text-2xl font-bold text-gray-900">{safeData.stats.activeCampaigns}</div>
             <p className="text-xs text-gray-600 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              지난 달 대비 +{stats.monthlyGrowth}%
+              지난 달 대비 +{safeData.stats.monthlyGrowth}%
             </p>
           </CardContent>
         </Card>
@@ -121,7 +147,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <Users className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.totalInfluencers}</div>
+            <div className="text-2xl font-bold text-gray-900">{safeData.stats.totalInfluencers}</div>
             <p className="text-xs text-gray-600">활성 인플루언서 수</p>
           </CardContent>
         </Card>
@@ -133,7 +159,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {totalViews.toFixed(1)}M
+              {safeCalculations.totalViews.toFixed(1)}M
             </div>
             <p className="text-xs text-gray-600">이번 달 누적</p>
           </CardContent>
@@ -146,7 +172,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              ₩{(stats.totalRevenue / 1000000).toFixed(0)}M
+              ₩{(safeData.stats.totalRevenue / 1000000).toFixed(0)}M
             </div>
             <p className="text-xs text-gray-600">현재 캠페인 기준</p>
           </CardContent>
@@ -164,8 +190,8 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <CardDescription>캠페인 준비 및 인플루언서 확정</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600 mb-2">{campaignsByStage.creation}</div>
-            <Progress value={(campaignsByStage.creation / totalCampaigns) * 100} className="h-2" />
+            <div className="text-3xl font-bold text-blue-600 mb-2">{safeData.campaignsByStage.creation}</div>
+            <Progress value={(safeData.campaignsByStage.creation / safeCalculations.totalCampaigns) * 100} className="h-2" />
           </CardContent>
         </Card>
 
@@ -178,10 +204,10 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <CardDescription>기획, 제작, 검수 진행</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600 mb-2">{campaignsByStage.content}</div>
-            <Progress value={(campaignsByStage.content / totalCampaigns) * 100} className="h-2" />
+            <div className="text-3xl font-bold text-purple-600 mb-2">{safeData.campaignsByStage.content}</div>
+            <Progress value={(safeData.campaignsByStage.content / safeCalculations.totalCampaigns) * 100} className="h-2" />
             <div className="mt-2 text-sm text-gray-600">
-              수정요청 대기: {contentStatus.reviewPending}건
+              수정요청 대기: {safeData.contentStatus.reviewPending}건
             </div>
           </CardContent>
         </Card>
@@ -195,8 +221,8 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
             <CardDescription>라이브 및 성과 모니터링</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600 mb-2">{campaignsByStage.live}</div>
-            <Progress value={(campaignsByStage.live / totalCampaigns) * 100} className="h-2" />
+            <div className="text-3xl font-bold text-green-600 mb-2">{safeData.campaignsByStage.live}</div>
+            <Progress value={(safeData.campaignsByStage.live / safeCalculations.totalCampaigns) * 100} className="h-2" />
           </CardContent>
         </Card>
       </div>
@@ -210,21 +236,28 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentCampaigns.slice(0, 5).map((campaign) => (
-                <div key={campaign.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{campaign.title}</p>
-                    <p className="text-sm text-gray-600">{campaign.brandName} • {campaign.influencerCount}명의 인플루언서</p>
-                    <div className="mt-2">
-                      <Progress value={campaign.progress} className="h-1" />
+              {safeData.recentCampaigns.slice(0, 5).map((campaign) => {
+                try {
+                  return (
+                    <div key={campaign.id || Math.random()} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">{campaign.title || '제목 없음'}</p>
+                        <p className="text-sm text-gray-600">{campaign.brandName || '브랜드 없음'} • {campaign.influencerCount || 0}명의 인플루언서</p>
+                        <div className="mt-2">
+                          <Progress value={campaign.progress || 0} className="h-1" />
+                        </div>
+                      </div>
+                      <Badge className={getStatusColor(campaign.status || '')}>
+                        {getStatusText(campaign.status || '')}
+                      </Badge>
                     </div>
-                  </div>
-                  <Badge className={getStatusColor(campaign.status)}>
-                    {getStatusText(campaign.status)}
-                  </Badge>
-                </div>
-              ))}
-              {recentCampaigns.length === 0 && (
+                  );
+                } catch (error) {
+                  console.error('❌ 캠페인 렌더링 오류:', error);
+                  return null;
+                }
+              })}
+              {safeData.recentCampaigns.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   진행 중인 캠페인이 없습니다.
                 </div>
@@ -240,24 +273,31 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topInfluencers.slice(0, 5).map((influencer) => (
-                <div key={influencer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <Users className="h-5 w-5 text-green-600" />
+              {safeData.topInfluencers.slice(0, 5).map((influencer) => {
+                try {
+                  return (
+                    <div key={influencer.id || Math.random()} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <Users className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{influencer.name || '이름 없음'}</p>
+                          <p className="text-sm text-gray-600">팔로워 {((influencer.followers || 0) / 1000).toFixed(0)}K • {influencer.category || '카테고리 없음'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{((influencer.engagementRate || 0) * 100).toFixed(1)}%</p>
+                        <p className="text-sm text-gray-600">참여율</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{influencer.name}</p>
-                      <p className="text-sm text-gray-600">팔로워 {(influencer.followers / 1000).toFixed(0)}K • {influencer.category}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{(influencer.engagementRate * 100).toFixed(1)}%</p>
-                    <p className="text-sm text-gray-600">참여율</p>
-                  </div>
-                </div>
-              ))}
-              {topInfluencers.length === 0 && (
+                  );
+                } catch (error) {
+                  console.error('❌ 인플루언서 렌더링 오류:', error);
+                  return null;
+                }
+              })}
+              {safeData.topInfluencers.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   인플루언서 데이터가 없습니다.
                 </div>

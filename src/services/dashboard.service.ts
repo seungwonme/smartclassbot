@@ -51,16 +51,16 @@ class DashboardService {
     try {
       console.log('📊 대시보드 데이터 로딩 시작');
       
-      const [campaigns, brands, products] = await Promise.all([
-        campaignService.getCampaigns(),
-        brandService.getBrands(),
-        brandService.getProducts()
+      // Safe service calls with individual error handling
+      const [campaigns, brands, products] = await Promise.allSettled([
+        this.safeServiceCall(() => campaignService.getCampaigns(), []),
+        this.safeServiceCall(() => brandService.getBrands(), []),
+        this.safeServiceCall(() => brandService.getProducts(), [])
       ]);
 
-      // Ensure campaigns is always an array
-      const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
-      const safeBrands = Array.isArray(brands) ? brands : [];
-      const safeProducts = Array.isArray(products) ? products : [];
+      const safeCampaigns = this.extractSettledValue(campaigns, []);
+      const safeBrands = this.extractSettledValue(brands, []);
+      const safeProducts = this.extractSettledValue(products, []);
 
       console.log('📊 안전한 데이터 변환 완료:', {
         campaigns: safeCampaigns.length,
@@ -68,82 +68,16 @@ class DashboardService {
         products: safeProducts.length
       });
 
-      const performanceSummary = this.validatePerformanceSummary(
-        performanceTrackerService.getPerformanceSummary()
-      );
+      // Safe performance summary with error handling
+      const performanceSummary = this.safePerformanceSummary();
       
-      // Calculate campaign stages with safe array access
-      const campaignsByStage = {
-        creation: safeCampaigns.filter(c => 
-          c?.status && ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
-        ).length,
-        content: safeCampaigns.filter(c => 
-          c?.status && ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
-        ).length,
-        live: safeCampaigns.filter(c => 
-          c?.status && ['live', 'monitoring', 'completed'].includes(c.status)
-        ).length
-      };
+      // Calculate campaign stages with enhanced safety
+      const campaignsByStage = this.calculateCampaignStages(safeCampaigns);
+      const contentStatus = this.calculateContentStatus(safeCampaigns);
+      const recentCampaigns = this.getRecentCampaigns(safeCampaigns);
+      const topInfluencers = this.getTopInfluencers(safeCampaigns);
 
-      // Content status analysis with safe access
-      const contentStatus = {
-        planningInProgress: safeCampaigns.filter(c => 
-          c?.status && ['planning', 'plan-review', 'plan-revision'].includes(c.status)
-        ).length,
-        productionInProgress: safeCampaigns.filter(c => 
-          c?.status && ['producing', 'content-review'].includes(c.status)
-        ).length,
-        reviewPending: safeCampaigns.filter(c => 
-          c?.contentPlans && Array.isArray(c.contentPlans) && c.contentPlans.some(plan => plan?.status === 'revision-request')
-        ).length
-      };
-
-      // Get recent campaigns (last 5) with safe sorting
-      const recentCampaigns = safeCampaigns
-        .filter(campaign => campaign && campaign.updatedAt)
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 5)
-        .map(campaign => ({
-          id: campaign.id || '',
-          title: campaign.title || 'Untitled Campaign',
-          status: campaign.status || 'unknown',
-          brandName: campaign.brandName || 'Unknown Brand',
-          influencerCount: Array.isArray(campaign.influencers) ? 
-            campaign.influencers.filter(inf => inf?.status === 'confirmed').length : 0,
-          progress: this.calculateCampaignProgress(campaign.status || '')
-        }));
-
-      // Top influencers by performance with safe access
-      const allInfluencers = safeCampaigns
-        .filter(c => c && Array.isArray(c.influencers))
-        .flatMap(c => c.influencers.filter(inf => inf?.status === 'confirmed'))
-        .filter(inf => inf && typeof inf.engagementRate === 'number');
-
-      const topInfluencers = allInfluencers
-        .sort((a, b) => (b.engagementRate || 0) - (a.engagementRate || 0))
-        .slice(0, 5)
-        .map(inf => ({
-          id: inf.id || '',
-          name: inf.name || 'Unknown Influencer',
-          followers: inf.followers || 0,
-          engagementRate: inf.engagementRate || 0,
-          category: inf.category || 'General'
-        }));
-
-      const stats: DashboardStats = {
-        totalCampaigns: safeCampaigns.length,
-        activeCampaigns: safeCampaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
-        completedCampaigns: safeCampaigns.filter(c => c?.status === 'completed').length,
-        totalBrands: safeBrands.length,
-        totalProducts: safeProducts.length,
-        totalInfluencers: safeCampaigns.reduce((sum, c) => {
-          const confirmedInfluencers = Array.isArray(c?.influencers) ? 
-            c.influencers.filter(inf => inf?.status === 'confirmed').length : 0;
-          return sum + confirmedInfluencers;
-        }, 0),
-        totalRevenue: safeCampaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
-        monthlyGrowth: 15.5 // Mock growth rate
-      };
+      const stats: DashboardStats = this.calculateStats(safeCampaigns, safeBrands, safeProducts);
 
       const result = {
         stats,
@@ -159,6 +93,151 @@ class DashboardService {
     } catch (error) {
       console.error('❌ Dashboard data fetch error:', error);
       return this.getFallbackBrandData();
+    }
+  }
+
+  private async safeServiceCall<T>(serviceCall: () => Promise<T>, fallback: T): Promise<T> {
+    try {
+      const result = await serviceCall();
+      return Array.isArray(result) ? result : fallback;
+    } catch (error) {
+      console.error('❌ 서비스 호출 실패:', error);
+      return fallback;
+    }
+  }
+
+  private extractSettledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
+    if (result.status === 'fulfilled') {
+      return Array.isArray(result.value) ? result.value : fallback;
+    } else {
+      console.error('❌ Promise 실패:', result.reason);
+      return fallback;
+    }
+  }
+
+  private safePerformanceSummary() {
+    try {
+      const summary = performanceTrackerService.getPerformanceSummary();
+      return this.validatePerformanceSummary(summary);
+    } catch (error) {
+      console.error('❌ 성과 요약 조회 실패:', error);
+      return {
+        xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
+        douyin: { count: 0, totalViews: 0, totalLikes: 0 }
+      };
+    }
+  }
+
+  private calculateCampaignStages(campaigns: any[]) {
+    try {
+      return {
+        creation: campaigns.filter(c => 
+          c?.status && ['creating', 'submitted', 'recruiting', 'proposing', 'revising', 'revision-feedback', 'confirmed'].includes(c.status)
+        ).length,
+        content: campaigns.filter(c => 
+          c?.status && ['planning', 'plan-review', 'plan-revision', 'plan-approved', 'producing', 'content-review', 'content-approved'].includes(c.status)
+        ).length,
+        live: campaigns.filter(c => 
+          c?.status && ['live', 'monitoring', 'completed'].includes(c.status)
+        ).length
+      };
+    } catch (error) {
+      console.error('❌ 캠페인 단계 계산 실패:', error);
+      return { creation: 0, content: 0, live: 0 };
+    }
+  }
+
+  private calculateContentStatus(campaigns: any[]) {
+    try {
+      return {
+        planningInProgress: campaigns.filter(c => 
+          c?.status && ['planning', 'plan-review', 'plan-revision'].includes(c.status)
+        ).length,
+        productionInProgress: campaigns.filter(c => 
+          c?.status && ['producing', 'content-review'].includes(c.status)
+        ).length,
+        reviewPending: campaigns.filter(c => 
+          c?.contentPlans && Array.isArray(c.contentPlans) && c.contentPlans.some(plan => plan?.status === 'revision-request')
+        ).length
+      };
+    } catch (error) {
+      console.error('❌ 콘텐츠 상태 계산 실패:', error);
+      return { planningInProgress: 0, productionInProgress: 0, reviewPending: 0 };
+    }
+  }
+
+  private getRecentCampaigns(campaigns: any[]) {
+    try {
+      return campaigns
+        .filter(campaign => campaign && campaign.updatedAt)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 5)
+        .map(campaign => ({
+          id: campaign.id || '',
+          title: campaign.title || 'Untitled Campaign',
+          status: campaign.status || 'unknown',
+          brandName: campaign.brandName || 'Unknown Brand',
+          influencerCount: Array.isArray(campaign.influencers) ? 
+            campaign.influencers.filter(inf => inf?.status === 'confirmed').length : 0,
+          progress: this.calculateCampaignProgress(campaign.status || '')
+        }));
+    } catch (error) {
+      console.error('❌ 최근 캠페인 조회 실패:', error);
+      return [];
+    }
+  }
+
+  private getTopInfluencers(campaigns: any[]) {
+    try {
+      const allInfluencers = campaigns
+        .filter(c => c && Array.isArray(c.influencers))
+        .flatMap(c => c.influencers.filter(inf => inf?.status === 'confirmed'))
+        .filter(inf => inf && typeof inf.engagementRate === 'number');
+
+      return allInfluencers
+        .sort((a, b) => (b.engagementRate || 0) - (a.engagementRate || 0))
+        .slice(0, 5)
+        .map(inf => ({
+          id: inf.id || '',
+          name: inf.name || 'Unknown Influencer',
+          followers: inf.followers || 0,
+          engagementRate: inf.engagementRate || 0,
+          category: inf.category || 'General'
+        }));
+    } catch (error) {
+      console.error('❌ 상위 인플루언서 조회 실패:', error);
+      return [];
+    }
+  }
+
+  private calculateStats(campaigns: any[], brands: any[], products: any[]): DashboardStats {
+    try {
+      return {
+        totalCampaigns: campaigns.length,
+        activeCampaigns: campaigns.filter(c => c?.status && !['completed'].includes(c.status)).length,
+        completedCampaigns: campaigns.filter(c => c?.status === 'completed').length,
+        totalBrands: brands.length,
+        totalProducts: products.length,
+        totalInfluencers: campaigns.reduce((sum, c) => {
+          const confirmedInfluencers = Array.isArray(c?.influencers) ? 
+            c.influencers.filter(inf => inf?.status === 'confirmed').length : 0;
+          return sum + confirmedInfluencers;
+        }, 0),
+        totalRevenue: campaigns.reduce((sum, c) => sum + (c?.budget || 0), 0),
+        monthlyGrowth: 15.5 // Mock growth rate
+      };
+    } catch (error) {
+      console.error('❌ 통계 계산 실패:', error);
+      return {
+        totalCampaigns: 0,
+        activeCampaigns: 0,
+        completedCampaigns: 0,
+        totalBrands: 0,
+        totalProducts: 0,
+        totalInfluencers: 0,
+        totalRevenue: 0,
+        monthlyGrowth: 0
+      };
     }
   }
 
@@ -307,7 +386,28 @@ class DashboardService {
     return progressMap[status] || 0;
   }
 
-  private getFallbackBrandData(): BrandDashboardData {
+  private getFallbackAdminData(): AdminDashboardData {
+    return {
+      stats: {
+        totalCampaigns: 25,
+        activeCampaigns: 18,
+        completedCampaigns: 7,
+        totalBrands: 8,
+        totalProducts: 45,
+        totalInfluencers: 150,
+        totalRevenue: 1200000000,
+        monthlyGrowth: 18.2
+      },
+      brandOverview: [],
+      platformStats: { xiaohongshu: { totalContent: 0 }, douyin: { totalContent: 0 } },
+      systemHealth: { activeUsers: 23, systemUptime: 99.8, dataCollectionStatus: 'Active' },
+      revenueByBrand: [],
+      campaignDistribution: { active: 18, completed: 7, planning: 5, live: 8 }
+    };
+  }
+
+  // Make getFallbackBrandData public for external access
+  getFallbackBrandData(): BrandDashboardData {
     console.log('🔄 Using fallback brand data');
     return {
       stats: {
@@ -328,26 +428,6 @@ class DashboardService {
       },
       topInfluencers: [],
       contentStatus: { planningInProgress: 2, productionInProgress: 3, reviewPending: 1 }
-    };
-  }
-
-  private getFallbackAdminData(): AdminDashboardData {
-    return {
-      stats: {
-        totalCampaigns: 25,
-        activeCampaigns: 18,
-        completedCampaigns: 7,
-        totalBrands: 8,
-        totalProducts: 45,
-        totalInfluencers: 150,
-        totalRevenue: 1200000000,
-        monthlyGrowth: 18.2
-      },
-      brandOverview: [],
-      platformStats: { xiaohongshu: { totalContent: 0 }, douyin: { totalContent: 0 } },
-      systemHealth: { activeUsers: 23, systemUptime: 99.8, dataCollectionStatus: 'Active' },
-      revenueByBrand: [],
-      campaignDistribution: { active: 18, completed: 7, planning: 5, live: 8 }
     };
   }
 }
