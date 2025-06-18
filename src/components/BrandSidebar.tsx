@@ -28,7 +28,7 @@ const BrandSidebar = () => {
   const sidebarItems: SidebarItem[] = [
     {
       title: "대시보드",
-      url: "/brand",
+      url: "/brand/dashboard",
       icon: LayoutDashboard,
     },
     {

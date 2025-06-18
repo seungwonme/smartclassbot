@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
@@ -38,11 +39,12 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
-        <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to={userRole === 'admin' ? "/admin" : "/brand"} />} />
-        <Route path="/signup" element={!isLoggedIn ? <Signup /> : <Navigate to={userRole === 'admin' ? "/admin" : "/brand"} />} />
+        <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to={userRole === 'admin' ? "/admin" : "/brand/dashboard"} />} />
+        <Route path="/signup" element={!isLoggedIn ? <Signup /> : <Navigate to={userRole === 'admin' ? "/admin" : "/brand/dashboard"} />} />
 
         {/* Brand Routes */}
-        <Route path="/brand" element={isValidAuthState && userRole === 'brand' ? <BrandDashboard /> : <Navigate to="/login" />} />
+        <Route path="/brand" element={<Navigate to="/brand/dashboard" replace />} />
+        <Route path="/brand/dashboard" element={isValidAuthState && userRole === 'brand' ? <BrandDashboard /> : <Navigate to="/login" />} />
         <Route path="/brand/campaigns" element={isValidAuthState && userRole === 'brand' ? <BrandCampaigns /> : <Navigate to="/login" />} />
         <Route path="/brand/campaigns/create" element={isValidAuthState && userRole === 'brand' ? <CreateCampaign /> : <Navigate to="/login" />} />
         <Route path="/brand/campaigns/:id" element={isValidAuthState && userRole === 'brand' ? <CampaignDetail /> : <Navigate to="/login" />} />
