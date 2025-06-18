@@ -8,6 +8,12 @@ export interface AuthUser {
   name: string;
 }
 
+// 하드코딩된 개발용 계정 정보
+const DEVELOPMENT_ACCOUNTS = {
+  brand: { email: 'brand', password: '123', name: '브랜드 사용자' },
+  admin: { email: 'admin', password: '123', name: '시스템 관리자' }
+};
+
 export const useAuth = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -25,12 +31,19 @@ export const useAuth = () => {
   }, []);
 
   const login = (email: string, password: string, role: 'brand' | 'admin') => {
-    // 간단한 로그인 로직 (실제 환경에서는 API 호출)
+    // 하드코딩된 계정 정보와 비교
+    const account = DEVELOPMENT_ACCOUNTS[role];
+    
+    if (email !== account.email || password !== account.password) {
+      throw new Error(`잘못된 ${role === 'admin' ? '관리자' : '브랜드'} 계정 정보입니다.`);
+    }
+    
+    // 로그인 성공 시 사용자 데이터 생성
     const userData: AuthUser = {
       id: `${role}_user_1`,
-      email,
+      email: account.email,
       role,
-      name: role === 'admin' ? '관리자' : '브랜드 사용자'
+      name: account.name
     };
     
     localStorage.setItem('circlue_user', JSON.stringify(userData));

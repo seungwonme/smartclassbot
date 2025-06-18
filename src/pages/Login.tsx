@@ -33,7 +33,7 @@ const Login = () => {
     } catch (error) {
       toast({
         title: "로그인 실패",
-        description: "이메일 또는 비밀번호를 확인해주세요.",
+        description: error instanceof Error ? error.message : "이메일 또는 비밀번호를 확인해주세요.",
         variant: "destructive"
       });
     } finally {
@@ -66,14 +66,18 @@ const Login = () => {
               </TabsList>
               
               <TabsContent value="brand" className="space-y-4">
+                <div className="mb-4 p-3 bg-blue-50 rounded-md text-sm text-blue-700">
+                  <strong>개발용 계정:</strong> ID: brand, PW: 123
+                </div>
                 <form onSubmit={(e) => handleLogin(e, 'brand')} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="brand-email">이메일</Label>
                     <Input
                       id="brand-email"
                       name="email"
-                      type="email"
-                      placeholder="이메일을 입력하세요"
+                      type="text"
+                      placeholder="brand"
+                      defaultValue="brand"
                       required
                     />
                   </div>
@@ -83,7 +87,8 @@ const Login = () => {
                       id="brand-password"
                       name="password"
                       type="password"
-                      placeholder="비밀번호를 입력하세요"
+                      placeholder="123"
+                      defaultValue="123"
                       required
                     />
                   </div>
@@ -98,14 +103,18 @@ const Login = () => {
               </TabsContent>
               
               <TabsContent value="admin" className="space-y-4">
+                <div className="mb-4 p-3 bg-blue-50 rounded-md text-sm text-blue-700">
+                  <strong>개발용 계정:</strong> ID: admin, PW: 123
+                </div>
                 <form onSubmit={(e) => handleLogin(e, 'admin')} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="admin-email">이메일</Label>
                     <Input
                       id="admin-email"
                       name="email"
-                      type="email"
-                      placeholder="관리자 이메일을 입력하세요"
+                      type="text"
+                      placeholder="admin"
+                      defaultValue="admin"
                       required
                     />
                   </div>
@@ -115,7 +124,8 @@ const Login = () => {
                       id="admin-password"
                       name="password"
                       type="password"
-                      placeholder="관리자 비밀번호를 입력하세요"
+                      placeholder="123"
+                      defaultValue="123"
                       required
                     />
                   </div>
