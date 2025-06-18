@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +48,7 @@ const FeaturesSection = () => {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
             
             <br />
-            <span className="text-foreground">circlue의 핵심가치</span>
+            <span className="text-foreground text-6xl text-center">circlue의 핵심가치</span>
           </h2>
           <p className="text-xl text-muted-foreground leading-relaxed">
             복잡한 중국 인플루언서 마케팅을 간단하고 효율적으로 만드는 6가지 핵심 기능
