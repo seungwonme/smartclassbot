@@ -21,10 +21,7 @@ const HeroSection = () => {
               무료로 시작하기
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-2 hover:bg-primary/5">
-              <Play className="mr-2 h-5 w-5" />
-              데모 보기
-            </Button>
+            
           </div>
 
           {/* Stats */}
