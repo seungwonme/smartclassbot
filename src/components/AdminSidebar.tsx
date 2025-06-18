@@ -7,7 +7,9 @@ import {
   Settings,
   FileText,
   DollarSign,
-  BarChart3
+  BarChart3,
+  Building2,
+  UserCheck
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -30,9 +32,14 @@ const AdminSidebar: React.FC = () => {
       icon: Home,
     },
     {
-      title: "브랜드 관리",
+      title: "브랜드 및 제품관리",
       url: "/admin/brands",
-      icon: Users,
+      icon: Building2,
+    },
+    {
+      title: "인플루언서관리",
+      url: "/admin/influencers",
+      icon: UserCheck,
     },
     {
       title: "분석",
@@ -45,7 +52,7 @@ const AdminSidebar: React.FC = () => {
       icon: DollarSign,
     },
     {
-      title: "설정",
+      title: "일반설정",
       url: "/admin/settings",
       icon: Settings,
     },

@@ -7,7 +7,9 @@ import {
   Settings,
   FileText,
   DollarSign,
-  BarChart3
+  BarChart3,
+  Package,
+  UserCheck
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -28,6 +30,16 @@ const BrandSidebar = () => {
       title: "캠페인 관리",
       url: "/brand/campaigns",
       icon: Home,
+    },
+    {
+      title: "브랜드 및 제품관리",
+      url: "/brand/products",
+      icon: Package,
+    },
+    {
+      title: "AI 페르소나 관리",
+      url: "/brand/personas",
+      icon: UserCheck,
     },
     {
       title: "인플루언서",
