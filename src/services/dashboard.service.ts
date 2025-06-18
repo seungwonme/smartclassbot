@@ -1,4 +1,3 @@
-
 import { campaignService } from './campaign.service';
 import { brandService } from './brand.service';
 import { performanceTrackerService } from './performanceTracker.service';
@@ -50,6 +49,8 @@ class DashboardService {
   // Brand Admin Dashboard Data
   async getBrandDashboardData(): Promise<BrandDashboardData> {
     try {
+      console.log('📊 대시보드 데이터 로딩 시작');
+      
       const [campaigns, brands, products] = await Promise.all([
         campaignService.getCampaigns(),
         brandService.getBrands(),
@@ -61,10 +62,15 @@ class DashboardService {
       const safeBrands = Array.isArray(brands) ? brands : [];
       const safeProducts = Array.isArray(products) ? products : [];
 
-      const performanceSummary = performanceTrackerService.getPerformanceSummary() || {
-        xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
-        douyin: { count: 0, totalViews: 0, totalLikes: 0 }
-      };
+      console.log('📊 안전한 데이터 변환 완료:', {
+        campaigns: safeCampaigns.length,
+        brands: safeBrands.length,
+        products: safeProducts.length
+      });
+
+      const performanceSummary = this.validatePerformanceSummary(
+        performanceTrackerService.getPerformanceSummary()
+      );
       
       // Calculate campaign stages with safe array access
       const campaignsByStage = {
@@ -139,7 +145,7 @@ class DashboardService {
         monthlyGrowth: 15.5 // Mock growth rate
       };
 
-      return {
+      const result = {
         stats,
         campaignsByStage,
         recentCampaigns,
@@ -147,10 +153,37 @@ class DashboardService {
         topInfluencers,
         contentStatus
       };
+
+      console.log('✅ 대시보드 데이터 생성 완료:', result);
+      return result;
     } catch (error) {
-      console.error('Dashboard data fetch error:', error);
+      console.error('❌ Dashboard data fetch error:', error);
       return this.getFallbackBrandData();
     }
+  }
+
+  private validatePerformanceSummary(summary: any) {
+    const defaultSummary = {
+      xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
+      douyin: { count: 0, totalViews: 0, totalLikes: 0 }
+    };
+
+    if (!summary || typeof summary !== 'object') {
+      return defaultSummary;
+    }
+
+    return {
+      xiaohongshu: {
+        count: summary?.xiaohongshu?.count || 0,
+        totalExposure: summary?.xiaohongshu?.totalExposure || 0,
+        totalLikes: summary?.xiaohongshu?.totalLikes || 0
+      },
+      douyin: {
+        count: summary?.douyin?.count || 0,
+        totalViews: summary?.douyin?.totalViews || 0,
+        totalLikes: summary?.douyin?.totalLikes || 0
+      }
+    };
   }
 
   // Admin Dashboard Data
@@ -167,10 +200,7 @@ class DashboardService {
       const safeBrands = Array.isArray(brands) ? brands : [];
       const safeProducts = Array.isArray(products) ? products : [];
 
-      const performanceSummary = performanceTrackerService.getPerformanceSummary() || {
-        xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
-        douyin: { count: 0, totalViews: 0, totalLikes: 0 }
-      };
+      const performanceSummary = this.validatePerformanceSummary(performanceTrackerService.getPerformanceSummary());
 
       // Brand overview with campaign statistics
       const brandOverview = safeBrands.map(brand => {
@@ -278,6 +308,7 @@ class DashboardService {
   }
 
   private getFallbackBrandData(): BrandDashboardData {
+    console.log('🔄 Using fallback brand data');
     return {
       stats: {
         totalCampaigns: 12,
@@ -291,7 +322,10 @@ class DashboardService {
       },
       campaignsByStage: { creation: 4, content: 3, live: 5 },
       recentCampaigns: [],
-      performanceSummary: { totalContent: 0, xiaohongshu: { count: 0 }, douyin: { count: 0 } },
+      performanceSummary: {
+        xiaohongshu: { count: 0, totalExposure: 0, totalLikes: 0 },
+        douyin: { count: 0, totalViews: 0, totalLikes: 0 }
+      },
       topInfluencers: [],
       contentStatus: { planningInProgress: 2, productionInProgress: 3, reviewPending: 1 }
     };

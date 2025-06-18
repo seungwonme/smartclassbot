@@ -39,12 +39,15 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
     );
   }
 
-  // Safe data access with defaults
+  // Enhanced safe data access with detailed logging
+  console.log('🔍 BrandDashboardOverview 데이터 확인:', data);
+
   const stats = data?.stats || {
     activeCampaigns: 0,
     monthlyGrowth: 0,
     totalInfluencers: 0,
-    totalRevenue: 0
+    totalRevenue: 0,
+    completedCampaigns: 0
   };
 
   const campaignsByStage = data?.campaignsByStage || {
@@ -87,8 +90,12 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
   };
 
   // Safe calculation for total campaigns
-  const completedCampaigns = (stats as any).completedCampaigns || 0;
+  const completedCampaigns = stats.completedCampaigns || 0;
   const totalCampaigns = Math.max(stats.activeCampaigns + completedCampaigns, 1);
+
+  // Safe calculation for views with proper null checking
+  const totalViews = ((performanceSummary?.xiaohongshu?.totalExposure || 0) + 
+    (performanceSummary?.douyin?.totalViews || 0)) / 1000000;
 
   return (
     <div className="space-y-6">
@@ -126,8 +133,7 @@ const BrandDashboardOverview: React.FC<BrandDashboardOverviewProps> = ({ data, i
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {(((performanceSummary?.xiaohongshu?.totalExposure || 0) + 
-                (performanceSummary?.douyin?.totalViews || 0)) / 1000000).toFixed(1)}M
+              {totalViews.toFixed(1)}M
             </div>
             <p className="text-xs text-gray-600">이번 달 누적</p>
           </CardContent>
