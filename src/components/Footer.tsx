@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Phone, MapPin, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Mail, Phone, MapPin, Twitter, Instagram, Linkedin, Building2, FileText } from 'lucide-react';
+
 const Footer = () => {
   const footerSections = [{
     title: "플랫폼",
@@ -90,6 +91,14 @@ const Footer = () => {
                   <MapPin className="h-5 w-5 mr-3 text-green-600" />
                   <span>경기도 의정부시 문화로 10, C-1005 (한강듀클래스 의정부 고산)</span>
                 </div>
+                <div className="flex items-center text-muted-foreground">
+                  <Building2 className="h-5 w-5 mr-3 text-green-600" />
+                  <span>사업자등록번호: 460-86-02048</span>
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  <FileText className="h-5 w-5 mr-3 text-green-600" />
+                  <span>통신판매허가번호: 제2024-의정부송산-0089호</span>
+                </div>
               </div>
 
               {/* Social Links */}
@@ -146,4 +155,5 @@ const Footer = () => {
       </div>
     </footer>;
 };
+
 export default Footer;
