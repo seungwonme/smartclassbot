@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,7 +15,7 @@ import { analyticsService } from '@/services/analytics.service';
 import ChinesePlatformStats from '@/components/analytics/ChinesePlatformStats';
 import MobileAnalyticsDashboard from '@/components/analytics/MobileAnalyticsDashboard';
 import RealTimeMonitor from '@/components/analytics/RealTimeMonitor';
-import NotificationSystem from '@/components/analytics/NotificationSystem';
+import HorizontalNotificationSystem from '@/components/analytics/HorizontalNotificationSystem';
 import AnalyticsFilters from '@/components/analytics/AnalyticsFilters';
 import PerformanceReportGenerator from '@/components/analytics/PerformanceReportGenerator';
 import ChineseCommentAnalyzer from '@/components/analytics/ChineseCommentAnalyzer';
@@ -155,14 +154,14 @@ const AdminAnalytics = () => {
 
         {/* 데스크톱/태블릿 레이아웃 */}
         <div className="hidden lg:block">
-          {/* 실시간 모니터링 및 알림 */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-6">
-            <div className="xl:col-span-3">
-              <RealTimeMonitor />
-            </div>
-            <div className="xl:col-span-1">
-              <NotificationSystem isAdmin={true} />
-            </div>
+          {/* 가로형 실시간 알림 */}
+          <div className="mb-6">
+            <HorizontalNotificationSystem />
+          </div>
+
+          {/* 실시간 모니터링 */}
+          <div className="mb-6">
+            <RealTimeMonitor />
           </div>
 
           {/* 필터 선택 */}
