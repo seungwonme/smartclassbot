@@ -49,26 +49,31 @@ src/
 
 ## 3. 라우트 & 페이지 스펙
 
-| 구분                    | 경로                     | 설명                                                        |
-| ----------------------- | ------------------------ | ----------------------------------------------------------- |
-| Landing                 | `/`                      | 메인 랜딩 페이지 (Hero, Features, CTA)                      |
-| 로그인                  | `/login`                 | 브랜드/관리자 공통 로그인, **탭** 또는 **토글**로 역할 전환 |
-| 회원가입                | `/signup`                | 브랜드 관리자용 가입 폼 (관리자 계정은 운영자만 생성)       |
-| Brand Dashboard         | `/brand`                 | 브랜드 관리자 메인 대시보드                                 |
-| Brand ‑ Brand CRUD      | `/brand/brands`          | 브랜드 목록/생성/수정                                       |
-| Brand ‑ Product CRUD    | `/brand/products`        | 제품 목록/생성/수정                                         |
-| Market Analysis         | `/brand/market-research` | 시장 분석 요청 & 결과 뷰                                    |
-| Persona                 | `/brand/persona`         | 페르소나 생성/관리                                          |
-| Influencer Search       | `/brand/influencers`     | 인플루언서 검색/추천                                        |
-| Campaign                | `/brand/campaigns`       | 캠페인 생성/관리                                            |
-| Performance             | `/brand/performance`     | 성과 분석 대시보드                                          |
-| Settlement              | `/brand/settlement`      | 정산 내역                                                   |
-| Admin Dashboard         | `/admin`                 | 플랫폼 관리자 메인 대시보드                                 |
-| Admin ‑ Brand 관리      | `/admin/brands`          | 브랜드/제품 관리 (풀 접근 권한)                             |
-| Admin ‑ Influencer 관리 | `/admin/influencers`     | 엑셀 업로드, 검색 등                                        |
-| Admin ‑ Performance     | `/admin/performance`     | 전체 성과 분석                                              |
-| Admin ‑ Settlement      | `/admin/settlement`      | 정산 관리                                                   |
-| Admin ‑ Settings        | `/admin/settings`        | 일반 설정                                                   |
+| 구분                    | 경로                        | 설명                                                        |
+| ----------------------- | --------------------------- | ----------------------------------------------------------- |
+| Landing                 | `/`                         | 메인 랜딩 페이지 (Hero, Features, CTA)                      |
+| 로그인                  | `/login`                    | 브랜드/관리자 공통 로그인, **탭** 또는 **토글**로 역할 전환 |
+| 회원가입                | `/signup`                   | 브랜드 관리자용 가입 폼 (관리자 계정은 운영자만 생성)       |
+| **Brand Routes**        |                             |                                                             |
+| Brand Dashboard         | `/brand/dashboard`          | 브랜드 관리자 메인 대시보드                                 |
+| Brand ‑ Campaigns       | `/brand/campaigns`          | 캠페인 목록/관리                                            |
+| Brand ‑ Create Campaign | `/brand/campaigns/create`   | 새 캠페인 생성                                              |
+| Brand ‑ Campaign Detail | `/brand/campaigns/:id`      | 캠페인 상세 페이지                                          |
+| Brand ‑ Products        | `/brand/products`           | 제품 목록/생성/수정                                         |
+| Brand ‑ Personas        | `/brand/personas`           | 페르소나 생성/관리                                          |
+| Brand ‑ Influencers     | `/brand/influencers`        | 인플루언서 검색/추천                                        |
+| Brand ‑ Analytics       | `/brand/analytics`          | 성과 분석 대시보드                                          |
+| Brand ‑ Billing         | `/brand/billing`            | 정산 내역                                                   |
+| Brand ‑ Settings        | `/brand/settings`           | 브랜드 설정                                                 |
+| **Admin Routes**        |                             |                                                             |
+| Admin Dashboard         | `/admin/dashboard`          | 플랫폼 관리자 메인 대시보드                                 |
+| Admin ‑ Campaigns       | `/admin/campaigns`          | 전체 캠페인 관리                                            |
+| Admin ‑ Campaign Detail | `/admin/campaigns/:id`      | 캠페인 상세 페이지                                          |
+| Admin ‑ Brands          | `/admin/brands`             | 브랜드 관리 (풀 접근 권한)                                  |
+| Admin ‑ Influencers     | `/admin/influencers`        | 인플루언서 관리, 엑셀 업로드, 검색 등                      |
+| Admin ‑ Analytics       | `/admin/analytics`          | 전체 성과 분석                                              |
+| Admin ‑ Billing         | `/admin/billing`            | 정산 관리                                                   |
+| Admin ‑ Settings        | `/admin/settings`           | 플랫폼 전체 설정                                            |
 
 > ❗ **AI 어시스턴트 주의사항**
 >
