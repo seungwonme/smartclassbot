@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Home,
@@ -5,7 +6,8 @@ import {
   Users,
   Settings,
   FileText,
-  DollarSign
+  DollarSign,
+  BarChart3
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -19,7 +21,7 @@ const BrandSidebar = () => {
   const sidebarItems: SidebarItem[] = [
     {
       title: "대시보드",
-      url: "/brand/dashboard",
+      url: "/brand",
       icon: LayoutDashboard,
     },
     {
@@ -33,9 +35,9 @@ const BrandSidebar = () => {
       icon: Users,
     },
     {
-      title: "마켓 리포트",
-      url: "/brand/reports",
-      icon: FileText,
+      title: "분석",
+      url: "/brand/analytics",
+      icon: BarChart3,
     },
     {
       title: "정산 관리",
@@ -51,6 +53,10 @@ const BrandSidebar = () => {
 
   return (
     <div className="w-64 bg-gray-50 border-r border-gray-200 h-full py-4 px-2">
+      <div className="mb-8">
+        <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-8 mx-auto" />
+        <h1 className="text-center mt-2 font-semibold">Brand Dashboard</h1>
+      </div>
       <nav className="space-y-4">
         {sidebarItems.map((item) => (
           <NavLink

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Home,
@@ -5,7 +6,8 @@ import {
   Users,
   Settings,
   FileText,
-  DollarSign
+  DollarSign,
+  BarChart3
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -19,7 +21,7 @@ const AdminSidebar: React.FC = () => {
   const sidebarItems: SidebarItem[] = [
     {
       title: "대시보드",
-      url: "/admin/dashboard",
+      url: "/admin",
       icon: LayoutDashboard,
     },
     {
@@ -33,9 +35,9 @@ const AdminSidebar: React.FC = () => {
       icon: Users,
     },
     {
-      title: "보고서 관리",
-      url: "/admin/reports",
-      icon: FileText,
+      title: "분석",
+      url: "/admin/analytics",
+      icon: BarChart3,
     },
     {
       title: "정산 관리",
