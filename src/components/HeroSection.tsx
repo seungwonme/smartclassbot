@@ -6,7 +6,7 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-4xl mx-auto">
           {/* Headline */}
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 whitespace-nowrap">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 whitespace-nowrap lg:text-7xl">
             AI 기반 중국 인플루언서<span className="text-green-600"> 매칭 </span>플랫폼
           </h1>
 
