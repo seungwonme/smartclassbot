@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +8,7 @@ const FeaturesSection = () => {
     {
       icon: Brain,
       title: "AI 시장 분석",
-      description: "샤오홍슈와 도우인의 실시간 트렌드와 소비자 인사이트를 AI로 분석하여 최적의 마케팅 전략을 제공합니다.",
+      description: "중국의 실시간 트렌드와 소비자 인사이트를 AI로 분석하여 최적의 마케팅 전략을 제공합니다.",
       badge: "AI 기반",
       color: "text-green-600"
     },
