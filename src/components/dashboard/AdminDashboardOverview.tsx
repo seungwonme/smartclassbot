@@ -10,10 +10,13 @@ import {
   DollarSign,
   Activity,
   TrendingUp,
-  Eye,
-  MessageSquare,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
   Globe,
-  Database
+  Database,
+  Bell,
+  Zap
 } from 'lucide-react';
 import { AdminDashboardData } from '@/services/dashboard.service';
 
@@ -39,8 +42,77 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
     );
   }
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      default: return <Clock className="h-4 w-4 text-yellow-500" />;
+    }
+  };
+
+  const getAlertIcon = (type: string) => {
+    switch (type) {
+      case 'error': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      default: return <CheckCircle className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* 시스템 알림 및 상태 */}
+      {data.alertsAndNotifications.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center text-orange-800">
+                <Bell className="w-5 h-5 mr-2" />
+                시스템 알림
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data.alertsAndNotifications.slice(0, 3).map((alert, index) => (
+                  <div key={index} className="flex items-start space-x-3 p-2 bg-white rounded">
+                    {getAlertIcon(alert.type)}
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{alert.title}</p>
+                      <p className="text-xs text-gray-600">{alert.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="flex items-center text-green-800">
+                <Zap className="w-5 h-5 mr-2" />
+                실시간 모니터링
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">시스템 가동률</span>
+                  <span className="font-bold text-green-600">{data.systemHealth.systemUptime}%</span>
+                </div>
+                <Progress value={data.systemHealth.systemUptime} className="h-2" />
+                <div className="flex justify-between items-center text-sm">
+                  <span>활성 사용자</span>
+                  <span className="font-medium">{data.systemHealth.activeUsers}명</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span>24시간 에러</span>
+                  <span className="font-medium text-red-600">{data.systemHealth.errorCount24h}건</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* 전체 통계 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -93,43 +165,20 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
         </Card>
       </div>
 
-      {/* 시스템 상태 및 플랫폼 통계 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 플랫폼 통계 및 상태 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-green-600" />
-              시스템 상태
+              <Globe className="w-5 h-5 mr-2 text-red-600" />
+              샤오홍슈 플랫폼
             </CardTitle>
-            <CardDescription>실시간 시스템 모니터링</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">활성 사용자</span>
-                <span className="font-medium">{data.systemHealth.activeUsers}명</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">시스템 가동률</span>
-                <span className="font-medium text-green-600">{data.systemHealth.systemUptime}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">데이터 수집</span>
-                <Badge variant="outline" className="bg-green-100 text-green-700">
-                  {data.systemHealth.dataCollectionStatus}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Globe className="w-5 h-5 mr-2 text-blue-600" />
-              샤오홍슈 통계
-            </CardTitle>
-            <CardDescription>샤오홍슈 플랫폼 성과</CardDescription>
+            <CardDescription className="flex items-center">
+              {getStatusIcon(data.systemHealth.platformsStatus.xiaohongshu)}
+              <span className="ml-2">
+                {data.platformStats?.xiaohongshu?.enabled ? '활성화됨' : '비활성화됨'}
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -144,10 +193,8 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">평균 참여도</span>
-                <span className="font-medium">
-                  {((data.platformStats?.xiaohongshu?.avgEngagement || 0) / 1000).toFixed(1)}K
-                </span>
+                <span className="text-sm text-gray-600">크롤링 간격</span>
+                <span className="font-medium">{data.platformStats?.xiaohongshu?.crawlingInterval || 10}분</span>
               </div>
             </div>
           </CardContent>
@@ -156,10 +203,15 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2 text-purple-600" />
-              더우인 통계
+              <Database className="w-5 h-5 mr-2 text-purple-600" />
+              더우인 플랫폼
             </CardTitle>
-            <CardDescription>더우인 플랫폼 성과</CardDescription>
+            <CardDescription className="flex items-center">
+              {getStatusIcon(data.systemHealth.platformsStatus.douyin)}
+              <span className="ml-2">
+                {data.platformStats?.douyin?.enabled ? '활성화됨' : '비활성화됨'}
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -174,10 +226,8 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">평균 참여도</span>
-                <span className="font-medium">
-                  {((data.platformStats?.douyin?.avgEngagement || 0) / 1000).toFixed(1)}K
-                </span>
+                <span className="text-sm text-gray-600">크롤링 간격</span>
+                <span className="font-medium">{data.platformStats?.douyin?.crawlingInterval || 10}분</span>
               </div>
             </div>
           </CardContent>
@@ -200,7 +250,12 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
                       <Building2 className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium">{brand.name}</p>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium">{brand.name}</p>
+                        <Badge variant={brand.status === 'active' ? 'default' : 'secondary'}>
+                          {brand.status === 'active' ? '활성' : '비활성'}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-gray-600">
                         캠페인 {brand.campaignCount}개 • 제품 {brand.productCount}개
                       </p>
@@ -251,6 +306,73 @@ const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({ data, i
                 <span className="text-lg font-bold text-gray-600">{data.campaignDistribution?.completed || 0}</span>
               </div>
               <Progress value={(data.campaignDistribution?.completed / Math.max(data.stats.totalCampaigns, 1)) * 100} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 최근 활동 및 수익 분석 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="w-5 h-5 mr-2" />
+              최근 활동
+            </CardTitle>
+            <CardDescription>시스템 내 최근 활동 로그</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.recentActivities.slice(0, 5).map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3 p-2 border-l-2 border-blue-200 bg-blue-50 rounded">
+                  <Activity className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{activity.title}</p>
+                    <p className="text-xs text-gray-600">{activity.description}</p>
+                    <p className="text-xs text-gray-400">{new Date(activity.timestamp).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+              {data.recentActivities.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  최근 활동이 없습니다.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>브랜드별 수익 현황</CardTitle>
+            <CardDescription>상위 수익 브랜드 분석</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {data.revenueByBrand.slice(0, 5).map((brand, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-green-600">#{index + 1}</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">{brand.brandName}</p>
+                      <p className="text-sm text-gray-600">{brand.campaigns}개 캠페인</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">₩{(brand.revenue / 1000000).toFixed(0)}M</p>
+                    <p className={`text-sm ${brand.growth > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {brand.growth > 0 ? '+' : ''}{brand.growth.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {data.revenueByBrand.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  수익 데이터가 없습니다.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
