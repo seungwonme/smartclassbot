@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -27,7 +26,7 @@ const HowItWorksSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-br from-green-50 via-green-100/50 to-green-200/30">
+    <section id="how-it-works" className="py-20 bg-gradient-to-br from-green-50 via-green-100/50 to-green-200/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
