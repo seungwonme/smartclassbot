@@ -23,14 +23,29 @@ const Login = () => {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
+    console.log(`[Login] 로그인 시도 - Role: ${role}`);
+
     try {
+      // 기존 인증 상태 완전 초기화
+      localStorage.removeItem('circlue_user');
+      console.log('[Login] 기존 인증 상태 초기화 완료');
+
+      // 로그인 실행
       login(email, password, role);
+      
       toast({
         title: "로그인 성공",
         description: `${role === 'admin' ? '관리자' : '브랜드'} 계정으로 로그인되었습니다.`
       });
-      navigate(role === 'admin' ? '/admin' : '/brand');
+
+      console.log(`[Login] 로그인 성공 - ${role} 대시보드로 이동`);
+
+      // 강제 페이지 이동 (replace를 사용하여 뒤로가기 방지)
+      const targetPath = role === 'admin' ? '/admin' : '/brand';
+      window.location.href = targetPath;
+      
     } catch (error) {
+      console.error('[Login] 로그인 실패:', error);
       toast({
         title: "로그인 실패",
         description: error instanceof Error ? error.message : "이메일 또는 비밀번호를 확인해주세요.",

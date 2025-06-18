@@ -22,15 +22,30 @@ export const useAuth = () => {
   useEffect(() => {
     // 로컬 스토리지에서 사용자 정보 확인
     const savedUser = localStorage.getItem('circlue_user');
+    console.log('[Auth] 초기화 - localStorage 데이터:', savedUser);
+    
     if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-      setUserRole(userData.role);
-      setIsLoggedIn(true);
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('[Auth] 저장된 사용자 데이터 복원:', userData);
+        setUser(userData);
+        setUserRole(userData.role);
+        setIsLoggedIn(true);
+      } catch (error) {
+        console.error('[Auth] localStorage 데이터 파싱 오류:', error);
+        // 잘못된 데이터가 있으면 제거
+        localStorage.removeItem('circlue_user');
+      }
     }
   }, []);
 
   const login = (email: string, password: string, role: 'brand' | 'admin') => {
+    console.log(`[Auth] 로그인 시도 - Role: ${role}, Email: ${email}`);
+    
+    // 기존 localStorage 데이터 완전 제거
+    localStorage.removeItem('circlue_user');
+    console.log('[Auth] 기존 localStorage 데이터 제거 완료');
+    
     // 하드코딩된 계정 정보와 비교
     const account = DEVELOPMENT_ACCOUNTS[role];
     
@@ -46,17 +61,29 @@ export const useAuth = () => {
       name: account.name
     };
     
+    console.log('[Auth] 새 사용자 데이터 생성:', userData);
+    
+    // localStorage에 저장하고 상태 동기적으로 업데이트
     localStorage.setItem('circlue_user', JSON.stringify(userData));
     setUser(userData);
     setUserRole(role);
     setIsLoggedIn(true);
+    
+    console.log('[Auth] 로그인 완료 - 상태 업데이트됨');
   };
 
   const logout = () => {
+    console.log('[Auth] 로그아웃 시작');
+    
     localStorage.removeItem('circlue_user');
     setUser(null);
     setUserRole(null);
     setIsLoggedIn(false);
+    
+    console.log('[Auth] 로그아웃 완료 - 페이지 새로고침');
+    
+    // 상태 완전 초기화를 위한 페이지 새로고침
+    window.location.href = '/';
   };
 
   return {
