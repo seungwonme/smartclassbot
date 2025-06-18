@@ -1,12 +1,15 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, TrendingUp, Users, Zap } from 'lucide-react';
+
 const HeroSection = () => {
-  return <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
+  return (
+    <section className="pt-32 pb-20 md:pt-40 md:pb-28 lg:pt-48 lg:pb-32 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-4xl mx-auto">
           {/* Headline */}
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 whitespace-nowrap text-center lg:text-7xl">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-6 text-center leading-tight">
             AI 기반 중국 인플루언서<span className="text-green-600"> 매칭 </span>플랫폼
           </h1>
 
@@ -21,7 +24,6 @@ const HeroSection = () => {
               무료로 시작하기
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            
           </div>
 
           {/* Stats */}
@@ -50,6 +52,8 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default HeroSection;
