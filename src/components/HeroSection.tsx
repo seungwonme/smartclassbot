@@ -17,10 +17,10 @@ const HeroSection = () => {
 
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            중국 시장을 
-            <span className="text-green-600">정복하는</span>
+            AI 기반 중국 인플루언서
+            <span className="text-green-600"> 매칭 </span>
             <br />
-            스마트한 방법
+            플랫폼
           </h1>
 
           {/* Subtitle */}
