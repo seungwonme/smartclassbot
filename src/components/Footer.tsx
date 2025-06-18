@@ -92,7 +92,7 @@ const Footer = () => {
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <MapPin className="h-5 w-5 mr-3 text-green-600" />
-                  <span>서울특별시 강남구 테헤란로 123</span>
+                  <span>경기도 의정부시 문화로 10, C-1005 (한강듀클래스 의정부 고산)</span>
                 </div>
               </div>
 
