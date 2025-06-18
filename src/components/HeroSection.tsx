@@ -1,9 +1,12 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Play, TrendingUp, Users, Zap } from 'lucide-react';
+
 const HeroSection = () => {
-  return <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
+  return (
+    <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-background via-background to-green-50/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-4xl mx-auto">
           {/* Badge */}
@@ -14,8 +17,10 @@ const HeroSection = () => {
 
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            
-            
+            중국 시장을 
+            <span className="text-green-600">정복하는</span>
+            <br />
+            스마트한 방법
           </h1>
 
           {/* Subtitle */}
@@ -63,6 +68,8 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default HeroSection;
