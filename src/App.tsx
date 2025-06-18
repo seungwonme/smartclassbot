@@ -39,8 +39,8 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
-        <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to={userRole === 'admin' ? "/admin" : "/brand/dashboard"} />} />
-        <Route path="/signup" element={!isLoggedIn ? <Signup /> : <Navigate to={userRole === 'admin' ? "/admin" : "/brand/dashboard"} />} />
+        <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to={userRole === 'admin' ? "/admin/dashboard" : "/brand/dashboard"} />} />
+        <Route path="/signup" element={!isLoggedIn ? <Signup /> : <Navigate to={userRole === 'admin' ? "/admin/dashboard" : "/brand/dashboard"} />} />
 
         {/* Brand Routes */}
         <Route path="/brand" element={<Navigate to="/brand/dashboard" replace />} />
@@ -56,7 +56,8 @@ function App() {
         <Route path="/brand/settings" element={isValidAuthState && userRole === 'brand' ? <BrandSettings /> : <Navigate to="/login" />} />
 
         {/* Admin Routes */}
-        <Route path="/admin" element={isValidAuthState && userRole === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/admin/dashboard" element={isValidAuthState && userRole === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
         <Route path="/admin/campaigns" element={isValidAuthState && userRole === 'admin' ? <AdminCampaigns /> : <Navigate to="/login" />} />
         <Route path="/admin/campaigns/:id" element={isValidAuthState && userRole === 'admin' ? <CampaignDetail /> : <Navigate to="/login" />} />
         <Route path="/admin/brands" element={isValidAuthState && userRole === 'admin' ? <AdminBrandManagement /> : <Navigate to="/login" />} />
