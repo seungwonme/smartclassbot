@@ -74,6 +74,7 @@ export interface SettlementSummary {
   totalAmount: number;
   pendingCount: number;
   completedCount: number;
-  monthlyRevenue: number;
+  taxInvoicePendingCount: number;
+  taxInvoicePendingAmount: number;
   pendingAmount: number;
 }

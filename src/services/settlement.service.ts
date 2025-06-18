@@ -1,4 +1,3 @@
-
 import { Settlement, SettlementStatus, TaxInvoice, PaymentInfo, SettlementSummary } from '@/types/settlement';
 import { storageService } from './storage.service';
 import { campaignService } from './campaign.service';
@@ -247,14 +246,18 @@ export const settlementService = {
           ? settlements.filter(s => s.brandId === brandId)
           : settlements;
 
+        // 세금계산서 발행 대기 상태들
+        const taxInvoicePendingStatuses = ['invoice-approved', 'invoice-issued'];
+        const taxInvoicePendingSettlements = filteredSettlements.filter(s => 
+          taxInvoicePendingStatuses.includes(s.status)
+        );
+
         const summary: SettlementSummary = {
           totalAmount: filteredSettlements.reduce((sum, s) => sum + s.amount, 0),
           pendingCount: filteredSettlements.filter(s => s.status === 'pending').length,
           completedCount: filteredSettlements.filter(s => s.status === 'completed').length,
-          monthlyRevenue: filteredSettlements
-            .filter(s => s.status === 'completed' && 
-              new Date(s.updatedAt).getMonth() === new Date().getMonth())
-            .reduce((sum, s) => sum + s.amount, 0),
+          taxInvoicePendingCount: taxInvoicePendingSettlements.length,
+          taxInvoicePendingAmount: taxInvoicePendingSettlements.reduce((sum, s) => sum + s.amount, 0),
           pendingAmount: filteredSettlements
             .filter(s => ['pending', 'invoice-requested', 'payment-processing'].includes(s.status))
             .reduce((sum, s) => sum + s.amount, 0)

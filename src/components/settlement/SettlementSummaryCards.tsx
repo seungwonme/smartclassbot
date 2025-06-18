@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SettlementSummary } from '@/types/settlement';
-import { DollarSign, Clock, CheckCircle, TrendingUp } from 'lucide-react';
+import { DollarSign, Clock, CheckCircle, FileText } from 'lucide-react';
 
 interface SettlementSummaryCardsProps {
   summary: SettlementSummary;
@@ -84,14 +84,17 @@ const SettlementSummaryCards: React.FC<SettlementSummaryCardsProps> = ({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            이번 달 매출
+            세금계산서 발행 대기
           </CardTitle>
-          <TrendingUp className="h-4 w-4 text-blue-500" />
+          <FileText className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-600">
-            {formatCurrency(summary.monthlyRevenue)}
+            {summary.taxInvoicePendingCount}건
           </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {formatCurrency(summary.taxInvoicePendingAmount)}
+          </p>
         </CardContent>
       </Card>
     </div>
