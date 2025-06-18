@@ -84,7 +84,7 @@ const Footer = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex items-center text-muted-foreground">
                   <Mail className="h-5 w-5 mr-3 text-green-600" />
-                  <span>contact@circlue.ai</span>
+                  <span>help@circlue.ai</span>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <Phone className="h-5 w-5 mr-3 text-green-600" />
