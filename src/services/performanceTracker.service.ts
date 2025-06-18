@@ -1,6 +1,6 @@
-
 import { ChinesePerformanceMetrics, PlatformUrlData } from '@/types/analytics';
 import { analyticsService } from './analytics.service';
+import { settingsService } from './settings.service';
 
 class PerformanceTrackerService {
   private storageKey = 'performance_metrics';
@@ -12,12 +12,21 @@ class PerformanceTrackerService {
     
     console.log('🚀 성과 데이터 자동 추적 시작');
     
+    // 설정에서 크롤링 주기 가져오기
+    const xiaohongshuInterval = settingsService.getCrawlingInterval('xiaohongshu');
+    const douyinInterval = settingsService.getCrawlingInterval('douyin');
+    
+    // 가장 짧은 주기로 설정 (분 단위를 밀리초로 변환)
+    const minInterval = Math.min(xiaohongshuInterval, douyinInterval) * 60 * 1000;
+    
     this.trackingInterval = setInterval(() => {
       this.updateAllPerformanceData();
-    }, 10 * 60 * 1000); // 10분마다 업데이트
+    }, minInterval);
     
     // 즉시 한 번 실행
     this.updateAllPerformanceData();
+    
+    console.log(`📊 설정된 수집 주기: ${minInterval / 60000}분`);
   }
 
   // 성과 데이터 자동 업데이트 중지
@@ -33,10 +42,19 @@ class PerformanceTrackerService {
   private updateAllPerformanceData(): void {
     try {
       const allUrls = JSON.parse(localStorage.getItem('campaign_monitoring_urls') || '[]');
-      const updatedUrls = allUrls.map((url: PlatformUrlData) => ({
-        ...url,
-        analytics: this.generateUpdatedMetrics(url.platform, url.analytics)
-      }));
+      
+      // 활성화된 플랫폼의 URL만 업데이트
+      const updatedUrls = allUrls.map((url: PlatformUrlData) => {
+        if (!settingsService.isPlatformEnabled(url.platform)) {
+          console.log(`⏸️ ${url.platform} 플랫폼이 비활성화되어 수집을 건너뜁니다`);
+          return url;
+        }
+        
+        return {
+          ...url,
+          analytics: this.generateUpdatedMetrics(url.platform, url.analytics)
+        };
+      });
       
       localStorage.setItem('campaign_monitoring_urls', JSON.stringify(updatedUrls));
       
@@ -54,20 +72,23 @@ class PerformanceTrackerService {
   private generateUpdatedMetrics(platform: string, currentMetrics?: any) {
     const baseGrowth = Math.random() * 0.1 + 0.95; // 95-105% 성장률
     
+    // 설정에서 해당 플랫폼의 수집 지표 확인
+    const enabledMetrics = settingsService.getPlatformMetrics(platform);
+    
     if (platform === 'xiaohongshu') {
-      return {
-        views: Math.floor((currentMetrics?.views || 10000) * baseGrowth + Math.random() * 500),
-        likes: Math.floor((currentMetrics?.likes || 800) * baseGrowth + Math.random() * 50),
-        comments: Math.floor((currentMetrics?.comments || 100) * baseGrowth + Math.random() * 10),
-        shares: Math.floor((currentMetrics?.shares || 50) * baseGrowth + Math.random() * 5),
-      };
+      const metrics: any = {};
+      if (enabledMetrics.includes('exposure')) metrics.views = Math.floor((currentMetrics?.views || 10000) * baseGrowth + Math.random() * 500);
+      if (enabledMetrics.includes('likes')) metrics.likes = Math.floor((currentMetrics?.likes || 800) * baseGrowth + Math.random() * 50);
+      if (enabledMetrics.includes('comments')) metrics.comments = Math.floor((currentMetrics?.comments || 100) * baseGrowth + Math.random() * 10);
+      if (enabledMetrics.includes('shares')) metrics.shares = Math.floor((currentMetrics?.shares || 50) * baseGrowth + Math.random() * 5);
+      return metrics;
     } else {
-      return {
-        views: Math.floor((currentMetrics?.views || 20000) * baseGrowth + Math.random() * 1000),
-        likes: Math.floor((currentMetrics?.likes || 1500) * baseGrowth + Math.random() * 100),
-        comments: Math.floor((currentMetrics?.comments || 200) * baseGrowth + Math.random() * 20),
-        shares: Math.floor((currentMetrics?.shares || 100) * baseGrowth + Math.random() * 10),
-      };
+      const metrics: any = {};
+      if (enabledMetrics.includes('views')) metrics.views = Math.floor((currentMetrics?.views || 20000) * baseGrowth + Math.random() * 1000);
+      if (enabledMetrics.includes('likes')) metrics.likes = Math.floor((currentMetrics?.likes || 1500) * baseGrowth + Math.random() * 100);
+      if (enabledMetrics.includes('comments')) metrics.comments = Math.floor((currentMetrics?.comments || 200) * baseGrowth + Math.random() * 20);
+      if (enabledMetrics.includes('shares')) metrics.shares = Math.floor((currentMetrics?.shares || 100) * baseGrowth + Math.random() * 10);
+      return metrics;
     }
   }
 
