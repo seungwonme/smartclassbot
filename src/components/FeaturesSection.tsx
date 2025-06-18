@@ -63,9 +63,7 @@ const FeaturesSection = () => {
                   <div className={`p-3 rounded-xl bg-gray-50 group-hover:bg-gray-100 transition-colors ${feature.color}`}>
                     <feature.icon className="h-6 w-6" />
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {feature.badge}
-                  </Badge>
+                  
                 </div>
                 <CardTitle className="text-xl font-semibold group-hover:text-primary transition-colors">
                   {feature.title}
