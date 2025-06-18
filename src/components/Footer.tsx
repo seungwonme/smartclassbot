@@ -72,11 +72,7 @@ const Footer = () => {
             {/* Company Info */}
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="relative">
-                  <div className="w-8 h-8 bg-green-500 rounded-full"></div>
-                  <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
-                </div>
-                
+                <img src="/lovable-uploads/3d3591d2-96dd-4030-962d-d5bcacde7cde.png" alt="Circlue Logo" className="h-8" />
               </div>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">AI-powerd Brand &amp; Influencer matching Platform</p>
               
