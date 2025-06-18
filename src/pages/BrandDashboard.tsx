@@ -1,41 +1,49 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import BrandSidebar from '@/components/BrandSidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Users, Megaphone, DollarSign } from 'lucide-react';
+import BrandDashboardOverview from '@/components/dashboard/BrandDashboardOverview';
+import { dashboardService } from '@/services/dashboard.service';
+import { performanceTrackerService } from '@/services/performanceTracker.service';
 
 const BrandDashboard = () => {
-  const stats = [
-    {
-      title: '진행 중인 캠페인',
-      value: '12',
-      description: '지난 달 대비 +20%',
-      icon: Megaphone,
-      trend: 'up'
-    },
-    {
-      title: '협업 인플루언서',
-      value: '85',
-      description: '활성 인플루언서 수',
-      icon: Users,
-      trend: 'up'
-    },
-    {
-      title: '총 조회수',
-      value: '2.4M',
-      description: '이번 달 누적',
-      icon: TrendingUp,
-      trend: 'up'
-    },
-    {
-      title: '예상 매출',
-      value: '₩45M',
-      description: '현재 캠페인 기준',
-      icon: DollarSign,
-      trend: 'up'
+  const [isTracking, setIsTracking] = useState(false);
+
+  // Start performance tracking on component mount
+  useEffect(() => {
+    console.log('🚀 브랜드 대시보드 마운트 - 성과 추적 시작');
+    performanceTrackerService.startTracking();
+    setIsTracking(true);
+    
+    return () => {
+      console.log('⏹️ 브랜드 대시보드 언마운트 - 성과 추적 정지');
+      performanceTrackerService.stopTracking();
+      setIsTracking(false);
+    };
+  }, []);
+
+  // Fetch dashboard data with real-time updates
+  const { data: dashboardData, isLoading, error, refetch } = useQuery({
+    queryKey: ['brandDashboard'],
+    queryFn: () => dashboardService.getBrandDashboardData(),
+    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+    staleTime: 10000, // Consider data stale after 10 seconds
+  });
+
+  // Auto-refresh on tracking status change
+  useEffect(() => {
+    if (isTracking) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 60000); // Refresh every minute when tracking is active
+      
+      return () => clearInterval(interval);
     }
-  ];
+  }, [isTracking, refetch]);
+
+  if (error) {
+    console.error('브랜드 대시보드 데이터 로드 실패:', error);
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -45,83 +53,40 @@ const BrandDashboard = () => {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">대시보드</h1>
-            <p className="text-gray-600 mt-2">브랜드 마케팅 현황을 한눈에 확인하세요</p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <Card key={index}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-4 w-4 text-gray-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                  <p className="text-xs text-gray-600 flex items-center mt-1">
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-                    {stat.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Recent Activities */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>최근 캠페인</CardTitle>
-                <CardDescription>진행 중인 마케팅 캠페인 현황</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">신제품 런칭 캠페인 #{item}</p>
-                        <p className="text-sm text-gray-600">샤오홍슈 • 5명의 인플루언서</p>
-                      </div>
-                      <Badge variant="outline" className="bg-green-100 text-green-700">
-                        진행중
-                      </Badge>
-                    </div>
-                  ))}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">브랜드 대시보드</h1>
+                <p className="text-gray-600 mt-2">캠페인 및 성과를 실시간으로 모니터링하세요</p>
+              </div>
+              {isTracking && (
+                <div className="flex items-center space-x-2 text-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">실시간 모니터링 중</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>인플루언서 성과</CardTitle>
-                <CardDescription>이번 주 상위 성과 인플루언서</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <Users className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">@influencer_{item}</p>
-                          <p className="text-sm text-gray-600">팔로워 450K</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">85K</p>
-                        <p className="text-sm text-gray-600">조회수</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           </div>
+
+          {/* Dashboard Overview */}
+          <BrandDashboardOverview 
+            data={dashboardData || {
+              stats: { totalCampaigns: 0, activeCampaigns: 0, completedCampaigns: 0, totalBrands: 0, totalProducts: 0, totalInfluencers: 0, totalRevenue: 0, monthlyGrowth: 0 },
+              campaignsByStage: { creation: 0, content: 0, live: 0 },
+              recentCampaigns: [],
+              performanceSummary: { totalContent: 0 },
+              topInfluencers: [],
+              contentStatus: { planningInProgress: 0, productionInProgress: 0, reviewPending: 0 }
+            }}
+            isLoading={isLoading}
+          />
+
+          {error && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800">
+                ⚠️ 일부 데이터를 불러오는 중 문제가 발생했습니다. 기본 데이터로 표시됩니다.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
