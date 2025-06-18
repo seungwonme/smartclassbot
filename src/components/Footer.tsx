@@ -76,7 +76,7 @@ const Footer = () => {
                   <div className="w-8 h-8 bg-green-500 rounded-full"></div>
                   <div className="absolute top-2 left-2 w-6 h-6 bg-black rounded-full"></div>
                 </div>
-                <span className="text-2xl font-bold text-foreground">circlue</span>
+                
               </div>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">AI-powerd Brand &amp; Influencer matching Platform</p>
               
