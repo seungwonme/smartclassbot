@@ -1,0 +1,473 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 사용자 및 인증
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         UserRole
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  sessions         UserSession[]
+  brands           Brand[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  contentRevisions ContentRevision[] @relation("FeedbackBy")
+
+  @@map("users")
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// 브랜드 및 제품
+model Brand {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  name           String
+  description    String?
+  website        String?
+  story          String?
+  channels       String[]
+  marketing      String?
+  socialChannels String[] @map("social_channels")
+  category       String?
+  logoUrl        String?  @map("logo_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    Product[]
+  campaigns   Campaign[]
+  personas    Persona[]
+  settlements Settlement[]
+
+  @@map("brands")
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  brandId      String   @map("brand_id")
+  name         String
+  description  String?
+  purchaseUrl  String?  @map("purchase_url")
+  unit         String?
+  price        Decimal? @db.Decimal(10, 2)
+  ingredients  String?
+  usage        String?
+  effects      String?
+  usp          String?
+  targetGender Gender?  @map("target_gender")
+  targetAge    String?  @map("target_age")
+  category     String?
+  imageUrl     String?  @map("image_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  brand     Brand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
+  personas  Persona[]
+
+  @@map("products")
+}
+
+// 인플루언서
+model Influencer {
+  id               String    @id @default(uuid())
+  name             String
+  realName         String?   @map("real_name")
+  category         String?
+  platform         Platform?
+  region           String?
+  followers        Int?
+  avgViews         Int?      @map("avg_views")
+  avgLikes         Int?      @map("avg_likes")
+  avgComments      Int?      @map("avg_comments")
+  engagementRate   Decimal?  @db.Decimal(5, 2) @map("engagement_rate")
+  profileImageUrl  String?   @map("profile_image_url")
+  instagramUrl     String?   @map("instagram_url")
+  youtubeUrl       String?   @map("youtube_url")
+  xiaohongshuUrl   String?   @map("xiaohongshu_url")
+  tiktokUrl        String?   @map("tiktok_url")
+  douyinUrl        String?   @map("douyin_url")
+  weiboUrl         String?   @map("weibo_url")
+  bilibiliUrl      String?   @map("bilibili_url")
+  baseFee          Decimal?  @db.Decimal(10, 2) @map("base_fee")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  campaigns           CampaignInfluencer[]
+  contentPlans        ContentPlan[]
+  contentSubmissions  ContentSubmission[]
+  performanceMetrics  PerformanceMetric[]
+
+  @@map("influencers")
+}
+
+// 캠페인
+model Campaign {
+  id                  String   @id @default(uuid())
+  brandId             String   @map("brand_id")
+  productId           String   @map("product_id")
+  title               String
+  description         String?
+  budget              Decimal  @db.Decimal(10, 2)
+  campaignStartDate   DateTime @map("campaign_start_date")
+  campaignEndDate     DateTime @map("campaign_end_date")
+  proposalDeadline    DateTime @map("proposal_deadline")
+  adType              AdType?  @map("ad_type")
+  status              String   @default("creating")
+  currentStage        Int      @default(1) @map("current_stage")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  brand               Brand                    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  product             Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  targetContent       CampaignTargetContent?
+  influencers         CampaignInfluencer[]
+  contentPlans        ContentPlan[]
+  contentSubmissions  ContentSubmission[]
+  performanceMetrics  PerformanceMetric[]
+  settlements         Settlement[]
+
+  @@map("campaigns")
+}
+
+model CampaignTargetContent {
+  id                      String   @id @default(uuid())
+  campaignId              String   @unique @map("campaign_id")
+  influencerCategories    String[] @map("influencer_categories")
+  targetAge               String?  @map("target_age")
+  uspImportance           Int?     @map("usp_importance")
+  influencerImpact        String?  @map("influencer_impact")
+  additionalDescription   String?  @map("additional_description")
+  secondaryContentUsage   Boolean  @default(false) @map("secondary_content_usage")
+
+  // Relations
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("campaign_target_content")
+}
+
+model CampaignInfluencer {
+  id                   String    @id @default(uuid())
+  campaignId           String    @map("campaign_id")
+  influencerId         String    @map("influencer_id")
+  proposedFee          Decimal?  @db.Decimal(10, 2) @map("proposed_fee")
+  adFee                Decimal?  @db.Decimal(10, 2) @map("ad_fee")
+  deliverables         String[]
+  additionalTerms      String?   @map("additional_terms")
+  status               String    @default("invited")
+  productionStartDate  DateTime? @map("production_start_date")
+  productionDeadline   DateTime? @map("production_deadline")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, influencerId])
+  @@map("campaign_influencers")
+}
+
+// 페르소나
+model Persona {
+  id            String   @id @default(uuid())
+  brandId       String   @map("brand_id")
+  productId     String?  @map("product_id")
+  name          String
+  age           String?
+  gender        String?
+  interests     String[]
+  occupation    String?
+  lifestyle     String?
+  shoppingHabits String? @map("shopping_habits")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  brand   Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("personas")
+}
+
+// 콘텐츠
+model ContentPlan {
+  id                     String   @id @default(uuid())
+  campaignId             String   @map("campaign_id")
+  influencerId           String   @map("influencer_id")
+  contentType            ContentType @map("content_type")
+  status                 String   @default("draft")
+  planData               Json     @map("plan_data")
+  currentRevisionNumber  Int      @default(0) @map("current_revision_number")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  campaign    Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer  Influencer        @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  revisions   ContentRevision[]
+
+  @@map("content_plans")
+}
+
+model ContentSubmission {
+  id                    String    @id @default(uuid())
+  campaignId            String    @map("campaign_id")
+  influencerId          String    @map("influencer_id")
+  contentType           ContentType @map("content_type")
+  status                String    @default("draft")
+  currentRevisionNumber Int       @default(0) @map("current_revision_number")
+  publishedUrl          String?   @map("published_url")
+  publishedAt           DateTime? @map("published_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  campaign           Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer         Influencer           @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  files              ContentFile[]
+  revisions          ContentRevision[]
+  performanceMetrics PerformanceMetric[]
+
+  @@map("content_submissions")
+}
+
+model ContentFile {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  fileUrl      String   @map("file_url")
+  fileType     String?  @map("file_type")
+  fileSize     Int?     @map("file_size")
+  thumbnailUrl String?  @map("thumbnail_url")
+  duration     Int?     // 비디오의 경우 초 단위
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  submission ContentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("content_files")
+}
+
+model ContentRevision {
+  id             String   @id @default(uuid())
+  contentPlanId  String?  @map("content_plan_id")
+  submissionId   String?  @map("submission_id")
+  revisionNumber Int      @map("revision_number")
+  feedback       String?
+  feedbackBy     String?  @map("feedback_by")
+  status         String?
+  revisionData   Json?    @map("revision_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  contentPlan ContentPlan?       @relation(fields: [contentPlanId], references: [id], onDelete: Cascade)
+  submission  ContentSubmission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  feedbackUser User?             @relation("FeedbackBy", fields: [feedbackBy], references: [id])
+
+  @@map("content_revisions")
+}
+
+// 성과 분석
+model PerformanceMetric {
+  id                  String   @id @default(uuid())
+  campaignId          String   @map("campaign_id")
+  influencerId        String   @map("influencer_id")
+  contentSubmissionId String?  @map("content_submission_id")
+  platform            String
+  metricDate          DateTime @map("metric_date")
+  views               Int      @default(0)
+  likes               Int      @default(0)
+  comments            Int      @default(0)
+  shares              Int      @default(0)
+  saves               Int      @default(0)
+  engagementRate      Decimal? @db.Decimal(5, 2) @map("engagement_rate")
+  clickThroughRate    Decimal? @db.Decimal(5, 2) @map("click_through_rate")
+  conversionRate      Decimal? @db.Decimal(5, 2) @map("conversion_rate")
+  salesAmount         Decimal? @db.Decimal(10, 2) @map("sales_amount")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  campaign          Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer        Influencer         @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  contentSubmission ContentSubmission? @relation(fields: [contentSubmissionId], references: [id], onDelete: Cascade)
+  commentAnalysis   CommentAnalysis[]
+
+  @@unique([campaignId, influencerId, platform, metricDate])
+  @@map("performance_metrics")
+}
+
+model CommentAnalysis {
+  id                   String   @id @default(uuid())
+  performanceMetricId  String   @map("performance_metric_id")
+  totalComments        Int?     @map("total_comments")
+  positiveComments     Int?     @map("positive_comments")
+  negativeComments     Int?     @map("negative_comments")
+  neutralComments      Int?     @map("neutral_comments")
+  keyTopics            String[] @map("key_topics")
+  sentimentScore       Decimal? @db.Decimal(3, 2) @map("sentiment_score")
+  analysisData         Json?    @map("analysis_data")
+  analyzedAt           DateTime @default(now()) @map("analyzed_at")
+
+  // Relations
+  performanceMetric PerformanceMetric @relation(fields: [performanceMetricId], references: [id], onDelete: Cascade)
+
+  @@map("comment_analysis")
+}
+
+// 정산
+model Settlement {
+  id          String    @id @default(uuid())
+  campaignId  String    @map("campaign_id")
+  brandId     String    @map("brand_id")
+  amount      Decimal   @db.Decimal(10, 2)
+  status      String    @default("pending")
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  campaign    Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  brand       Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  taxInvoices TaxInvoice[]
+  payments    Payment[]
+
+  @@map("settlements")
+}
+
+model TaxInvoice {
+  id             String   @id @default(uuid())
+  settlementId   String   @map("settlement_id")
+  invoiceNumber  String   @unique @map("invoice_number")
+  businessNumber String?  @map("business_number")
+  companyName    String?  @map("company_name")
+  ceoName        String?  @map("ceo_name")
+  address        String?
+  businessType   String?  @map("business_type")
+  businessItem   String?  @map("business_item")
+  amount         Decimal  @db.Decimal(10, 2)
+  taxAmount      Decimal  @db.Decimal(10, 2) @map("tax_amount")
+  totalAmount    Decimal  @db.Decimal(10, 2) @map("total_amount")
+  issuedDate     DateTime @map("issued_date")
+  fileUrl        String?  @map("file_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  settlement Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+
+  @@map("tax_invoices")
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  settlementId   String   @map("settlement_id")
+  paymentMethod  String?  @map("payment_method")
+  transactionId  String?  @map("transaction_id")
+  paidAmount     Decimal  @db.Decimal(10, 2) @map("paid_amount")
+  paidAt         DateTime @map("paid_at")
+  receiptUrl     String?  @map("receipt_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  settlement Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// 시스템
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  type      String
+  title     String
+  message   String?
+  data      Json?
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Enums
+enum UserRole {
+  brand
+  admin
+}
+
+enum Gender {
+  male
+  female
+  unisex
+}
+
+enum Platform {
+  douyin
+  xiaohongshu
+  weibo
+  bilibili
+}
+
+enum AdType {
+  branding
+  live_commerce @map("live-commerce")
+}
+
+enum ContentType {
+  image
+  video
+}
