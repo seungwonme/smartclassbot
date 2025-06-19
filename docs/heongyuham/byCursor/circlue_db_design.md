@@ -48,7 +48,7 @@ erDiagram
 erDiagram
     users {
         string id PK
-        string email UK
+        string email
         string password_hash
         string name
         string role
@@ -60,7 +60,7 @@ erDiagram
     user_sessions {
         string id PK
         string user_id FK
-        string token UK
+        string token
         datetime expires_at
         datetime created_at
     }
