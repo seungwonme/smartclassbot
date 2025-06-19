@@ -182,7 +182,7 @@ erDiagram
 
     campaign_target_content {
         string id PK
-        string campaign_id FK UK
+        string campaign_id FK
         string influencer_categories
         string target_age
         int usp_importance
@@ -319,7 +319,7 @@ erDiagram
     tax_invoices {
         string id PK
         string settlement_id FK
-        string invoice_number UK
+        string invoice_number
         string business_number
         string company_name
         string ceo_name
@@ -396,7 +396,7 @@ erDiagram
 
     users {
         string id PK
-        string email UK
+        string email
         string role
         boolean is_active
     }
