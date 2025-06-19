@@ -8,24 +8,24 @@ erDiagram
     users ||--o{ brands : creates
     users ||--o{ campaigns : creates
     users ||--o{ system_logs : generates
-    
+
     brands ||--o{ brand_channels : has
     brands ||--o{ brand_social_channels : has
     brands ||--o{ products : has
     brands ||--o{ campaigns : runs
     brands ||--o{ personas : generates
-    
+
     products ||--o{ campaign_products : included_in
-    
+
     influencers ||--o{ influencer_categories : has
     influencers ||--o{ influencer_metrics : tracks
     influencers ||--o{ campaign_influencers : participates_in
-    
+
     campaigns ||--o{ campaign_products : includes
     campaigns ||--o{ campaign_influencers : invites
     campaigns ||--o{ campaign_analytics : analyzed_by
     campaigns ||--o{ billings : generates
-    
+
     campaign_influencers ||--o{ contents : creates
     contents ||--o{ content_metrics : tracked_by
 ```
@@ -43,7 +43,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     user_profiles {
         string id PK
         string user_id FK
@@ -55,7 +55,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     users ||--o{ user_profiles : has
 ```
 
@@ -75,7 +75,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     brand_channels {
         string id PK
         string brand_id FK
@@ -83,7 +83,7 @@ erDiagram
         string channel_url
         datetime created_at
     }
-    
+
     brand_social_channels {
         string id PK
         string brand_id FK
@@ -92,7 +92,7 @@ erDiagram
         int follower_count
         datetime created_at
     }
-    
+
     brands ||--o{ brand_channels : has
     brands ||--o{ brand_social_channels : has
 ```
@@ -120,7 +120,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     brands ||--o{ products : has
 ```
 
@@ -142,14 +142,14 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     influencer_categories {
         string id PK
         string influencer_id FK
         string category
         datetime created_at
     }
-    
+
     influencer_metrics {
         string id PK
         string influencer_id FK
@@ -161,7 +161,7 @@ erDiagram
         int avg_comments
         datetime created_at
     }
-    
+
     influencers ||--o{ influencer_categories : has
     influencers ||--o{ influencer_metrics : tracks
 ```
@@ -183,14 +183,14 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     campaign_products {
         string id PK
         string campaign_id FK
         string product_id FK
         datetime created_at
     }
-    
+
     campaign_influencers {
         string id PK
         string campaign_id FK
@@ -202,7 +202,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     campaigns ||--o{ campaign_products : includes
     campaigns ||--o{ campaign_influencers : invites
 ```
@@ -226,7 +226,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     contents {
         string id PK
         string campaign_influencer_id FK
@@ -240,7 +240,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     content_metrics {
         string id PK
         string content_id FK
@@ -252,7 +252,7 @@ erDiagram
         float engagement_rate
         datetime created_at
     }
-    
+
     brands ||--o{ personas : generates
     campaign_influencers ||--o{ contents : creates
     contents ||--o{ content_metrics : tracked_by
@@ -274,7 +274,7 @@ erDiagram
         float roi
         datetime created_at
     }
-    
+
     billings {
         string id PK
         string campaign_id FK
@@ -287,7 +287,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     campaigns ||--o{ campaign_analytics : analyzed_by
     campaigns ||--o{ billings : generates
 ```
@@ -307,7 +307,7 @@ erDiagram
         string user_agent
         datetime created_at
     }
-    
+
     platform_settings {
         string id PK
         string setting_key UK
@@ -316,7 +316,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     users ||--o{ system_logs : generates
 ```
 
@@ -331,21 +331,21 @@ erDiagram
     brands ||--o{ brand_channels : "sells through"
     brands ||--o{ brand_social_channels : "promotes on"
     brands ||--o{ products : "manufactures"
-    
+
     users {
         string id PK
         string email UK
         string role
         boolean is_active
     }
-    
+
     brands {
         string id PK
         string name
         string website
         string created_by FK
     }
-    
+
     products {
         string id PK
         string brand_id FK
@@ -365,7 +365,7 @@ erDiagram
     contents ||--o{ content_metrics : "performance tracked"
     campaigns ||--o{ campaign_analytics : analyzed
     campaigns ||--o{ billings : "generates bills"
-    
+
     campaigns {
         string id PK
         string name
@@ -374,7 +374,7 @@ erDiagram
         date start_date
         date end_date
     }
-    
+
     campaign_influencers {
         string id PK
         string campaign_id FK
@@ -382,7 +382,7 @@ erDiagram
         string status
         float fee
     }
-    
+
     contents {
         string id PK
         string campaign_influencer_id FK
@@ -399,7 +399,7 @@ erDiagram
     influencers ||--o{ influencer_metrics : "metrics tracked"
     influencers ||--o{ campaign_influencers : "participates in"
     campaign_influencers ||--o{ contents : produces
-    
+
     influencers {
         string id PK
         string nickname
@@ -408,13 +408,13 @@ erDiagram
         float engagement_rate
         string region
     }
-    
+
     influencer_categories {
         string id PK
         string influencer_id FK
         string category
     }
-    
+
     influencer_metrics {
         string id PK
         string influencer_id FK
@@ -431,7 +431,7 @@ erDiagram
     contents ||--o{ content_metrics : "daily metrics"
     campaigns ||--o{ campaign_analytics : "aggregated analytics"
     campaign_influencers ||--o{ contents : creates
-    
+
     contents {
         string id PK
         string platform
@@ -439,7 +439,7 @@ erDiagram
         string status
         datetime published_at
     }
-    
+
     content_metrics {
         string id PK
         string content_id FK
@@ -449,7 +449,7 @@ erDiagram
         int comments
         float engagement_rate
     }
-    
+
     campaign_analytics {
         string id PK
         string campaign_id FK
@@ -466,28 +466,28 @@ flowchart TD
     A[브랜드 가입] --> B[브랜드 생성]
     B --> C[제품 등록]
     B --> D[페르소나 생성]
-    
+
     C --> E[캠페인 생성]
     D --> E
-    
+
     E --> F[인플루언서 매칭]
     F --> G[인플루언서 초대]
     G --> H{수락?}
-    
+
     H -->|Yes| I[계약 체결]
     H -->|No| F
-    
+
     I --> J[콘텐츠 제작]
     J --> K[콘텐츠 검수]
     K --> L{승인?}
-    
+
     L -->|Yes| M[콘텐츠 발행]
     L -->|No| J
-    
+
     M --> N[성과 모니터링]
     N --> O[분석 리포트]
     N --> P[정산 처리]
-    
+
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style E fill:#bbf,stroke:#333,stroke-width:2px
     style M fill:#bfb,stroke:#333,stroke-width:2px
@@ -508,7 +508,7 @@ stateDiagram-v2
     content_review --> live: 검수 완료
     live --> monitoring: 라이브 시작
     monitoring --> completed: 캠페인 종료
-    
+
     creating --> cancelled: 취소
     confirming --> cancelled: 취소
     content_planning --> cancelled: 취소
@@ -538,7 +538,7 @@ graph LR
     B --> D[campaign_analytics]
     C --> E[contents]
     E --> F[content_metrics]
-    
+
     style A fill:#f96,stroke:#333,stroke-width:2px
 ```
 
@@ -551,7 +551,7 @@ graph LR
     A --> D[campaign_influencers]
     D --> E[campaigns]
     D --> F[contents]
-    
+
     style A fill:#f96,stroke:#333,stroke-width:2px
 ```
 
@@ -560,36 +560,22 @@ graph LR
 ```mermaid
 graph TD
     A[Primary Keys] --> B[UUID 자동 인덱스]
-    
+
     C[Foreign Keys] --> D[참조 무결성 인덱스]
-    
+
     E[Search Columns] --> F[users.email]
     E --> G[influencers.platform]
     E --> H[campaigns.status]
-    
+
     I[Join Columns] --> J[brand_id in products]
     I --> K[campaign_id in analytics]
-    
+
     L[Date Columns] --> M[content_metrics.metric_date]
     L --> N[campaign_analytics.analytics_date]
-    
+
     style A fill:#bbf,stroke:#333,stroke-width:2px
     style C fill:#bbf,stroke:#333,stroke-width:2px
     style E fill:#bfb,stroke:#333,stroke-width:2px
     style I fill:#bfb,stroke:#333,stroke-width:2px
     style L fill:#fbf,stroke:#333,stroke-width:2px
 ```
-
-## Obsidian 설정 확인사항
-
-Obsidian에서 Mermaid 다이어그램이 제대로 표시되지 않는다면:
-
-1. **설정 > 에디터 > Mermaid 다이어그램 활성화** 확인
-2. **커뮤니티 플러그인에서 "Mermaid" 플러그인 설치** (필요시)
-3. **읽기 모드로 전환**하여 확인
-4. Obsidian 재시작
-
-만약 여전히 문제가 있다면 다음을 시도해보세요:
-- 더 작은 다이어그램으로 분할
-- 복잡한 스타일 제거
-- 특수문자나 따옴표 제거
