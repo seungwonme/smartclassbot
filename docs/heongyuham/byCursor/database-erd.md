@@ -28,9 +28,9 @@ erDiagram
         text description
         string website
         text story
-        array channels
+        string channels
         text marketing
-        array social_channels
+        string social_channels
         string category
         string logo_url
         timestamp created_at
@@ -103,7 +103,7 @@ erDiagram
     campaign_target_content {
         uuid id PK
         uuid campaign_id FK UK
-        array influencer_categories
+        string influencer_categories
         string target_age
         integer usp_importance
         text influencer_impact
@@ -117,7 +117,7 @@ erDiagram
         uuid influencer_id FK
         decimal proposed_fee
         decimal ad_fee
-        array deliverables
+        string deliverables
         text additional_terms
         string status
         date production_start_date
@@ -133,7 +133,7 @@ erDiagram
         string name
         string age
         string gender
-        array interests
+        string interests
         string occupation
         text lifestyle
         text shopping_habits
@@ -216,7 +216,7 @@ erDiagram
         integer positive_comments
         integer negative_comments
         integer neutral_comments
-        array key_topics
+        string key_topics
         decimal sentiment_score
         jsonb analysis_data
         timestamp analyzed_at
@@ -271,7 +271,7 @@ erDiagram
         uuid entity_id
         jsonb old_values
         jsonb new_values
-        inet ip_address
+        string ip_address
         text user_agent
         timestamp created_at
     }
